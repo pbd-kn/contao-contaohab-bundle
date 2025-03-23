@@ -1,0 +1,89 @@
+<div class="things-list">
+    <h2>Ausgewählte Things und ihre Sensoren aus Info</h2>
+<?php
+    if (!empty($this->things) && is_array($this->things)) {
+      echo "<strong>Things</strong><br>";
+      echo "<ul>";
+      foreach ($this->things as $k=>$v) {   // Thing Sensor
+            echo "<li>$v</li>";
+      }
+      echo "</ul>";
+    }
+    if (!empty($this->sensors) && is_array($this->sensors)) {
+      echo "<strong>Sensors</strong><br>";
+      echo "<ul>";
+      foreach ($this->sensors as $k=>$v) {   // Thing Sensor
+        echo "<li>";
+        if (is_array($v)) {                // elemente von Thing/Sensor
+          echo "<ul>";
+          foreach ($v as $k1=>$v1) {
+            echo "<li>";
+              echo "$k1: ";
+              if (is_array($v1)) {                // elemente von Thing/Sensor
+                echo "<ul>";
+                  foreach ($v1 as $k2=>$v2) {
+                    echo "<li>";
+                      echo "$k2: $v2";
+                    echo "</li>"; 
+                  }             
+                echo "</ul>";
+              } else {
+                echo $v1;
+              }
+            echo "</li>";
+          }  
+          echo "</ul>";
+        } else {
+          echo $v;
+        }
+        echo "</li>";
+      }
+      echo "</ul>";
+    }
+/*
+    echo"------------------------------------<br>";
+    if (!empty($this->allthings)) {
+      echo "<ul>";
+      foreach ($this->allthings as $k=>$v) {   // Thing Sensor
+        echo "<li><strong>$k</strong></li>";
+           
+        if (is_array($v)) {                // elemente von Thing/Sensor
+          echo "<ul>";
+          foreach ($v as $k1=>$v1) {
+            echo "<li>";
+              echo "$k1: ";
+              if (is_array($v1)) {                // elemente von Thing/Sensor
+                echo "<ul>";
+                  foreach ($v1 as $k2=>$v2) {
+                    echo "<li>";
+                      echo "$k2: ";
+                      if (is_array($v2)) {                // elemente von Thing/Sensor
+                        echo "<ul>";
+                        foreach ($v2 as $k3=>$v3) {
+                          echo "<li>";
+                            echo "k3: $v3";
+                          echo "</li>";
+                        }
+                        echo "</ul>";
+                      } else {
+                        echo $v2;
+                      }
+                    echo "</li>";
+                  }                      
+                echo "</ul>";
+              } else {
+                echo $v1;
+              }
+             //var_dump("v1",$v1);
+              echo "</li>";
+            }
+          echo "</ul>";
+        }  
+      }
+      echo "</ul>";
+    } else {
+        echo "<p>Es wurden keine AllThings ausgewählt.</p>";
+    }
+*/
+?>
+</div>

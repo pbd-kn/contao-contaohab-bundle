@@ -1,0 +1,77 @@
+<!-- templates/be_import_csv.html5 -->
+<!DOCTYPE html>
+<html lang="<?= $this->language ?>">
+<head>
+    <meta charset="utf-8">
+    <title><?= $this->title ?></title>
+    <?= $this->stylesheets ?>  <!-- Standard Contao Stylesheets -->
+    <?= $this->javascripts ?>   <!-- Standard Contao JavaScripts -->
+    <script src="assets/mootools/core.js"></script>
+    <script src="assets/mootools/more.js"></script>
+</head>
+<body class="tl_page">
+    <div id="wrapper">
+        <div id="container">
+            <!-- Hier kannst du deine eigene Struktur einfügen -->
+            <div class="tl_formbody_edit">
+            <?php echo Contao\Message::generate(); ?>
+            <form action="" method="post">
+                <input type="hidden" name="FORM_SUBMIT" value="csv_form">
+                <input type="hidden" name="FORM_MODE" value="preview">
+                <input type="hidden" name="REQUEST_TOKEN" value="<?= REQUEST_TOKEN; ?>">
+                <div class="widget">
+                    <h3><?= $this->headline; ?></h3>
+                    <?= $this->csvCheckbox; ?>
+                    <br>
+                </div>
+                Ausgabe<br>
+                <select name="ausgabe" id="ausgabe">
+                  <option value="0" selected>Standard</option>
+                  <option value="1">Standard/Fehler</option>
+                  <option value="2" >Standard/Fehler/Warnungen</option>
+                  <option value="3">Standard/Fehler/Warnungen/Debug</option>
+                </select> 
+                <div class="tl_deletBox">
+                    <br>
+                    <input type="checkbox" name="delEntries" id="delEntries" checked>
+                    <label for="delEntries">TWIG Tabelle vor insert Sensorliste löschen?</label>
+                    <br>
+                </div>
+                <div class="tl_formbody_submit">
+                    <div class="tl_submit_container">
+                        <br>
+                        <button type="submit" class="tl_submit"><?= $this->submit; ?></button>
+                    </div>
+                </div>
+            </form>
+            </div>
+            <div class=tl_redirect>
+                <br><a href = <?= $this->redirekturl; ?> > Zurück zur Tabelle </a>
+            </div>
+            <!-- Hier endet dein eigener Inhalt -->
+        </div>
+    </div>
+</body>
+</html>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('csvImportForm');
+    form.addEventListener('submit', function(e) {
+debugger;
+        const selectedFiles = document.querySelectorAll('input[type="radio"][name="csvFile"]:checked');
+        if (selectedFiles.length === 0) {
+            //e.preventDefault(); // Verhindern des Formularabsendens
+            const fileValue = 'anton';
+            alert('Bitte wählen Sie eine CSV-Datei aus.');
+        } else {
+            const fileValue = selectedFiles[0].value;
+            console.log('Ausgewählte Datei:', fileValue); // Für Debugging-Zwecke
+            // Hier können Sie weitere Aktionen durchführen, bevor das Formular abgesendet wird.
+        }
+    });
+});
+
+</script>

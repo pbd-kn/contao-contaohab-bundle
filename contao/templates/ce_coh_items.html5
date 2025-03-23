@@ -1,0 +1,69 @@
+<div id="coh_items">
+    <h2>Item Statistik</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Anzahl</th>
+            </tr>
+        </thead>
+        <tbody id="coh_items_body">
+            <?php foreach ($this->items as $item): ?>
+            <tr data-item="<?php echo $item['item_name']; ?>">
+                <td><?php echo $item['item_name']; ?></td>
+                <td class="count"><?php echo $item['count']; ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<script>
+let updateInterval = 5000;  // Standard-Intervall
+let updateTimer;
+
+// Funktion zum Laden des Update-Intervalls aus der API
+function fetchUpdateInterval() {
+    fetch('/api/coh_update_interval')
+        .then(response => response.json())
+        .then(data => {
+            if (data.interval && !isNaN(data.interval)) {
+                updateInterval = data.interval;
+                restartAutoUpdate();
+            }
+        })
+        .catch(error => console.error("Fehler beim Laden des Intervalls:", error));
+}
+
+// Funktion zum Abrufen der aktuellen Items
+function updateCohItems() {
+    fetch('/api/coh_items')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById("coh_items_body");
+            tbody.innerHTML = "";
+
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.setAttribute("data-item", row.item_name);
+                tr.innerHTML = `
+                    <td>${row.item_name}</td>
+                    <td class="count">${row.count}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+}
+
+// Funktion, um das automatische Update mit neuem Intervall zu starten
+function restartAutoUpdate() {
+    if (updateTimer) clearInterval(updateTimer);
+    updateTimer = setInterval(updateCohItems, updateInterval);
+}
+
+// Starte das erste Update und lade das Intervall aus der API
+updateCohItems();
+fetchUpdateInterval();
+setInterval(fetchUpdateInterval, 30000); // Alle 30 Sekunden das Intervall aus der Datenbank holen
+restartAutoUpdate();
+</script>

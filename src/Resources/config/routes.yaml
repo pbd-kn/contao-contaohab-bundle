@@ -1,0 +1,19 @@
+api_coh_items:
+    path: /api/coh_items
+    controller: PbdKn\ContaoContaohabBundle\Controller\CohApiController::fetchItems
+    methods: GET
+
+api_coh_update_interval:
+    path: /api/coh_update_interval
+    controller: PbdKn\ContaoContaohabBundle\Controller\CohApiController::fetchUpdateInterval
+    methods: GET
+
+import_coh_sensor:  # Name der Route (frei waehlbar, aber eindeutig)
+    path: /Coh/importFromCheckbox
+    controller: PbdKn\ContaoContaohabBundle\Controller\ImportCohSensorController::importFromCheckbox
+    methods: [GET, POST]
+    
+import_coh_sensor_action:
+    path: Coh/importAction
+    controller: PbdKn\ContaoContaohabBundle\Controller\ImportCohSensorController::importAction
+    methods: [GET, POST]
