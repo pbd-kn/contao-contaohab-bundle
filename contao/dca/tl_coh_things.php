@@ -24,6 +24,7 @@ use Contao\StringUtil;
 
 use Contao\Controller;
 use PbdKn\ContaoContaohabBundle\Controller\FrontendModule\DisplayThingsController;
+use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 //use PbdKn\ContaoContaohabBundle\Module\ModuleCohCallback; // Die Klasse importieren!
 
 
@@ -51,8 +52,8 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array(
-            'fields' => array('thingTitle'),
-            'format' => '%s',
+            'fields' => array('thingTitle','thingID'),
+            'format' => '%s (ID: %s)',
         ),
         'global_operations' => array(
             'all' => array(
@@ -174,7 +175,7 @@ class tl_coh_things
       // Die aktuell gewählte thingId abrufen
 
       $selectedThingId = \Contao\Input::post('coh_selectedThing') ?? $dc->activeRecord->coh_selectedThing;
-die ("getsensorvariables recorde da ".$dc->activeRecord->coh_selectedThing);
+//die ("getsensorvariables recorde da ".$dc->activeRecord->coh_selectedThing);
 
       // Falls nichts ausgewählt ist, leere Liste zurückgeben
       if (!$selectedThingId) {
@@ -228,6 +229,10 @@ die ("keine sensoren");
  */
     private static function getAllSensors()
     {
+        /** @var LoggerService $logger */
+      $logger = System::getContainer()->get(LoggerService::class);
+
+      $logger->debugMe('getAllSensors wurde ausgelöst');    
       $database = Database::getInstance();
 
       $query = "SELECT sensorId, sensorTitle FROM tl_coh_sensors ORDER BY sensorTitle";

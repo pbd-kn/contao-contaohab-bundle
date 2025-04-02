@@ -29,9 +29,9 @@ class PbdKnContaoContaohabExtension extends Extension
 
         $loader = new YamlFileLoader(
             $container,
-            new FileLocator(__DIR__.'/../../config')
+            new FileLocator(__DIR__ . '/../Resources/config')
         );
-//die ("load in ".__DIR__.'/../../config');
+//die ("load in ".__DIR__ . '/../Resources/config');
         $loader->load('parameters.yaml');
         $loader->load('services.yaml');
         $loader->load('listener.yaml');

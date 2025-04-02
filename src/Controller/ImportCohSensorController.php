@@ -186,7 +186,7 @@ echo "mandatory $fieldName <br>";
           echo "value: $v Basename ".basename($v).'<br>';
         }
         $redirekturl = $this->router->generate('contao_backend', [
-            'do' => 'Sensorliste', // Verwende hier den Namen, den du im BE_MOD-Array definiert hast
+            'do' => 'Sensor', // Verwende hier den Namen, den du im BE_MOD-Array definiert hast
             'table' => "$this->strTable", // Optional: wenn du eine bestimmte Tabelle direkt ansprechen möchtest
         ]);
 

@@ -9,23 +9,22 @@ services:
         bind:
             #$projectDir: '%kernel.project_dir%'
 
+
     PbdKn\ContaoContaohabBundle\:
-        resource: ../src/
-        exclude: ../src/{DependencyInjection,Model,Session}
-    
+        resource: '../../*'
+        exclude: '../../{DependencyInjection,Resources,public,Tests}'
+
     PbdKn\ContaoContaohabBundle\Controller\:
-        resource: '../src/Controller/'
+        resource: '../../Controller/'
         public: true
         tags: ['controller.service_arguments']
 
     PbdKn\ContaoContaohabBundle\Controller\ImportCohSensorController:
-        public: true
-        autowire: true
-        autoconfigure: true
         tags: ['controller.service_arguments']
-        
+
     PbdKn\ContaoContaohabBundle\Module\ModuleCohCallback:
         public: true
+
 
 #modul ModuleCohThings als service      
     PbdKn\ContaoContaohabBundle\Module\ModuleCohThings:
@@ -35,8 +34,32 @@ services:
         tags:
           - { name: contao.frontend_module, category: "coh" }
           
+# logger service logausschriebe, nur wenn debug modus
+    PbdKn\ContaoContaohabBundle\Service\LoggerService:
+        public: true
+        arguments:
+          $dateiname: 'cohdebug.log'
+          $contaoLogger: '@monolog.logger.contao'
+          $container: '@service_container' # Injiziere den service_container
 
-#    PbdKn\ContaoBesslichschmuck\Controller\:
-#        resource: '../../Controller'
-#        tags: ['controller.service_arguments']
 
+
+#    PbdKn\ContaoContaohabBundle\Command\ContaohabDaemonCommand:
+#        tags: ['console.command']
+        
+
+    PbdKn\ContaoContaohabBundle\Sensor\SensorManager:
+        arguments:
+          $fetchers: !tagged_iterator sensor.fetcher
+
+    PbdKn\ContaoContaohabBundle\Sensor\TasmotaSensorService:
+        tags: ['sensor.fetcher']
+
+#        arguments:
+#           $logger: '@monolog.logger.sensor'
+
+    PbdKn\ContaoContaohabBundle\Sensor\SolarApiSensorService:
+        tags: ['sensor.fetcher']        
+
+#        arguments:
+#           $logger: '@monolog.logger.sensor'
