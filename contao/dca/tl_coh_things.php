@@ -119,8 +119,6 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_things'],
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_things'], // Sprachreferenz für die Labels
             'options'   => [
                               'php' => 'php',
                               'costum' => 'costum',
@@ -136,7 +134,7 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
         'Sensorvariable' => array (                    // enthält alle möglichen sensoren, die in dieswem Thing möglich sind
             'label'            => &$GLOBALS['TL_LANG']['tl_coh_things']['Sensorvariable'],
             'inputType'        => 'select',
-            'options_callback' => ['tl_coh_things', 'getSensorvariables'], // Selectbox mit Werten aus `tl_coh_sensors` füllen
+            'options_callback' => ['tl_coh_things', 'getAllSensors'], // Selectbox mit Werten aus `tl_coh_sensors` füllen
             'eval'             => ['mandatory' => true, 'multiple' => true,'chosen' => true, 'tl_class' => 'w50'],
             'sql'              => "blob NULL",
         ),
@@ -165,74 +163,19 @@ class tl_coh_things
      * bei der selection
      */
 
+/*
   public static function getSensorvariables($dc)
   {
         return self::getAllSensors();
-    $database = Database::getInstance();
-    // Prüfen, ob ein bestehendes Thing bearbeitet wird
-    if ($dc->activeRecord && $dc->activeRecord->id) {
-
-      // Die aktuell gewählte thingId abrufen
-
-      $selectedThingId = \Contao\Input::post('coh_selectedThing') ?? $dc->activeRecord->coh_selectedThing;
-//die ("getsensorvariables recorde da ".$dc->activeRecord->coh_selectedThing);
-
-      // Falls nichts ausgewählt ist, leere Liste zurückgeben
-      if (!$selectedThingId) {
-          return [];
-      }
- 
-      // Deserialisieren (falls multiple => true)
-      $selectedThingIds = \Contao\StringUtil::deserialize($selectedThingId, true);
-
-      // Falls das Array leer ist, nichts tun
-      if (empty($selectedThingIds)) {
-          return [];
-      }
-
-      // 1?? Erste SQL-Abfrage: Sensorvariable (BLOB) für die `thingId` auslesen
-      $placeholders = implode(',', array_fill(0, count($selectedThingIds), '?'));
-      $query = "SELECT Sensorvariable FROM tl_coh_things WHERE thingId IN ($placeholders)";
-      $result = $database->prepare($query)->execute(...$selectedThingIds);
-
-      $sensorIds = [];
-      while ($result->next()) {
-        $sensorVars = \Contao\StringUtil::deserialize($result->Sensorvariable, true);
-        if (is_array($sensorVars)) {
-            $sensorIds = array_merge($sensorIds, $sensorVars);
-        }
-      }
-
-      // Falls keine Sensoren gefunden wurden, leere Liste zurückgeben
-      if (empty($sensorIds)) {
-die ("keine sensoren");
-        return [];
-      }
-      // 2?? Zweite SQL-Abfrage: Sensor-Titel für die Sensor-IDs abrufen
-      $placeholders = implode(',', array_fill(0, count($sensorIds), '?'));
-      $query = "SELECT sensorId, sensorTitle FROM tl_coh_sensors WHERE sensorId IN ($placeholders)";
-      $result = $database->prepare($query)->execute(...$sensorIds);
-
-      $options = [];
-      while ($result->next()) {
-        $options[$result->sensorId] = sprintf('%s (%s)', $result->sensorTitle, $result->sensorId);
-      }
-
-      return $options;
-    } else {
-        // Wenn ein neues Thing erstellt wird, alle Sensoren anzeigen
-        return self::getAllSensors();
-    }
   }
+*/
 /**
  * Lädt alle verfügbaren Sensoren aus `tl_coh_sensors`
  */
-    private static function getAllSensors()
+    public static function getAllSensors()
     {
         /** @var LoggerService $logger */
       $logger = System::getContainer()->get(LoggerService::class);
-
-      $logger->debugMe('getAllSensors wurde ausgelöst');    
       $database = Database::getInstance();
 
       $query = "SELECT sensorId, sensorTitle FROM tl_coh_sensors ORDER BY sensorTitle";
@@ -242,6 +185,7 @@ die ("keine sensoren");
       while ($result->next()) {
         $options[$result->sensorId] = sprintf('%s (%s)', $result->sensorTitle, $result->sensorId);
       }
+      $logger->debugMe('getAllSensors Anzahl Sensoren: '.count($options));    
 
       return $options;
     }  
@@ -249,7 +193,9 @@ die ("keine sensoren");
 
     public function onSubmitRecord(DataContainer $dc)
     {
+        $logger = System::getContainer()->get(LoggerService::class);
         if (!$dc->id) {
+            $logger->debugMe('onSubmitRecord keine dc->id');    
             return;
         }
 
@@ -260,26 +206,26 @@ die ("keine sensoren");
 
         if ($objRecord->numRows) {
             \System::log("Thing Datensatz gespeichert: " . $objRecord->thingTitle, __METHOD__, TL_GENERAL);
+            $logger->debugMe("Thing Datensatz gespeichert Titel: " . $objRecord->thingTitle);    
         }
         // Achtung es kann auch über active record auf den aktuellen Record zugegriffen werden
         // Direkt auf die gespeicherten Werte zugreifen
         $thingTitle = $dc->activeRecord->thingTitle;        
     }
-public function serializeSensorSelection($varValue, DataContainer $dc)
-{
-    var_dump($varvalue);
-    //die(serializeSensorSelection);
-    if (empty($varValue)) {
-        return null; // Falls nichts ausgewählt ist, speichere NULL
+    /* wird wohl nicht mehr gebraucht */
+    public function serializeSensorSelection($varValue, DataContainer $dc)
+    {
+        var_dump($varvalue);
+        //die(serializeSensorSelection);
+        if (empty($varValue)) {
+            return null; // Falls nichts ausgewählt ist, speichere NULL
+        }
+
+        $sensorIds = StringUtil::deserialize($varValue, true);
+        if (!is_array($sensorIds)) {
+            return null; // Falls ungültige Daten vorliegen
+        }
+
+        return serialize($sensorIds); // Speichert die Auswahl serialisiert
     }
-
-    $sensorIds = StringUtil::deserialize($varValue, true);
-    if (!is_array($sensorIds)) {
-        return null; // Falls ungültige Daten vorliegen
-    }
-
-    return serialize($sensorIds); // Speichert die Auswahl serialisiert
-}
-
-   
 }
