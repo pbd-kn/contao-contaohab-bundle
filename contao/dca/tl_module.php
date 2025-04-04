@@ -254,7 +254,7 @@ class tl_module_coh
         // 🔹 DEBUG: Thing-ID abrufen
         $selectedThingIds = StringUtil::deserialize($dc->activeRecord->coh_selectedThing, true);
 //        exit;
-        var_dump("Ausgewählte Thing-IDs:", $selectedThingIds);
+//        var_dump("Ausgewählte Thing-IDs:", $selectedThingIds);
 
 
         if (empty($selectedThingIds)) {

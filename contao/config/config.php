@@ -22,7 +22,7 @@ $GLOBALS['BE_MOD']['contao_hab']['Things'] = array(
 );
 
 $GLOBALS['BE_MOD']['contao_hab']['Sensor'] = array (
-	'tables'     => ['tl_coh_sensors'],
+	'tables'     => [$strTable],
 	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
     'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
 );
@@ -31,12 +31,20 @@ $GLOBALS['BE_MOD']['contao_hab']['SensorValues'] = array (
 	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
     'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
 );
+$GLOBALS['BE_MOD']['contao_hab']['Geräte'] = array (
+	'tables'     => ['tl_coh_geraete'],
+	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
+    'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
+);
 /**
  * Models
  */
 $GLOBALS['TL_MODELS']['tl_coh_things'] = ThingsModel::class;
-$GLOBALS['TL_MODELS']['tl_coh_sensors'] = SensorModel::class;
+$GLOBALS['TL_MODELS'][$strTable] = SensorModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_sensorvalue'] = SensorValueModel::class;
+$GLOBALS['TL_MODELS']['tl_coh_sensors'] = \PbdKn\ContaoContaohabBundle\Model\SensorModel::class;
+$GLOBALS['TL_MODELS']['tl_coh_geraete'] = GeraeteModel::class;
+
 
 /**
  * Fe Modules

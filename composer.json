@@ -26,7 +26,8 @@
         "contao/core-bundle": "^4.13 || ^5.0"
     },
     "require-dev": {
-        "contao/manager-plugin": "^2.12"
+        "contao/manager-plugin": "^2.12",
+        "symplify/easy-coding-standard": "11.1"
     },
     "autoload": {
         "psr-4": {
@@ -37,15 +38,16 @@
         "allow-plugins": {
             "contao-components/installer": false,
             "contao/manager-plugin": false,
-            "contao-community-alliance/composer-plugin": true
+            "contao-community-alliance/composer-plugin": true,
+            "php-http/discovery": true
         }
     },
     "extra": {
         "contao-manager-plugin": "PbdKn\\ContaoContaohabBundle\\ContaoManager\\Plugin"
     },
     "scripts": {
-        "cs-fixer": "@php tools/ecs/vendor/bin/ecs check config/ contao/ src/ templates/ tests/ --config tools/ecs/config.php --fix --ansi",
-        "unit-tests": "@php tools/phpunit/vendor/bin/phpunit -c tools/phpunit/phpunit.xml.dist"
+        "cs-fixer": "vendor\\bin\\ecs.bat check src\\ tests\\ --fix --ansi",
+        "unit-tests": "vendor\\bin\\phpunit.bat"
     },
     "version": "1.0.1"
 }

@@ -5,24 +5,25 @@ namespace PbdKn\ContaoContaohabBundle\Sensor;
 use PbdKn\ContaoContaohabBundle\Model\SensorModel;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Doctrine\DBAL\Connection;
-//use Psr\Log\LoggerInterface;
+use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+
 
 class SolarApiSensorService implements SensorFetcherInterface
 {
     private HttpClientInterface $httpClient;
-//    private LoggerInterface $logger;
+    private ?LoggerService $logger = null;
     private Connection $connection;
 
-    public function __construct(HttpClientInterface $httpClient, Connection $connection)
+    public function __construct(HttpClientInterface $httpClient, Connection $connection,LoggerService $logger)
     {
         $this->httpClient = $httpClient;
-//        $this->logger = $logger;
+        $this->logger = $logger;
         $this->connection = $connection;
     }
 
     public function supports(SensorModel $sensor): bool
     {
-        return (int)$sensor->sensorSource === 1; // 1 = Solaranlage
+        return strtolower($sensor->sensorSource) === 'iqbox';
     }
 
     public function fetch(SensorModel $sensor): ?array
@@ -32,10 +33,12 @@ class SolarApiSensorService implements SensorFetcherInterface
 
             if (!$url) {
                 $message = "SolarAPI: sensorReferenz fehlt bei Sensor {$sensor->sensorID}";
-//                $this->logger->warning($message);
+                $this->logger->debugMe($message);
+/*
                 $this->connection->update('tl_coh_sensors', [
                     'lastError' => $message
                 ], ['id' => $sensor->id]);
+*/
                 return null;
             }
 
@@ -46,23 +49,25 @@ class SolarApiSensorService implements SensorFetcherInterface
 
             if ($key === null || !isset($data[$key])) {
                 $message = "SolarAPI: Kein passender Wert für '{$sensor->transFormProcedur}' bei Sensor {$sensor->sensorID}";
-//                $this->logger->warning($message);
+                $this->logger->debugMe($message);
+/*
                 $this->connection->update('tl_coh_sensors', [
                     'lastError' => $message
                 ], ['id' => $sensor->id]);
+*/
                 return null;
             }
 
             $value = $data[$key];
 
-//            $this->logger->info("SolarAPI: Sensor {$sensor->sensorID} liefert {$value} ({$key})");
-
+            $this->logger->debugMe("SolarApi: Sensor {$sensor->sensorID} liefert {$value} W");    
+/*
             $this->connection->update('tl_coh_sensors', [
                 'lastUpdated' => time(),
                 'lastValue'   => $value,
                 'lastError'   => '',
             ], ['id' => $sensor->id]);
-
+*/
             return [
                 'sensorID'        => $sensor->sensorID,
                 'sensorValue'     => $value,
@@ -72,12 +77,12 @@ class SolarApiSensorService implements SensorFetcherInterface
             ];
         } catch (\Throwable $e) {
             $message = "SolarAPI: Fehler bei Sensor {$sensor->sensorID}: " . $e->getMessage();
-//            $this->logger->error($message);
-
+           $this->logger->debugMe($message);
+/*
             $this->connection->update('tl_coh_sensors', [
                 'lastError' => $e->getMessage()
             ], ['id' => $sensor->id]);
-
+*/
             return null;
         }
     }

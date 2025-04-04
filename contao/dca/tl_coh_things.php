@@ -193,6 +193,7 @@ class tl_coh_things
 
     public function onSubmitRecord(DataContainer $dc)
     {
+        /** @var LoggerService $logger */
         $logger = System::getContainer()->get(LoggerService::class);
         if (!$dc->id) {
             $logger->debugMe('onSubmitRecord keine dc->id');    

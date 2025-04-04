@@ -227,6 +227,29 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             //'relation'  => array('type' => 'hasOne', 'load' => 'lazy')
             'default'   => 'Text',
         ),
+'lastUpdated' => [
+    'sql' => "int(10) unsigned NOT NULL default '0'",
+],
+
+'pollInterval' => [
+    'inputType' => 'text',
+    'exclude'   => true,
+    'eval'      => ['rgxp' => 'digit', 'tl_class' => 'w50'],
+    'sql'       => "int(10) unsigned NOT NULL default '60'",
+    'default'   => 60,
+],
+
+'lastValue' => [
+    'sql' => "varchar(255) NOT NULL default ''",
+],
+
+'lastError' => [
+    'inputType' => 'textarea',
+    'exclude'   => true,
+    'eval'      => ['rte' => 'none', 'tl_class' => 'clr', 'readonly' => true],
+    'sql'       => "text NULL",
+],
+        
     )
 );
 

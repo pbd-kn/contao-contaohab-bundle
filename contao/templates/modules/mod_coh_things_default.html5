@@ -1,6 +1,17 @@
 <div class="things-list">
-    <h2>Ausgewählte Things und ihre Sensoren aus Info</h2>
+    <h2>Ausgewählte Things und ihre Sensoren aus Default</h2>
 <?php
+echo "hallo<br>";
+    if (!empty($this->sensorData) && is_array($this->sensorData)) {
+      echo "<strong>sensorData</strong><br>";
+      echo "<ul>";
+      foreach ($this->sensorData as $k=>$v) {   // Thing data
+            echo "<li>$k: $v</li>";
+      }
+      echo "</ul>";
+    } else {
+      echo "sensorData kein feld<br>";
+    }
     if (!empty($this->things) && is_array($this->things)) {
       echo "<strong>Things</strong><br>";
       echo "<ul>";

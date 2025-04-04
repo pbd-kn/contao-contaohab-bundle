@@ -7,6 +7,10 @@ use Contao\Module;
 use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 
+use PbdKn\ContaoContaohabBundle\Sensor\SensorManager;
+use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use Contao\System;
+
 /**
  * @FrontendModule("coh_things", category="coh", template="mod_coh_things_default")
  */
@@ -15,11 +19,14 @@ class ModuleCohThings extends Module
 {
     protected $strTemplate = 'mod_coh_things_default';
     private Connection $database;
+    private LoggerService $logger;
 
     public function __construct($moduleModel, $column = 'main')
     {
       parent::__construct($moduleModel, $column);
       $this->database = \Contao\System::getContainer()->get('doctrine.dbal.default_connection');
+      // 🔥 Logger holen
+      $this->logger = System::getContainer()->get(LoggerService::class);
     }
     public function generate()
     {
@@ -34,7 +41,7 @@ class ModuleCohThings extends Module
    
     protected function compile(): void
     {
-    
+ $this->logger->debugMe('Frontend-Modul compile ModuleCohThings wurde aufgerufen');   
       // Gespeicherte Things und sensorIds abrufen (im Modul konfiguriert)
       $selectedThingIds = StringUtil::deserialize($this->coh_selectedThing ?? '', true);
       $selectedSensorIds = StringUtil::deserialize($this->coh_selectedSensor ?? '', true);
@@ -68,6 +75,16 @@ class ModuleCohThings extends Module
       $this->Template->things = $things;
       $this->Template->sensors = $sensors;
       $this->Template->allthings = $allthings;
+      /* nun die werte lesen */
+
+      
+      $sensorManager = System::getContainer()->get(SensorManager::class);
+
+      $data = $sensorManager->fetchAll();
+
+        // Jetzt kannst du die $data im Template verwenden:
+      $this->Template->sensorData = $data;
+      
       return;
     }
 }

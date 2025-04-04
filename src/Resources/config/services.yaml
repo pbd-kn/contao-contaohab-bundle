@@ -49,17 +49,12 @@ services:
         
 
     PbdKn\ContaoContaohabBundle\Sensor\SensorManager:
+        public: true
         arguments:
           $fetchers: !tagged_iterator sensor.fetcher
-
-    PbdKn\ContaoContaohabBundle\Sensor\TasmotaSensorService:
-        tags: ['sensor.fetcher']
-
-#        arguments:
-#           $logger: '@monolog.logger.sensor'
 
     PbdKn\ContaoContaohabBundle\Sensor\SolarApiSensorService:
         tags: ['sensor.fetcher']        
 
-#        arguments:
-#           $logger: '@monolog.logger.sensor'
+    PbdKn\ContaoContaohabBundle\Sensor\TasmotaSensorService:
+        tags: ['sensor.fetcher']        
