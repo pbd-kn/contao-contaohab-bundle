@@ -46,8 +46,8 @@
         "contao-manager-plugin": "PbdKn\\ContaoContaohabBundle\\ContaoManager\\Plugin"
     },
     "scripts": {
-        "cs-fixer": "vendor\\bin\\ecs.bat check src\\ tests\\ --fix --ansi",
-        "unit-tests": "vendor\\bin\\phpunit.bat"
+       "cs-fixer": "vendor\\bin\\ecs.bat check src\\ tests\\ --fix --ansi",
+       "unit-tests": "vendor\\bin\\phpunit.bat"
     },
     "version": "1.0.1"
 }

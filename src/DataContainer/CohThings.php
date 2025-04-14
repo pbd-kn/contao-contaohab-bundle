@@ -19,6 +19,8 @@ use Contao\DataContainer;
 use Contao\Input;
 use Contao\System;
 
+// fügt, wenn man edit bei einem thing klickt im editfenster einen zusätzlcihen Button ein
+
 #[AsCallback(table: 'tl_coh_things', target: 'edit.buttons', priority: 100)]
 class CohThings
 {
@@ -34,14 +36,9 @@ class CohThings
         $systemAdapter = $this->framework->getAdapter(System::class);
 
         $systemAdapter->loadLanguageFile('tl_coh_things');
- // Debugging: Welche Sprachdatei wird geladen?
-
-    //$systemAdapter->loadLanguageFile('tl_things'); // Testweise alte Datei laden
-
-    //dump($GLOBALS['TL_LANG']); // Zeigt die geladenen Sprachdateien
-if (!isset($GLOBALS['TL_LANG']['tl_coh_things']['customButton'])) {
-        throw new \Exception("Sprachkey GLOBALS['TL_LANG']['tl_coh_things']['customButton'] wurde nicht geladen!");
-    }
+        if (!isset($GLOBALS['TL_LANG']['tl_coh_things']['customButton'])) {
+            throw new \Exception("Sprachkey GLOBALS['TL_LANG']['tl_coh_things']['customButton'] wurde nicht geladen!");
+        }
             if ('edit' === $inputAdapter->get('act')) {
             $arrButtons['customButton'] = '<button type="submit" name="customButton" id="customButton" class="tl_submit customButton" accesskey="x">'.$GLOBALS['TL_LANG']['tl_coh_things']['customButton'].'</button>';
         }

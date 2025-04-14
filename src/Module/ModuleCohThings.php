@@ -45,6 +45,7 @@ class ModuleCohThings extends Module
       // Gespeicherte Things und sensorIds abrufen (im Modul konfiguriert)
       $selectedThingIds = StringUtil::deserialize($this->coh_selectedThing ?? '', true);
       $selectedSensorIds = StringUtil::deserialize($this->coh_selectedSensor ?? '', true);
+ $this->logger->debugMe("coh_selectedSensor: ".$this->coh_selectedSensor);   
       $allthings = [];   // feld wird an template übergeben sollte vielleicht einzeln sls Things und sensoren übergben werden. Template wird dann einfacher
       $things = [];
       foreach ($selectedThingIds as $k=>$v) {
@@ -52,6 +53,7 @@ class ModuleCohThings extends Module
         $things[$k] = $v;
       } 
       $sensors=[];
+      $sensorNamen=[];
       foreach ($selectedSensorIds as $k=>$v) {
         $allthings['Sensor'][$k]['sensorID'] = $v;
         $sensors[$k]['ID']=$v;
@@ -66,6 +68,8 @@ class ModuleCohThings extends Module
             }
             $allthings['Sensor'][$k]['description'] = $sensordesr;
             $sensors[$k]['description'] = $sensordesr;
+            $sensorNamen[]=$sensordesr['sensorID'];
+
         } else {
     // Optional: leeres Array zuweisen oder Hinweis
             $allthings['Sensor'][$k]['description'] = [];
@@ -80,8 +84,7 @@ class ModuleCohThings extends Module
       
       $sensorManager = System::getContainer()->get(SensorManager::class);
 
-      $data = $sensorManager->fetchAll();
-
+      $data = $sensorManager->fetchAll($sensorNamen);
         // Jetzt kannst du die $data im Template verwenden:
       $this->Template->sensorData = $data;
       

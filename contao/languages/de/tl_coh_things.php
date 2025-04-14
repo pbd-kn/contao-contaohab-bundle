@@ -35,7 +35,7 @@ $GLOBALS['TL_LANG']['tl_coh_things']['show'] = "Datensatz mit ID: %s ansehen";
 $GLOBALS['TL_LANG']['tl_coh_things']['thingID'] = ["Thing Id","eindeutige Id die das Thing identifiziert"];
 $GLOBALS['TL_LANG']['tl_coh_things']['thingTitle'] = ["Thing Titel","Titel des Things"];
 $GLOBALS['TL_LANG']['tl_coh_things']['thingType'] = ["Thing Type","Wird noch nicht ausgewertet"];
-$GLOBALS['TL_LANG']['tl_coh_things']['Sensorvariable'] = ['Sensor', 'Wählen Sie eine oder mehrere Sensoren aus'];
+$GLOBALS['TL_LANG']['tl_coh_things']['Sensorvariable'] = ['Sensor', 'Wählen Sie eine oder mehrere Sensoren die von diesem Thing verwaltet werden. unter FE Module können die Things verwendet werden'];
 
 
 /**
@@ -45,4 +45,6 @@ $GLOBALS['TL_LANG']['tl_coh_things']['Sensorvariable'] = ['Sensor', 'Wählen Sie
 /**
  * Buttons
  */
-$GLOBALS['TL_LANG']['tl_coh_things']['customButton'] = "Custom Routine starten";
+$GLOBALS['TL_LANG']['tl_coh_things']['customButton'] = 'Custom Button aus Callback';
+
+

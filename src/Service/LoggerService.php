@@ -48,6 +48,21 @@ class LoggerService
         }
     }
 
+    public function Error(string $txt): void
+    {
+        if ($this->streamHandler === null) { // Erst wenn der Debug-Modus aktiv ist und noch nicht initialisiert wurde
+            $logPath = $this->projectDir . '/var/logs/' . $this->dateiname;
+            // Erstelle einen LineFormatter, der nur die Nachricht loggt
+            $formatter = new LineFormatter('%datetime% [Logger] %message%'. PHP_EOL, null, true, true);            
+            $this->streamHandler = new StreamHandler($logPath, Logger::INFO);
+            $this->streamHandler->setFormatter($formatter);  // Setze den benutzerdefinierten Formatter
+            $this->contaoLogger->pushHandler($this->streamHandler);
+
+            // Optional: Log-Nachrichten beim ersten Initialisieren
+            //$this->contaoLogger->info('Logger initialisiert für ' . $this->dateiname);
+        }    
+        $this->contaoLogger->error($this->addDebugInfoToText($txt));
+    }
     public function isDebug(): bool
     {
         return $this->debug;

@@ -63,6 +63,14 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
             )
         ),
         'operations'        => array(
+/*
+            'meinKnopf' => array(
+                'label' => ['Mein Button', 'Das ist mein Spezialknopf'],
+                'href'  => '/contao?do=coh_things&key=custom&id=%s',
+                'icon'  => 'bundles/pbdkncontaocontaohab/icons/mail.gif',
+                'button_callback' => ['tl_coh_things', 'generateCustomButton'],
+            ),
+*/
             'edit'   => array(
                 'href'  => 'act=edit',
                 'icon'  => 'edit.svg'
@@ -84,7 +92,7 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
         )
     ),
 'palettes' => [
-        'default' => '{title_legend},thingID,thingTitle,thingType,Sensorvariable,coh_selectedSensor;'
+        'default' => '{title_legend},thingID,thingTitle,Sensorvariable,coh_selectedSensor;'
     ],    
     'fields'      => array(
         'id'             => array(
@@ -94,6 +102,7 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ),
         'thingID'          => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['lastValue'],
             'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
@@ -104,6 +113,7 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
             'sql'       => "varchar(255) NOT NULL default ''",
         ),
         'thingTitle'          => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['lastValue'],
             'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
@@ -113,7 +123,8 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
             'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
         ),
-        'thingType'  => array(
+        'thingType'  => array(                // noch nicht ausgewertet
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['lastValue'],
             'inputType' => 'select',
             'exclude'   => true,
             'search'    => true,
@@ -123,16 +134,13 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
                               'php' => 'php',
                               'costum' => 'costum',
                            ],
-            //'foreignKey'            => 'tl_user.name',
-            //'options_callback'      => array('CLASS', 'METHOD'),
             'eval'      => array('mandatory' => true,'includeBlankOption' => false, 'chosen' => true, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
-            //'relation'  => array('type' => 'hasOne', 'load' => 'lazy')
             'default'   => 'php',
             'sql'       => "varchar(255) NOT NULL default ''",
         ),
         'Sensorvariable' => array (                    // enthält alle möglichen sensoren, die in dieswem Thing möglich sind
-            'label'            => &$GLOBALS['TL_LANG']['tl_coh_things']['Sensorvariable'],
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['lastValue'],
             'inputType'        => 'select',
             'options_callback' => ['tl_coh_things', 'getAllSensors'], // Selectbox mit Werten aus `tl_coh_sensors` füllen
             'eval'             => ['mandatory' => true, 'multiple' => true,'chosen' => true, 'tl_class' => 'w50'],
@@ -143,7 +151,7 @@ $GLOBALS['TL_DCA']['tl_coh_things'] = array(
 
 
         'coh_customParameter' => array (
-            'label'     => &$GLOBALS['TL_LANG']['tl_coh_things']['coh_customParameter'],
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['lastValue'],
             'exclude'   => true,
             'inputType' => 'text',
             'eval'      => ['tl_class' => 'w50'],
@@ -172,6 +180,20 @@ class tl_coh_things
 /**
  * Lädt alle verfügbaren Sensoren aus `tl_coh_sensors`
  */
+public function generateCustomButton(array $row, string $href, string $label, string $title, string $icon, string $attributes): string
+{
+    $href = \Contao\System::getContainer()->get('router')->generate('contao_backend') . '?' . sprintf($href, $row['id']);
+    // link auf die funktion
+    return sprintf(
+        '<a href="%s" title="%s"%s><img src="%s" alt=""> %s</a>',
+        $href,
+        $title,
+        $attributes,
+        $icon,
+        $label
+    );
+}
+
     public static function getAllSensors()
     {
         /** @var LoggerService $logger */

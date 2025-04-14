@@ -6,7 +6,15 @@ echo "hallo<br>";
       echo "<strong>sensorData</strong><br>";
       echo "<ul>";
       foreach ($this->sensorData as $k=>$v) {   // Thing data
-            echo "<li>$k: $v</li>";
+            echo "<li>$k: <br>";
+            if (is_array($v)) {
+                foreach ($v as $k1=>$v1) {
+                    echo "$k1: $v1<br>";
+                }
+            } else {
+              echo "$v<br>";
+            }
+            echo "</li>";
       }
       echo "</ul>";
     } else {

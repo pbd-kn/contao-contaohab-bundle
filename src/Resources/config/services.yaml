@@ -25,6 +25,10 @@ services:
     PbdKn\ContaoContaohabBundle\Module\ModuleCohCallback:
         public: true
 
+# eventlistener 
+    PbdKn\ContaoContaohabBundle\EventListener\BackendStyleListener:
+        tags:
+          - { name: kernel.event_listener, event: contao.backend.load_data_container, method: __invoke }
 
 #modul ModuleCohThings als service      
     PbdKn\ContaoContaohabBundle\Module\ModuleCohThings:
@@ -34,7 +38,7 @@ services:
         tags:
           - { name: contao.frontend_module, category: "coh" }
           
-# logger service logausschriebe, nur wenn debug modus
+# logger service logAusschriebe, nur wenn debug modus
     PbdKn\ContaoContaohabBundle\Service\LoggerService:
         public: true
         arguments:
@@ -42,6 +46,11 @@ services:
           $contaoLogger: '@monolog.logger.contao'
           $container: '@service_container' # Injiziere den service_container
 
+# Callbackroutinen für globale funktionen in der dca
+# in dieser klasse wird der button erstellt
+#    PbdKn\ContaoContaohabBundle\DataContainer\CohThings:             
+#        tags:
+#            - { name: contao.callback }
 
 
 #    PbdKn\ContaoContaohabBundle\Command\ContaohabDaemonCommand:
@@ -53,8 +62,12 @@ services:
         arguments:
           $fetchers: !tagged_iterator sensor.fetcher
 
-    PbdKn\ContaoContaohabBundle\Sensor\SolarApiSensorService:
+    PbdKn\ContaoContaohabBundle\Sensor\IQBoxSensorService:
         tags: ['sensor.fetcher']        
 
     PbdKn\ContaoContaohabBundle\Sensor\TasmotaSensorService:
         tags: ['sensor.fetcher']        
+
+    PbdKn\ContaoContaohabBundle\Sensor\HeizstabSensorService:
+        tags: ['sensor.fetcher']        
+

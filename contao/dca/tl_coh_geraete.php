@@ -21,6 +21,7 @@ use Contao\Backend;
 use Contao\System;
 use Contao\Image;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Contao\CoreBundle\Exception\InvalidFieldValueException;
 
 
 
@@ -46,8 +47,8 @@ $GLOBALS['TL_DCA'][$strTable] = array(
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array(
-            'fields' => array('geraeteTitle','geraeteID'),
-            'format' => '%s ID(%s)',
+            'fields' => array('geraeteTitle','geraeteID','geraeteUrl'),
+            'format' => '%s (GeräteId: %s URL: %s)',
         ),
         'global_operations' => array(
         
@@ -83,8 +84,7 @@ $GLOBALS['TL_DCA'][$strTable] = array(
         )
     ),
     'palettes'    => array(
-        '__selector__' => array('addSubpalette'),
-        'default'      => '{first_legend},geraeteID,geraeteTitle,geraeteUrl,geraeteDescription}'
+        'default'      => '{first_legend},geraeteID,geraeteTitle,geraeteUrl,geraeteDescription'
     ),
     'fields'      => array(
         'id'             => array(
@@ -94,6 +94,7 @@ $GLOBALS['TL_DCA'][$strTable] = array(
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ),
         'geraeteID'          => array(
+            'label'     => &$GLOBALS['TL_LANG'][$strTable]['geraeteID'], 
             'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
@@ -104,6 +105,7 @@ $GLOBALS['TL_DCA'][$strTable] = array(
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'geraeteTitle'          => array(
+            'label'     => &$GLOBALS['TL_LANG'][$strTable]['geraeteTitle'], 
             'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
@@ -114,23 +116,34 @@ $GLOBALS['TL_DCA'][$strTable] = array(
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'geraeteUrl'          => array(
+            'label'     => &$GLOBALS['TL_LANG'][$strTable]['geraeteUrl'], 
             'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
             'flag'      => DataContainer::SORT_INITIAL_LETTER_ASC,
-            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'),
+            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50','rgxp'      => 'custom',),
+            'save_callback' => [
+                [tl_coh_geraete::class, 'validateHostOrIp']
+             ],
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'geraeteDescription'          => array(
-            'inputType' => 'text',
+            'label'     => &$GLOBALS['TL_LANG'][$strTable]['geraeteDescription'],
+            'inputType' => 'textarea',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
             'flag'      => DataContainer::SORT_INITIAL_LETTER_ASC,
-            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'),
+            'eval'      => [
+                             'mandatory' => false,
+                              'rows'      => 4,
+                              'cols'      => 40,
+                              'tl_class'  => 'w50',
+                               
+                           ],
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
     )
@@ -138,8 +151,21 @@ $GLOBALS['TL_DCA'][$strTable] = array(
 
 
 
-/* klasse f�r alle callback funktionen zu things */
+/* klasse für alle callback funktionen zu things */
 class tl_coh_geraete
 {
+    public function validateHostOrIp(string $value): string
+    {
+        if (filter_var($value, FILTER_VALIDATE_IP)) {
+            return $value;
+        }
+
+        // einfache Hostname-Prüfung (z. B. "my-host.local" oder "example.com")
+        if (preg_match('/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/', $value)) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('Bitte eine gültige IP-Adresse oder einen Hostnamen eingeben.');
+    }
 
 }

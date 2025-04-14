@@ -1,4 +1,4 @@
-sensorID;sensorTitle;sensorSource;ReferenzsensorReferenz;transFormProcedur;sensorEinheit
+sensorID;sensorTitle;sensorSource;sensorReferenz;transFormProcedur;sensorEinheit
 ELaktPwr;ELaktPwr;Heizstab;power_elwa2;elwaPwrkWh;kwh
 ELmaxPower;ELmaxPower;Heizstab;maxpwr;elwaPwr;kW
 ELprotokoll;ELprotokoll;Heizstab;ctrl;elwaProt;OK

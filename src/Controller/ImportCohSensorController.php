@@ -1,5 +1,5 @@
 <?php
-// src/Controller/ImportHeikePreislisteController.php
+// src/Controller/ImportCohSensorController.php
 namespace PbdKn\ContaoContaohabBundle\Controller;
 
 use Contao\System;  // Import the System class from Contao
@@ -29,6 +29,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Contao\CoreBundle\Picker\FilePickerProvider;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 
 class ImportCohSensorController extends AbstractBackendController
 {
@@ -61,6 +63,46 @@ class ImportCohSensorController extends AbstractBackendController
 
 
     }
+/*
+    #[Route(
+        path: '/Coh/exportCsv',
+        name: 'export_coh_sensor_csv',
+        methods: ['GET']
+    )]
+*/
+public function exportCsvAction(): Response
+{
+    $filename = 'sensors_export_' . date('Y-m-d_H-i-s') . '.csv';
+
+    $response = new StreamedResponse(function () {
+        $handle = fopen('php://output', 'w');
+
+        $rows = Database::getInstance()
+            ->prepare("SELECT * FROM tl_coh_sensors")
+            ->execute()
+            ->fetchAllAssoc();
+
+        if (!empty($rows)) {
+            // Entferne die Spalten 'id' und 'tstamp' aus dem Header
+            $headers = array_diff(array_keys($rows[0]), ['id', 'tstamp']);
+            fputcsv($handle, $headers, ';'); // ← Semikolon als Trenner
+
+            foreach ($rows as $row) {
+                // Entferne 'id' und 'tstamp' aus den Daten
+                $filteredRow = array_intersect_key($row, array_flip($headers));
+                fputcsv($handle, $filteredRow, ';'); // ← auch hier Semikolon
+            }
+        }
+
+        fclose($handle);
+    });
+
+    $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
+    $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+    return $response;
+}
+    
     #[Route(
       path: 'Coh/importAction',
       name: 'import_coh_sensor_action',                    // dieser Name korrespondiert mit dem namen in der routes.yaml
@@ -91,7 +133,7 @@ class ImportCohSensorController extends AbstractBackendController
               // Logik zum Verarbeiten der eingereichten Daten
               // z.B.: Dateipfad aus $objWidget->value auslesen
               $strFile=$objWidget->value;            
-echo "objfile $strFile <br>";
+              // echo "objfile $strFile <br>";
               if ($strFile) {
                 $objFile = new File($strFile, true);
                 if ($objFile->extension === 'csv') {
@@ -114,12 +156,12 @@ echo "objfile $strFile <br>";
 
                    // Durchlaufe alle Felder in der DCA
 
-echo "Prüfe auf mandatory Fields <br>";
+//echo "Prüfe auf mandatory Fields <br>";
                    foreach ($dca['fields'] as $fieldName => $fieldConfig) {
                      // Überprüfen, ob das Feld als mandatory definiert ist
                      if (isset($fieldConfig['eval']['mandatory']) && $fieldConfig['eval']['mandatory']) {
                        $arrImportantFields[] = $fieldName;
-echo "mandatory $fieldName <br>";                       
+//echo "mandatory $fieldName <br>";                       
                      }
                    }
                    $delEntries=1;    // einräge löschen
@@ -128,8 +170,6 @@ echo "mandatory $fieldName <br>";
                     Message::addConfirmation('Die CSV-Datei wurde erfolgreich importiert.');
                     //ob_end_flush();
                     return new Response($resArr);
-
-                    //throw new RedirectResponseException($this->get('router')->generate('import_heike_preisliste'));
                 }
             }
           }
@@ -181,9 +221,8 @@ echo "mandatory $fieldName <br>";
 
         $arrCSVFiles=$this->getCsvFilesFromContaoDirectory();
         foreach($arrCSVFiles as $k=>$v) {
-          //$attributes['options'][]=['value' => $v, 'label' => basename($v)];
           $attributes['options'][]=['value' => $v, 'label' => $k];
-          echo "value: $v Basename ".basename($v).'<br>';
+          //echo "value: $v Basename ".basename($v).'<br>';
         }
         $redirekturl = $this->router->generate('contao_backend', [
             'do' => 'Sensor', // Verwende hier den Namen, den du im BE_MOD-Array definiert hast
@@ -269,13 +308,11 @@ echo "mandatory $fieldName <br>";
     }
     
 
-
-    /**
-     * @Route("/besslich/showSupportedContexts", 
-     * name="ImportHeikePreislisteController::showSupportedContexts",
-     * methods={"GET"})
-     * @throws \Exception
-     */
+    #[Route(
+      path: 'Coh/showSupportedContexts',
+      name: 'showSupportedContexts',                    // dieser Name korrespondiert mit dem namen in der routes.yaml
+      methods: ['GET', 'POST']
+     )]
      
     public function showSupportedContexts(): Response
     {
@@ -292,6 +329,7 @@ echo "mandatory $fieldName <br>";
         return new Response('<pre>' . print_r($contexts, true) . '</pre>');
     }
 
+// dies ist der Versuch eines Filetrres im BE wird nicht verwendet
     public function generateFileTreeWidget()
     {
       /* aus DC_Formdata efg 5388 */
@@ -340,7 +378,7 @@ echo "mandatory $fieldName <br>";
         $encoding = mb_detect_encoding($content, "auto", true);
         $res['debug'][]="Die vermutete Kodierung ist: $encoding";        
         if ($encoding != 'UTF-8') {
-          $res['warning'][]="falsche codierung der Preisliste $encoding sollte UTF-8 sein. Versuch zu wandeln nach UTF-8<br>Wahrscheinlich werden Umlaute falsch dargestellt";
+          $res['warning'][]="falsche codierung der Sensorliste $encoding sollte UTF-8 sein. Versuch zu wandeln nach UTF-8<br>Wahrscheinlich werden Umlaute falsch dargestellt";
           // Inhalt nach UTF-8 konvertieren, falls nötig
           $content = mb_convert_encoding($content, "UTF-8");
           $content = preg_replace('/\xEF\xBB\xBF/', '', $content);
@@ -437,7 +475,7 @@ echo "mandatory $fieldName <br>";
     }
     
     // von efg DC_formdata übernommen wird beim aufbaut des filetrees mitgeliefert.
-    // ob da funktioniert ???
+    // ob das funktioniert ???
         private function getFilepickerJavascript($strReload)
     {
 
@@ -595,35 +633,8 @@ window.addEvent('domready', function(){
     }
 function getCsvFilesFromContaoDirectory()
 {
-/*
-    // Überprüfen, ob das Verzeichnis existiert
-    $projectDir = System::getContainer()->getParameter('kernel.project_dir');
-
-    if (!is_dir($this->projectDir . '/' . $directoryPath)) {
-        return [];
-    }
-
-    // Liste der .csv-Dateien initialisieren
     $csvFiles = [];
-
-    // Ordner durchgehen und Dateien abrufen
-    $folder = new Folder($directoryPath);
-    $files = scandir($projectDir . '/' . $folder->path);
-    foreach ($files as $file) {
-        if ($file !== '.' && $file !== '..') {
-            $filePath = $folder->path . '/' . $file;
-            $fileModel = FilesModel::findByPath($filePath);
-            if ($fileModel==null) echo "filePath $filePath nicht im Filemodel Abhilfe im Dateimanager dierekt beafbeiten uns speichern<br>";
-            if ($fileModel !== null && $fileModel->extension === 'csv') {
-                $csvFiles[] = $filePath;
-            }
-        }
-    }
-
-    return $csvFiles;
-*/
-    $csvFiles = [];
-    // suche alle folders die unter files sind
+    // suche alle downloads folders die unter files sind
 
     $folders = FilesModel::findBy(["type='folder' AND path LIKE ?"], ['%/downloads']);
     if ($folders !== null) {
@@ -639,14 +650,17 @@ function getCsvFilesFromContaoDirectory()
         } 
       }
     }
-    $bundlePath = $this->projectDir . '/public/bundles/pbdkncontaocontaohab/downloads/defaultVariables/';
+    //$bundlePath = $this->projectDir . '/public/bundles/pbdkncontaocontaohab/downloads/defaultVariables/';
+    $webPath = '/bundles/pbdkncontaocontaohab/downloads/defaultVariables/';
+    $bundlePath = $this->projectDir . '/public' . $webPath;
+
 //    echo "bundlePath $bundlePath xx<br>";
     $files = glob($bundlePath . '*.csv');
 
     if (!empty($files)) {
       foreach ($files as $file) {
         $csvFiles['bundle:'.basename($file)] = $file;
-        echo "file $file<br>";
+//        echo "file $file<br>";
       }
     } 
     return $csvFiles;

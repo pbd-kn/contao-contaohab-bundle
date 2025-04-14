@@ -6,50 +6,73 @@ namespace PbdKn\ContaoContaohabBundle\Sensor;
 
 use PbdKn\ContaoContaohabBundle\Model\SensorModel;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use Doctrine\DBAL\Connection;
 
 class SensorManager
 {
     private iterable $fetchers;
     private ?LoggerService $logger = null;
+    private Connection $connection;
 
 
-    public function __construct(iterable $fetchers, LoggerService $logger)
-    {
+   public function __construct(iterable $fetchers, LoggerService $logger, Connection $connection)
+   {
         $this->fetchers = $fetchers;
         $this->logger = $logger;
+        $this->connection = $connection;
 
     }
 
-    public function fetchAll(): array
-    {
-        $allData = [];
-$this->logger->debugMe("fetchAll gerufen");
-        $sensors = SensorModel::findAll();
+public function fetchAll(?array $sensorIds = null): array
+{
+    $allData = [];
 
-        if ($sensors === null) {
-            return $allData;
-        }
-        $timestampNow = time();
+    $qb = $this->connection->createQueryBuilder();
+    $qb->select('s.*', 'g.geraeteID', 'g.geraeteTitle', 'g.geraeteUrl')
+        ->from('tl_coh_sensors', 's')
+        ->leftJoin('s', 'tl_coh_geraete', 'g', 's.sensorSource = g.geraeteID');
+
+    if (!empty($sensorIds)) {
+        $this->logger->debugMe("SensorIDs übergeben: " . implode(', ', $sensorIds));
+        $qb->where($qb->expr()->in('s.sensorID', ':ids'))
+           ->setParameter('ids', $sensorIds, Connection::PARAM_STR_ARRAY);
+    }
+
+    $rows = $qb->executeQuery()->fetchAllAssociative();
+
+    if (empty($rows)) {
+        $this->logger->debugMe("Keine Sensoren gefunden.");
+        return $allData;
+    }
+
+    // Sensor-Modelle erzeugen
+    $sensors = [];
+    foreach ($rows as $row) {
+        $model = new SensorModel();
+        $model->setRow($row);
+        $sensors[] = $model;
+    }
+
+    // Sensoren pro Fetcher gruppieren
+    foreach ($this->fetchers as $fetcher) {
+        $supported = [];
 
         foreach ($sensors as $sensor) {
-//            $lastTime = (int) $sensor->lastUpdated; // Neues Feld nötig, siehe unten
-//            $interval = (int) $sensor->pollInterval;
-$this->logger->debugMe("verarbeite ID: ".$sensor->sensorID. " sensorTitle: ".$sensor->sensorTitle." sensorSource: ".$sensor->sensorSource);
-
-//            if (isset($interval)&&$interval > 0 && ($timestampNow - $lastTime < $interval)) {
-//$this->logger->debugMe("noch nicht dran");
-//              continue; // noch nicht dran
-//            }
-            foreach ($this->fetchers as $fetcher) {
-                if ($fetcher->supports($sensor)) {
-                    $data = $fetcher->fetch($sensor);
-                    if ($data !== null) {
-                        $allData[] = $data;
-                    }
-                }
+            if ($fetcher->supports($sensor)) {
+                $supported[] = $sensor;
             }
         }
 
-        return $allData;   // werden im contaohabDaemon in die tl_sensorvalue geschrieben
+        if (!empty($supported)) {
+            $this->logger->debugMe("Fetcher " . get_class($fetcher) . " verarbeitet " . count($supported) . " Sensoren");
+            $data = $fetcher->fetchArr($supported); // <- Jetzt wird ein Array übergeben
+            if (is_array($data)) {
+                $allData = array_merge($allData, $data);
+            }
+        }
     }
+
+    return $allData;
+}
+
 }

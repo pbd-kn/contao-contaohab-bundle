@@ -17,3 +17,14 @@ import_coh_sensor_action:
     path: Coh/importAction
     controller: PbdKn\ContaoContaohabBundle\Controller\ImportCohSensorController::importAction
     methods: [GET, POST]
+    
+export_coh_sensor_action:
+    path: Coh/exportCsv
+    controller: PbdKn\ContaoContaohabBundle\Controller\ImportCohSensorController::exportCsvAction
+    methods: [GET]
+
+
+show_coh_sensor_suported_context:
+    path: Coh/showSupportedContexts,
+    controller: PbdKn\ContaoContaohabBundle\Controller\ImportCohSensorController::showSupportedContexts
+    methods: ['GET', 'POST']
