@@ -70,33 +70,54 @@ class ImportCohSensorController extends AbstractBackendController
         methods: ['GET']
     )]
 */
-public function exportCsvAction(): Response
+public function exportCsvAction(): StreamedResponse
 {
     $filename = 'sensors_export_' . date('Y-m-d_H-i-s') . '.csv';
 
     $response = new StreamedResponse(function () {
         $handle = fopen('php://output', 'w');
 
+        $delimiter = ';';  // Trennzeichen auf Semikolon setzen
+        
+        $excludedFields = ['id', 'tstamp',  'persistent', 'lastUpdated', 'pollInterval', 'lastValue', 'lastError']; // ❌ Diese Spalten sollen NICHT exportiert werden
+        // Eine Beispielzeile holen, um Spaltennamen zu bekommen
+        $exampleRow = Database::getInstance()
+            ->prepare("SELECT * FROM tl_coh_sensors LIMIT 1")
+            ->execute()
+            ->fetchAssoc();
+
+        if (!$exampleRow) {
+            fclose($handle);
+            return;
+        }
+
+        
+        $includedFields = array_diff(array_keys($exampleRow), $excludedFields); // 🔎 Nur die Spalten, die nicht ausgeschlossen wurden
+
+        // Jetzt alle Daten holen
         $rows = Database::getInstance()
             ->prepare("SELECT * FROM tl_coh_sensors")
             ->execute()
             ->fetchAllAssoc();
 
         if (!empty($rows)) {
-            // Entferne die Spalten 'id' und 'tstamp' aus dem Header
-            $headers = array_diff(array_keys($rows[0]), ['id', 'tstamp']);
-            fputcsv($handle, $headers, ';'); // ← Semikolon als Trenner
+            // 🧾 Kopfzeile schreiben
+            fputcsv($handle, $includedFields, $delimiter);
 
             foreach ($rows as $row) {
-                // Entferne 'id' und 'tstamp' aus den Daten
-                $filteredRow = array_intersect_key($row, array_flip($headers));
-                fputcsv($handle, $filteredRow, ';'); // ← auch hier Semikolon
+                // 🎯 Nur die gewünschten Spalten in richtiger Reihenfolge
+                $data = [];
+                foreach ($includedFields as $field) {
+                    $data[] = $row[$field];
+                }
+                fputcsv($handle, $data, $delimiter);
             }
         }
 
         fclose($handle);
     });
 
+    // HTTP-Header setzen für Dateidownload
     $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
     $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
 

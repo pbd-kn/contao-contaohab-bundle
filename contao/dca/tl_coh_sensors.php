@@ -50,8 +50,8 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array(
-            'fields' => array('sensorTitle','sensorLokalId'),
-            'format' => '%s (ID: %s)',
+            'fields' => array('sensorID','sensorLokalId','sensorEinheit','transFormProcedur'),
+            'format' => "sensorID: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorLokalId: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorEinheit: %s&nbsp;&nbsp;&nbsp;&nbsp;    transFormProcedur: %s",
         ),
         'global_operations' => array(
             'csvimport' => [
@@ -102,7 +102,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
     ),
     'palettes'    => array(
         '__selector__' => array('addSubpalette'),
-        'default'      => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorSource,sensorLokalId,transFormProcedur'
+        'default'      => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur'
     ),
     'fields'      => array(
         'id'             => array(
@@ -141,7 +141,6 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'filter'    => true,
             'sorting'   => true,
             'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'],
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'], // Sprachreferenz für die Labels
             'options'   => [
                               'kwh' => 'kwh',
                               'W' => 'W',
@@ -153,7 +152,26 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
                               'Text' => 'Text',
                               'OK' => 'OK'
                            ],
-            'eval'      => array('includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'),
+            'eval'      => array('mandatory' => false,'includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'),
+            'sql'       => "varchar(255) NOT NULL default ''",
+            'default'   => 'Text',
+        ),
+        'sensorValueType'          => array(
+            'inputType' => 'select',
+            'exclude'   => true,
+            'search'    => true,
+            'filter'    => true,
+            'sorting'   => true,
+            'options'   => [
+                              'int' => 'int',
+                              'float' => 'float',
+                              'GradC' => 'GradC',
+                              'Datum' => 'Datum',
+                              'Zeit' => 'Zeit',
+                              'DatumZeit' => 'DatumZeit',
+                              'Text' => 'Text'
+                           ],
+            'eval'      => array( 'maxlength' => 255, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
             'default'   => 'Text',
         ),
@@ -165,7 +183,6 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'filter'    => true,
             'sorting'   => true,
             'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'],
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'], // Sprachreferenz für die Labels
             'options'   => [
                               0 => 'Heizstab',
                               1 => 'IQbox',
@@ -185,13 +202,13 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'filter'    => true,
             'sorting'   => true,
             'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'],
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'], // Sprachreferenz für die Labels
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'], 
             'options'   => [
                               'elwaPwrkWh','elwaPwr','elwaPwr','elwaTemp',
                               'IQkW','IQkWh','IQSOC','IQTemp',
                               'tskWh','tsWatt'
                            ],
-            'eval'      => array('mandatory' => false,'includeBlankOption' => false, 'chosen' => true, 'tl_class' => 'w50'),
+            'eval'      => array('mandatory' => false,'includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
             'default'   => 0,
         ),
@@ -211,7 +228,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'exclude'   => true,
             'filter'    => true,
             'sorting'   => true,
-            'options'   => [0, 1], // ? nur die Schlüssel
+            'options'   => [0, 1], // ? nur die Schluessel
             'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent_options'], // ? Anzeigenamen
             'eval' => [
                 'includeBlankOption' => false,
@@ -250,7 +267,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
 
 
 
-/* klasse für alle callback funktionen zu things */
+/* Klasse fuer alle callback funktionen zu Sensor */
 class tl_coh_sensors
 {
 
@@ -282,37 +299,6 @@ class tl_coh_sensors
         return $strRet;
     
     }
-    public function exportCsv(): StreamedResponse
-    {
-        $filename = 'sensors_export_' . date('Y-m-d_H-i-s') . '.csv';
-
-        $response = new StreamedResponse(function () {
-            $handle = fopen('php://output', 'w');
-
-            // Daten aus deiner Tabelle holen
-            $rows = \Database::getInstance()
-                ->prepare("SELECT * FROM tl_coh_sensors")
-                ->execute()
-                ->fetchAllAssoc();
-
-            if (!empty($rows)) {
-                // Spaltenüberschriften
-                fputcsv($handle, array_keys($rows[0]));
-
-                foreach ($rows as $row) {
-                    fputcsv($handle, $row);
-                }
-            }
-
-            fclose($handle);
-        });
-
-        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
-        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
-
-        return $response;
-    }    
-
     /**
      * Erzeugt den CSV-Import-Button mit einer Route.
      */
@@ -328,7 +314,7 @@ class tl_coh_sensors
         return $strRet;
     }
     /*
-     * return ein Array das zur Selection dews Items das mit diesem thing verknüüft ist
+     * return ein Array das zur Selection dews Items das mit diesem thing verknuepft ist
      * bei der selection
      */
      
@@ -365,7 +351,7 @@ class tl_coh_sensors
         if ($objRecord->numRows) {
             \System::log("Sensor Datensatz gespeichert: " . $objRecord->sensorTitle, __METHOD__, TL_GENERAL);
         }
-        // Achtung es kann auch über active record auf den aktuellen Record zugegriffen werden
+        // Achtung es kann auch ueber active record auf den aktuellen Record zugegriffen werden
         // Direkt auf die gespeicherten Werte zugreifen
         $sensorTitle = $dc->activeRecord->sensorTitle;        
     }

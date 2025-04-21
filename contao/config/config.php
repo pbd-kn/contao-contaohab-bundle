@@ -37,6 +37,11 @@ $GLOBALS['BE_MOD']['contao_hab']['Geräte'] = array (
 	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
     'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
 );
+$GLOBALS['BE_MOD']['contao_hab']['RemotCfg'] = array (
+	'tables'     => ['tl_coh_cfgcollect'],
+	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
+    'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
+);
 /**
  * Models
  */

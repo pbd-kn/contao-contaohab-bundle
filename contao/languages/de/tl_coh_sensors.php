@@ -43,10 +43,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['show'] = "Datensatz mit ID: %s ansehen";
  */
 $GLOBALS['TL_LANG']['tl_coh_sensors']['sensorID'] = ['SensorId ','Eindeutige ID über alle Sensoren'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['sensorTitle'] = ['Sensortitel','Zur Anzeige'];
-$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorEinheit'] = ['Einheit','Einheit des werte kann beim Aufruf des Wertze geändert werden. s. tranformProzedur '];
-$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorSource'] = ['SensorSozrce','Geraät das diesem Senxor zugeprdnet ist'];
-$GLOBALS['TL_LANG']['tl_coh_sensors']['transFormProcedur'] = ['transFormProcedur','Beim Lesen des Wertes vom Value kann anbgebenen werden wie der gelesene Wert geändert wird. Dies ist eine Prozedurname der in der Sensorklass verwendet werden kann.'];
-$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorLokalId'] = ['SensorlokalId','Beim zugriff auf den sensor kann dieser Wert verwendet werden. Ansonsten wird sensorID verwendet'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorEinheit'] = ['Einheit','Einheit des Wertes kann beim Aufruf des Werte geändert werden. s. tranformProzedur '];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorSource'] = ['SensorSource','Geraät das diesem Senxor zugeprdnet ist'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['transFormProcedur'] = ['transFormProcedur','Der gelesene Wert kann geändert wird. Dies ist ein Prozedurname der in der GeräteSensorklasse verwendet werden kann. ReturnWert der Prozedur value und Einheit. Einheit erstzt den Wert von sensorEinheit'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorLokalId'] = ['SensorlokalId','Beim Zugriff auf den sensor kann dieser Wert verwendet werden. Ansonsten wird sensorID verwendet'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['persistent'] = ['Persostent speichern',' '];  // wird (noch) nicht verwendet
 $GLOBALS['TL_LANG']['tl_coh_sensors']['lastUpdated'] = [' ',' ']; // wird  nicht angezeigt
 $GLOBALS['TL_LANG']['tl_coh_sensors']['pollInterval'] = [' ',' ']; // wird  nicht angezeigt

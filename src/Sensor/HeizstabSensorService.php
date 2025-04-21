@@ -148,7 +148,7 @@ class HeizstabSensorService implements SensorFetcherInterface
                     $res[$sensor->sensorID] = [
                         'sensorID'        => $sensor->sensorID,
                         'sensorValue'     => $value,
-                        'sensorEinheit'   => $sensor->sensorEinheit,
+                        'sensorEinheit'   => $einheit,
                         'sensorValueType' => $sensor->sensorValueType,
                         'sensorSource'    => $sensor->sensorSource,
                     ];
