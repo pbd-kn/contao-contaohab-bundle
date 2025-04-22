@@ -25,7 +25,7 @@ class AjaxController extends AbstractController
             return new JsonResponse(['error' => 'Unauthorized'], 403);
         }
 
-        // CSRF-Token prüfen
+        // CSRF-Token prÃ¼fen
         $token = $request->request->get('_token');
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken('contao_backend', $token))) {
             return new JsonResponse(['error' => 'Invalid CSRF token'], 403);
@@ -34,7 +34,7 @@ class AjaxController extends AbstractController
         // Anfrage verarbeiten
         $value = $request->request->get('value');
 
-        // Deine Logik hier …
+        // Deine Logik hier â€¦
         return new JsonResponse([
             'success' => true,
             'message' => 'Wert empfangen: ' . $value,
@@ -51,7 +51,7 @@ bei html5 sie chatgpt
 
 
 
-/* zugehieiriges js
+/* zugehÃ¶rges js
 fetch('/_ajax/contaohab/custom-action', {
     method: 'POST',
     headers: {
@@ -59,7 +59,7 @@ fetch('/_ajax/contaohab/custom-action', {
     },
     body: new URLSearchParams({
         value: 'Hallo vom Frontend',
-        _token: Contao.request_token // Nur im Backend verfügbar
+        _token: Contao.request_token // Nur im Backend verfÃ¼gbar
     })
 })
 .then(response => response.json())
