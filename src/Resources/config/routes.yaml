@@ -1,3 +1,7 @@
+pbdkn_coh.controller:
+    resource: ../../Controller
+    type: annotation
+    
 api_coh_items:
     path: /api/coh_items
     controller: PbdKn\ContaoContaohabBundle\Controller\CohApiController::fetchItems

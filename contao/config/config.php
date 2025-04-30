@@ -55,5 +55,8 @@ $GLOBALS['TL_MODELS']['tl_coh_geraete'] = GeraeteModel::class;
  * Fe Modules
  */
 
-$GLOBALS['FE_MOD']['COH']['coh_things'] = 'PbdKn\ContaoContaohabBundle\Module\ModuleCohThings';
+$GLOBALS['FE_MOD']['COH']['coh_things'] = 'PbdKn\ContaoContaohabBundle\Module\ModuleCohThings'; 
+
+
+
 

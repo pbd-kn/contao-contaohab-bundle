@@ -17,7 +17,6 @@ use PbdKn\ContaoContaohabBundle\Controller\ContentElement\ThingController;
 /**
  * Content element
  */
-$GLOBALS['TL_LANG']['CTE']['contao_hab'] = 'contaoHab';
 $GLOBALS['TL_LANG']['CTE'][ThingController::TYPE] = ['displayFeThing', 'ein Thing wird dargestellt'];
 
 /**

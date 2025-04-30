@@ -59,7 +59,7 @@ class HeizstabSensorService implements SensorFetcherInterface
             $value = $this->getHeizstabdata[$lokalAccess];
 
             if ($value === null) {
-                $message = "Heizstab: Keinen  für Sensor {$sensor->sensorID} access: getHeizstabdata[$lokalAccess]";
+                $message = "Heizstab: Keinen  fÃ¼r Sensor {$sensor->sensorID} access: getHeizstabdata[$lokalAccess]";
                 $this->logger->debugMe($message);    
 
                 $this->connection->update('tl_coh_sensors', [
@@ -138,12 +138,12 @@ class HeizstabSensorService implements SensorFetcherInterface
                         $einheit=$arr['einheit'];                    
                         $value=$arr['wert'];
                     } else {
-                        $this->logger->Error("Heizstab transFormProcedur ".$sensor->transFormProcedur." für SensorID  '.$sensor->sensorID.' existiert nicht");  
+                        $this->logger->Error("Heizstab transFormProcedur ".$sensor->transFormProcedur." fÃ¼r SensorID  '.$sensor->sensorID.' existiert nicht");  
                     }                 
                 }                   
                 $this->logger->debugMe("Heizstab Sensorservice SensorID  '.$sensor->sensorID.' lokalAccess $lokalAccess value $value Einheit $einheit");  
                 if ($value === null) {
-//                    $this->logger->debugMe('Heizstab Sensorservice keinen wert für sensorID: '.$sensor->sensorID);
+//                    $this->logger->debugMe('Heizstab Sensorservice keinen wert fÃ¼r sensorID: '.$sensor->sensorID);
                 } else {    
                     $res[$sensor->sensorID] = [
                         'sensorID'        => $sensor->sensorID,
@@ -190,7 +190,7 @@ class HeizstabSensorService implements SensorFetcherInterface
         return "OK";
         
     }
-    // liest die data.jsn vom Heizstab und gibt sie als Array zurück
+    // liest die data.jsn vom Heizstab und gibt sie als Array zurÃ¼ck
     // liefert False bei einem Fehler
     private function getdata($url) {
         $url=$url."/data.jsn";
@@ -203,7 +203,7 @@ class HeizstabSensorService implements SensorFetcherInterface
         $this->aktData=$data;
         return $data;
     }
-    // liest die setup.jsn vom Heizstab und gibt sie als Array zurück
+    // liest die setup.jsn vom Heizstab und gibt sie als Array zurÃ¼ck
     // liefert False bei einem Fehler
 
     private function getsetup($url) {
@@ -245,7 +245,7 @@ class HeizstabSensorService implements SensorFetcherInterface
     }
     private function elwaTemp($stat) {   // temperatur
         $resArr['wert'] = round($stat/10,2);
-        $resArr['einheit']='°C';
+        $resArr['einheit']='Â°C';
         return $resArr;
     }
 

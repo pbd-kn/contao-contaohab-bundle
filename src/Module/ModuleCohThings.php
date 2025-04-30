@@ -9,12 +9,10 @@ use Doctrine\DBAL\Connection;
 
 use PbdKn\ContaoContaohabBundle\Sensor\SensorManager;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use Contao\BackendTemplate;
 use Contao\System;
 
-/**
- * @FrontendModule("coh_things", category="coh", template="mod_coh_things_default")
- */
-#[FrontendModule(name: "coh_things", category: "coh", template: "mod_coh_things_default")]
+
 class ModuleCohThings extends Module
 {
     protected $strTemplate = 'mod_coh_things_default';
@@ -30,6 +28,24 @@ class ModuleCohThings extends Module
     }
     public function generate()
     {
+
+        $scope = System::getContainer()
+        ->get('request_stack')
+        ?->getCurrentRequest()
+        ?->attributes
+        ?->get('_scope');
+
+    if ('backend' === $scope) {
+        // Wir sind im Backend!
+            $template = new BackendTemplate('be_wildcard');
+            $template->wildcard = '### ModuleCohThings ###';
+            $template->title = $this->headline;
+            $template->id = $this->id;
+            $template->link = $this->name;
+            $template->href = 'contao?do=themes&table=tl_module&id=' . $this->id;
+
+            return $template->parse();
+        }      
       // Falls im Backend kein spezifisches Template gewählt wurde, Standard setzen
       // muss hier geschen. im Compile ist es zu spät warum ??
         if (!empty($this->coh_template)) {

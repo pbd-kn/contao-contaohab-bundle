@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class CohApiController extends AbstractController
 {
-    #[Route('/api/coh_items', name: 'api_coh_items', methods: ['GET'])]
+    #[Route('/api/coh_items', name: 'api_coh_items_hallo', methods: ['GET'])]
     public function fetchItems(): JsonResponse
     {
         $db = Database::getInstance();

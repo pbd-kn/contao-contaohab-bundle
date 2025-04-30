@@ -49,7 +49,7 @@ class IQBoxSensorService implements SensorFetcherInterface
             $key = $this->mapTransform($sensor->transFormProcedur, $data);
 
             if ($key === null || !isset($data[$key])) {
-                $message = "IQbox: Kein passender Wert für '{$sensor->transFormProcedur}' bei Sensor {$sensor->sensorID}";
+                $message = "IQbox: Kein passender Wert fÃ¼r '{$sensor->transFormProcedur}' bei Sensor {$sensor->sensorID}";
                 $this->logger->debugMe($message);
 
                 $this->connection->update('tl_coh_sensors', [
@@ -125,7 +125,7 @@ class IQBoxSensorService implements SensorFetcherInterface
                         $einheit=$arr['einheit'];                    
                         $value=$arr['wert'];
                     } else {
-                        $this->logger->Error("IQbox transFormProcedur ".$sensor->transFormProcedur." für SensorID  '.$sensor->sensorID.' existiert nicht");  
+                        $this->logger->Error("IQbox transFormProcedur ".$sensor->transFormProcedur." fÃ¼r SensorID  '.$sensor->sensorID.' existiert nicht");  
                     }                 
                 }                   
                 $this->logger->debugMe("IQbox Sensorservice SensorID  '.$sensor->sensorID.' lokalAccess $lokalAccess value $value Einheit $einheit");  
@@ -172,7 +172,7 @@ class IQBoxSensorService implements SensorFetcherInterface
         $state=$data['state'];
         return $state;
     }
-    private function IQSOC($stat) {   // Füllstand Betterie
+    private function IQSOC($stat) {   // FÃ¼llstand Betterie
         $statearr = explode(" ", $stat);
         $resArr['wert'] = $statearr[0];
         $resArr['einheit']='%';
@@ -212,7 +212,7 @@ class IQBoxSensorService implements SensorFetcherInterface
     private function IQTemp($stat) {   // Temp z.b Batterie
         $statearr = explode(" ", $stat);
         $resArr['wert'] = $statearr[0];
-        $resArr['einheit']='°C';
+        $resArr['einheit']='Â°C';
         return $resArr;
     }
     

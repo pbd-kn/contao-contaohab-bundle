@@ -19,9 +19,7 @@ use Contao\Input;
 
 $strDca='tl_coh_sensorvalue';
 
-/**
- * Table tl_coh_items
- */
+
 $GLOBALS['TL_DCA'][$strDca] = array(
     'config'      => array(
         'dataContainer'    => DC_Table::class,

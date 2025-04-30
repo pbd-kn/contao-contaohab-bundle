@@ -55,7 +55,7 @@ class TasmotaSensorService implements SensorFetcherInterface
             $value = $data['StatusSNS']['ENERGY']['Power'] ?? null;
 
             if ($value === null) {
-                $message = "Tasmota: Kein Power-Wert gefunden für Sensor {$sensor->sensorID}";
+                $message = "Tasmota: Kein Power-Wert gefunden fÃ¼r Sensor {$sensor->sensorID}";
                 $this->logger->debugMe($message);    
 
                 $this->connection->update('tl_coh_sensors', [
@@ -132,7 +132,7 @@ class TasmotaSensorService implements SensorFetcherInterface
                             $einheit=$arr['einheit'];                    
                             $value=$arr['wert'];
                         } else {
-                            $this->logger->Error("Tasmota transFormProcedur ".$sensor->transFormProcedur." für SensorID  '.$sensor->sensorID.' existiert nicht");  
+                            $this->logger->Error("Tasmota transFormProcedur ".$sensor->transFormProcedur." fÃ¼r SensorID  '.$sensor->sensorID.' existiert nicht");  
                         }                 
                     }                   
                     $this->logger->debugMe("Tasmota Sensorservice SensorID  '.$sensor->sensorID.' lokalAccess $lokalAccess value $value Einheit $einheit");  
@@ -151,7 +151,7 @@ class TasmotaSensorService implements SensorFetcherInterface
                     
                     $this->logger->debugMe("sensorID: $value");
                 } else {
-                    $this->logger->debugMe('Tasmota Sensorservice keinen wert für sensorID: '.$sensor->sensorID);    
+                    $this->logger->debugMe('Tasmota Sensorservice keinen wert fÃ¼r sensorID: '.$sensor->sensorID);    
                 }
             }
             return $res;

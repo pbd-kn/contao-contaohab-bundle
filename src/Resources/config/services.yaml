@@ -35,8 +35,8 @@ services:
         arguments:
           $moduleModel: '@contao.framework'
           $column: 'main'
-        tags:
-          - { name: contao.frontend_module, category: "coh" }
+#        tags:
+#          - { name: contao.frontend_module, category: "coh" }
           
 # logger service logAusschriebe, nur wenn debug modus
     PbdKn\ContaoContaohabBundle\Service\LoggerService:
