@@ -83,7 +83,7 @@ class TasmotaSensorService implements SensorFetcherInterface
             ];
         } catch (\Throwable $e) {
             $message = "Tasmota: Fehler bei {$sensor->sensorID}: " . $e->getMessage();
-            $this->logger->debugMe($message);    
+            $this->logger->Error($message);    
 
             $this->connection->update('tl_coh_sensors', [
                 'lastError' => $e->getMessage()
@@ -157,7 +157,7 @@ class TasmotaSensorService implements SensorFetcherInterface
             return $res;
         } catch (\Throwable $e) {
             $message = "Tasmota: Fehler bei : " . $e->getMessage();
-            $this->logger->debugMe($message);    
+            $this->logger->Error($message);    
 
             $this->connection->update('tl_coh_sensors', [
                 'lastError' => $e->getMessage()
@@ -203,7 +203,7 @@ class TasmotaSensorService implements SensorFetcherInterface
                 }
             }            
         } catch (\Throwable $e) {
-            $this->logger->debugMe("Tasmota: Fehler bei getDataFromDevice : " . $e->getMessage());
+            $this->logger->Error("Tasmota: Fehler bei getDataFromDevice : " . $e->getMessage());
             return null;
         }
         return $this->dataFromDevice=$data;

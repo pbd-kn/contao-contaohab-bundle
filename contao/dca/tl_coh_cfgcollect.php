@@ -24,7 +24,7 @@ use Contao\StringUtil;
 
 use Contao\Controller;
 use PbdKn\ContaoContaohabBundle\Controller\FrontendModule\DisplayThingsController;
-use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+//use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 //use PbdKn\ContaoContaohabBundle\Module\ModuleCohCallback; // Die Klasse importieren!
 
 

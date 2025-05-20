@@ -169,7 +169,7 @@ class IQBoxSensorService implements SensorFetcherInterface
         $data = $response->toArray();
         $this->logger->debugMe("Antwort: " . json_encode($data)); // ? sicher logbar
         
-        $state=$data['state'];
+        $state = is_array($data) && isset($data['state']) ? $data['state'] : '';
         return $state;
     }
     private function IQSOC($stat) {   // Füllstand Betterie
@@ -179,19 +179,30 @@ class IQBoxSensorService implements SensorFetcherInterface
         return $resArr;
     }  
 
-    private function IQkWh($stat) {   // Angabe kWh Wh, Ws
-        $statearr = explode(" ", $stat);
-        $v=strtolower($statearr[1]);
-        if ($v == 'ws') {$value=round($statearr[0]/3600000,2);}
-        elseif ($v == 'wh') {$value=round($statearr[0]/1000,2);}
-        else $value=$statearr[0];
+    private function IQkWh($stat) {
+        $statearr = explode(" ", $stat ?? '');
+        $rawValue = $statearr[0] ?? '';
+        $unit = strtolower($statearr[1] ?? '');
+
+        if (!is_numeric($rawValue)) {
+            $resArr['wert'] = 0;  // oder null, oder eine Fehlermeldung
+            $resArr['einheit'] = 'kWh';
+            return $resArr;
+        }
+
+        $value = match ($unit) {
+            'ws' => round($rawValue / 3600000, 2),
+            'wh' => round($rawValue / 1000, 2),
+            default => (float)$rawValue
+        };
+
         $resArr['wert'] = $value;
-        $resArr['einheit']='kWh';
+        $resArr['einheit'] = 'kWh';
         return $resArr;
-    }  
+    }
     private function IQkW($stat) {   // Angabe kW W
         $resArr=[];
-        $valarr = explode("|",$stat);   // sieht der state so aus "1714050990000|4.0 W" dann ist das vor | die Uhrzeit
+        $valarr = explode("|", $stat ?? '');
         if (count($valarr) > 1) {           // mit zeitangabe
             // liefere den zeitpunkt der messung in sec
             $unixzeit_ms=$valarr[0];
@@ -200,8 +211,8 @@ class IQBoxSensorService implements SensorFetcherInterface
             $strWert=$valarr[1];              
         } else $strWert=$stat;
 
-        $statearr = explode(" ", $strWert);
-        $v=strtolower($statearr[1]);
+        $statearr = explode(" ", $strWert ?? '');
+        $v = strtolower($statearr[1] ?? '');
         if ($v == 'w') {$value=round($statearr[0]/1000,2);}
         else $value=$statearr[0];
         $resArr['wert'] = $value;

@@ -1,7 +1,7 @@
 <div class="things-list">
     <h2>Ausgewählte Things und ihre Sensoren aus Default</h2>
 <?php
-echo "hallo<br>";
+
     if (!empty($this->sensorData) && is_array($this->sensorData)) {
       echo "<strong>sensorData</strong><br>";
       echo "<ul>";
@@ -18,7 +18,7 @@ echo "hallo<br>";
       }
       echo "</ul>";
     } else {
-      echo "sensorData kein feld<br>";
+      echo "sensorData mod_coh_things_default Template keine sensordaten aus fetch ..Service<br>";
     }
     if (!empty($this->things) && is_array($this->things)) {
       echo "<strong>Things</strong><br>";

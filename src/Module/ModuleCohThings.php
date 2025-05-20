@@ -23,7 +23,6 @@ class ModuleCohThings extends Module
     {
       parent::__construct($moduleModel, $column);
       $this->database = \Contao\System::getContainer()->get('doctrine.dbal.default_connection');
-      // 🔥 Logger holen
       $this->logger = System::getContainer()->get(LoggerService::class);
     }
     public function generate()

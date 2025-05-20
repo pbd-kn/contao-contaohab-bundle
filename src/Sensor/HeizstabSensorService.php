@@ -180,11 +180,11 @@ class HeizstabSensorService implements SensorFetcherInterface
             $v1=$this->getdata($url);
             $v2=$this->getsetup($url);
             if ($v1 === null || $v2 === null) {
-              $this->logger->Error("Heizstab: Fehler bei Lesen der daten vom Heizstab");  
+              $this->logger->Error("Heizstab: Fehler bei Lesen der daten vom Heizstab url $url");  
               return null;             
             }
         } catch (\Throwable $e) {
-            $this->logger->Error("Heizstab: Fehler bei getDataFromDevice : " . $e->getMessage());
+            $this->logger->Error("Heizstab: Fehler bei getDataFromDevice: url $url " . $e->getMessage());
             return null;
         }
         return "OK";
@@ -194,13 +194,18 @@ class HeizstabSensorService implements SensorFetcherInterface
     // liefert False bei einem Fehler
     private function getdata($url) {
         $url=$url."/data.jsn";
-        $response = $this->httpClient->request('GET', $url);
-        $data = $response->toArray();
-        if ($data === null) {
+        $data=[];
+        try {
+          $response = $this->httpClient->request('GET', $url);
+          $data = $response->toArray();
+          if ($data === null) {
             $this->logger->Error("Fehler keine daten bei : " . $url); // ? sicher logbar
             return false;
+          }
+          $this->aktData=$data;
+        } catch (\Throwable $e) {
+            return false;
         }
-        $this->aktData=$data;
         return $data;
     }
     // liest die setup.jsn vom Heizstab und gibt sie als Array zurück

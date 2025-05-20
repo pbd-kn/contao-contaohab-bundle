@@ -25,7 +25,7 @@ class LoggerService
     {
         $this->dateiname = $dateiname;
         $this->contaoLogger = $contaoLogger;
-        $this->debug=$container->getParameter('kernel.debug');;
+        $this->debug=$container->getParameter('kernel.debug');
         $this->projectDir = $container->getParameter('kernel.project_dir');;
     }
     
@@ -65,6 +65,22 @@ class LoggerService
     }
     public function isDebug(): bool
     {
+        return $this->debug;
+    }
+    /*
+     * schaltet den debug asuschrieb unabhängig von kernel.debug ein
+     */
+    public function setDebug()
+    {
+        $this->debug=true;
+        $this->debugMe("debug eingeschaltet");
+    }
+    /*
+     * setzt den debug asuschrieb auf den defaultwert bei contao debuger ein wird eingesaltet.
+     */
+    public function defaultDebug(): bool
+    {
+        $this->debug=$container->getParameter('kernel.debug');
         return $this->debug;
     }
     

@@ -65,9 +65,13 @@ public function fetchAll(?array $sensorIds = null): array
 
         if (!empty($supported)) {
             $this->logger->debugMe("Fetcher " . get_class($fetcher) . " verarbeitet " . count($supported) . " Sensoren");
-            $data = $fetcher->fetchArr($supported); // <- Jetzt wird ein Array übergeben
-            if (is_array($data)) {
+            try {
+              $data = $fetcher->fetchArr($supported); // <- Jetzt wird ein Array übergeben
+              if (is_array($data)) {
                 $allData = array_merge($allData, $data);
+              }
+            } catch (\Throwable $e) {
+              $this->logger->Error("Heizstab: Fehler bei fetchdata " . $e->getMessage());
             }
         }
     }
