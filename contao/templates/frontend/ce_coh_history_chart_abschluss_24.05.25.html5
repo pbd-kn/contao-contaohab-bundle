@@ -1,0 +1,84 @@
+<div class="coh-canvas-chart" style="max-width: 800px; margin: 0 auto;">
+  <form method="get" style="margin-bottom: 1rem;">
+    <?php foreach ($_GET as $key => $value): ?>
+      <?php if (str_starts_with($key, 'unit_chart_') || str_starts_with($key, 'value_chart_')): ?>
+        <?php if ($key !== $this->unitField && $key !== $this->valueField): ?>
+          <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
+        <?php endif; ?>
+      <?php endif; ?>
+    <?php endforeach; ?>
+
+    <select name="<?= $this->unitField ?>" onchange="this.form.submit()">
+      <option value="day" <?= $this->currentUnit === 'day' ? 'selected' : '' ?>>Tag</option>
+      <option value="week" <?= $this->currentUnit === 'week' ? 'selected' : '' ?>>Woche</option>
+      <option value="month" <?= $this->currentUnit === 'month' ? 'selected' : '' ?>>Monat</option>
+      <option value="year" <?= $this->currentUnit === 'year' ? 'selected' : '' ?>>Jahr</option>
+    </select>
+
+    <button type="submit" name="<?= $this->valueField ?>" value="<?= (new DateTime($this->currentValue))->modify('-1 ' . $this->currentUnit)->format('Y-m-d') ?>">←</button>
+    <span style="margin: 0 0.5rem;"><?= $this->rangeLabel ?></span>
+    <button type="submit" name="<?= $this->valueField ?>" value="<?= (new DateTime($this->currentValue))->modify('+1 ' . $this->currentUnit)->format('Y-m-d') ?>">→</button>
+  </form>
+
+  <?php if ($chartdataRaw = $this->chartdata): ?>
+    <canvas id="<?= $this->chartId ?>" width="800" height="400"></canvas>
+
+    <?php if (!isset($GLOBALS['CHART_JS_LOADED'])): ?>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/luxon@3"></script>
+      <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+      <?php $GLOBALS['CHART_JS_LOADED'] = true; ?>
+    <?php endif; ?>
+
+    <script>
+      (() => {
+        luxon.Settings.defaultLocale = 'de';
+        const chartData = <?= $chartdataRaw ?>;
+        const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
+
+        const timeUnit = chartData.xUnit === 'day' ? 'hour' :
+                         chartData.xUnit === 'week' ? 'day' :
+                         chartData.xUnit === 'month' ? 'day' :
+                         chartData.xUnit === 'year' ? 'month' : 'day';
+
+        const timeFormats = chartData.xUnit === 'week'
+          ? { tooltipFormat: 'cccc', displayFormats: { day: 'ccc' } } // Wochentage Mo, Di, Mi ...
+          : {};
+
+        const scales = {
+          x: {
+            type: 'time',
+            time: { unit: timeUnit, ...timeFormats },
+            title: { display: true, text: 'Zeit' }
+          }
+        };
+
+        for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
+          const color = info.color || '#000';
+          scales[axisId] = {
+            position: 'left',
+            title: { display: true, text: info.unit, color },
+            ticks: { color, callback: val => info.unit ? `${val} ${info.unit}` : val },
+            grid: { drawOnChartArea: true }
+          };
+        }
+
+        new Chart(ctx, {
+          type: 'line',
+          data: { labels: chartData.labels, datasets: chartData.datasets },
+          options: {
+            responsive: true,
+            interaction: { mode: 'nearest', intersect: false },
+            scales,
+            plugins: {
+              legend: { display: true, position: 'top' },
+              title: { display: true, text: "<?= addslashes($this->headline['value'] ?? 'Sensorwerte über Zeit') ?>" }
+            }
+          }
+        });
+      })();
+    </script>
+  <?php else: ?>
+    <p><em>⚠️ Keine Sensordaten für den gewählten Zeitraum gefunden.</em></p>
+  <?php endif; ?>
+</div>

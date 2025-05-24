@@ -1,0 +1,52 @@
+<div class="coh-canvas-chart">
+  <label for="rangeSelect">Zeitraum:</label>
+  <select id="rangeSelect">
+    <option value="1d">Seit gestern</option>
+    <option value="1w">1 Woche</option>
+    <option value="1m">1 Monat</option>
+  </select>
+
+  <canvas id="<?= $this->chartId ?>"></canvas>
+
+  <script src="/bundles/pbdcontaocohcanvas/js/chart.min.js"></script>
+  <script src="/bundles/pbdcontaocohcanvas/js/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const chartId = "<?= $this->chartId ?>";
+      const ajaxUrl = "<?= $this->ajaxUrl ?>";
+      let myChart;
+
+      function loadChart(range) {
+        fetch(ajaxUrl + '?range=' + range)
+          .then(r => r.json())
+          .then(data => {
+            const ctx = document.getElementById(chartId).getContext("2d");
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+              type: 'line',
+              data: data,
+              options: {
+                responsive: true,
+                scales: {
+                  x: { type: 'time', time: { unit: 'day' } }
+                },
+                plugins: {
+                  title: {
+                    display: true,
+                    text: 'Sensorwerte über Zeit'
+                  }
+                }
+              }
+            });
+          });
+      }
+
+      document.getElementById("rangeSelect").addEventListener("change", e => {
+        loadChart(e.target.value);
+      });
+
+      loadChart("1d");
+    });
+  </script>
+</div>
