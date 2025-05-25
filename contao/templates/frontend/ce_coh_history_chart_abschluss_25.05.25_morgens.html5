@@ -1,5 +1,5 @@
-<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper" style="max-width: 700px; padding: 1rem;">
-  <form method="get">
+<div class="coh-canvas-chart" style="max-width: 800px; margin: 0 auto;">
+  <form method="get" style="margin-bottom: 1rem;">
     <?php foreach ($_GET as $key => $value): ?>
       <?php if (str_starts_with($key, 'unit_chart_') || str_starts_with($key, 'value_chart_')): ?>
         <?php if ($key !== $this->unitField && $key !== $this->valueField): ?>
@@ -21,7 +21,7 @@
   </form>
 
   <?php if ($chartdataRaw = $this->chartdata): ?>
-    <canvas id="<?= $this->chartId ?>"></canvas>
+    <canvas id="<?= $this->chartId ?>" width="800" height="400"></canvas>
 
     <?php if (!isset($GLOBALS['CHART_JS_LOADED'])): ?>
       <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -36,16 +36,13 @@
         const chartData = <?= $chartdataRaw ?>;
         const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
 
-        const xUnit = chartData.xUnit;
-        const timeUnit = xUnit === 'day' ? 'hour' :
-                         xUnit === 'week' ? 'day' :
-                         xUnit === 'month' ? 'day' :
-                         xUnit === 'year' ? 'month' : 'day';
+        const timeUnit = chartData.xUnit === 'day' ? 'hour' :
+                         chartData.xUnit === 'week' ? 'day' :
+                         chartData.xUnit === 'month' ? 'day' :
+                         chartData.xUnit === 'year' ? 'month' : 'day';
 
-        const timeFormats = xUnit === 'week'
+        const timeFormats = chartData.xUnit === 'week'
           ? { tooltipFormat: 'cccc', displayFormats: { day: 'ccc' } }
-          : xUnit === 'month'
-          ? { tooltipFormat: 'dd.LLL', displayFormats: { day: 'd.' } }
           : {};
 
         const scales = {
@@ -56,6 +53,7 @@
           }
         };
 
+        // Linke/rechte Y-Achsen abwechselnd setzen
         let useLeft = true;
         for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
           const color = info.color || '#000';
@@ -73,8 +71,6 @@
           data: { labels: chartData.labels, datasets: chartData.datasets },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
-            aspectRatio: 2,
             interaction: { mode: 'nearest', intersect: false },
             scales,
             elements: {
@@ -90,11 +86,18 @@
                 }
             },
             plugins: {
-              legend: { display: true, position: 'top', align: 'start' },
-              title: { display: true, text: <?= json_encode($this->headline ?? 'Sensorwerte über Zeit') ?> },
+              legend: {
+                display: true,
+                position: 'top',
+                align: 'start'
+              },
+              title: {
+                display: true,
+                text: <?= json_encode($this->headline['value'] ?? 'Sensorwerte über Zeit') ?>
+              },
               tooltip: {
                 callbacks: {
-                  label: ctx => {
+                  label: function (ctx) {
                     const label = ctx.dataset.label || '';
                     const value = ctx.parsed.y;
                     const axisId = ctx.dataset.yAxisID;

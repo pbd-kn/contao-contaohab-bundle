@@ -1,18 +1,16 @@
 <?php
 
-// src/Controller/ContentElement/CohHistoryChart.php
-
 namespace PbdKn\ContaoContaohabBundle\Controller\ContentElement;
 
 use Contao\ContentModel;
 use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
-use Contao\System;  // <== Diese Zeile hinzufügen!
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
+use Contao\System;
 
 #[AsContentElement(CohHistoryChart::TYPE, category: 'COH-History', template: 'ce_coh_history_chart')]
 class CohHistoryChart extends AbstractContentElementController
@@ -23,9 +21,7 @@ class CohHistoryChart extends AbstractContentElementController
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
     {
-        // Backend-Vorschau
         $scope = System::getContainer()->get('request_stack')?->getCurrentRequest()?->attributes?->get('_scope');
-
         if ('backend' === $scope) {
             $wildcard = new BackendTemplate('be_wildcard');
             $wildcard->wildcard = '### COH HISTORY ###';
@@ -35,16 +31,14 @@ class CohHistoryChart extends AbstractContentElementController
             return new Response($wildcard->parse());
         }
 
-        // CE-spezifische GET-Parameter
+        // Range-Parameter pro CE
         $unitField = 'unit_chart_' . $model->id;
         $valueField = 'value_chart_' . $model->id;
 
         $unit = $request->query->get($unitField, 'day');
         $currentValue = $request->query->get($valueField, (new \DateTimeImmutable())->format('Y-m-d'));
-
         $date = new \DateTimeImmutable($currentValue);
 
-        // Start- und Endzeitpunkte berechnen
         $start = match ($unit) {
             'day' => $date->setTime(0, 0),
             'week' => $date->modify('monday this week')->setTime(0, 0),
@@ -60,7 +54,6 @@ class CohHistoryChart extends AbstractContentElementController
             default => $start->modify('+1 day'),
         };
 
-        // Sensoren-Daten sammeln
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $datasets = [];
         $axes = [];
