@@ -23,10 +23,34 @@
   <?php if ($chartdataRaw = $this->chartdata): ?>
     <canvas id="<?= $this->chartId ?>"></canvas>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        // Chart.js + Luxon sind jetzt sicher geladen werden mit dem js_coh_chart_script geladen. Achung beim deinstallierenmuss dieser Haken auch im Layout unter den js_ entfernt werden sonst Absturz !!!!
+    <?php 
+      if (!isset($GLOBALS['CHART_JS_LOADED'])) {
+//      echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>';
+//      echo '<script src="https://cdn.jsdelivr.net/npm/luxon@3"></script>';
+//      echo '<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>';
+/* hier der Weg mit dem die npm geladen wurden und ins publicverzeichnis kopiertt
+    1. npm install chart.js@^4.4 luxon@^3 chartjs-adapter-luxon@^1      legt die dateinen package.json und package-lock.json für die dateien an
+    2. npm install   legt die datein in das verzeichnis node_modules
+    3. die Datei package.json erweitern um die kopie zu mahen, der scripts teil muss dazu
+    4. npm run build   legt die Dateien in das public verzeichnis
+nochmals start  npm install chart.js@^4.4 luxon@^3 chartjs-adapter-luxon@^1
+dann entsteht automatisch:
+    package.json (mit Abhängigkeiten)
+    package-lock.json (mit exakten Versionen)
+    node_modules (mit den Dateien)
+Danach: Dein eigenes package.json anpassen
+*/
 
+//      echo '<script src="/bundles/pbdkncontaocontaohab/jsCharts/chart.umd.js"></script>';
+//      echo '<script src="/bundles/pbdkncontaocontaohab/jsCharts/luxon.min.js"></script>';
+//      echo '<script src="/bundles/pbdkncontaocontaohab/jsCharts/chartjs-adapter-luxon.umd.min.js"></script>';
+//C:\wampneu\www\co5\websites\W5neu\web\bundles\pbdkncontaocontaohab\jsCharts
+      $GLOBALS['CHART_JS_LOADED'] = true;
+      }
+    ?>
+
+    <script>
+      (() => {
         luxon.Settings.defaultLocale = 'de';
         const chartData = <?= $chartdataRaw ?>;
         const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
@@ -74,14 +98,14 @@
             scales,
             elements: {
                 line: {
-                    borderWidth: 1
+                    borderWidth: 1 // 👈 Alle Linien 2 Pixel dick
                 },
                 point: {
-                    radius: 1,
-                    pointStyle: 'circle',
-                    backgroundColor: '#fff',
-                    borderColor: '#333',
-                    borderWidth: 2
+                    radius: 1,                    // Punktgröße
+                    pointStyle: 'circle',         // 'circle', 'rect', 'triangle', ...
+                    backgroundColor: '#fff',      // Innenfarbe
+                    borderColor: '#333',          // Randfarbe
+                    borderWidth: 2                // Randdicke
                 }
             },
             plugins: {
@@ -101,7 +125,7 @@
             }
           }
         });
-      });
+      })();
     </script>
   <?php else: ?>
     <p><em>Keine Sensordaten für Chart <?= '<strong>'.$this->headline.'</strong>' ?> im gewählten Zeitraum gefunden.</em></p>
