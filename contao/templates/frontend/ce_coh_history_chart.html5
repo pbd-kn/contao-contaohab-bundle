@@ -85,7 +85,20 @@
                 }
             },
             plugins: {
-              legend: { display: true, position: 'top', align: 'start' },
+              legend: { display: true, position: 'top', align: 'start',
+                labels: {
+                    boxWidth: 20,      // Breite des farbigen Kästchens
+                    boxHeight: 10,     // Höhe des farbigen Kästchens
+                    usePointStyle: true, // Verwendet Punkt-Form statt Box (z. B. Kreis)
+                    pointStyle: 'circle', // 'circle', 'rect', 'rectRounded', 'triangle', 'line', 'cross'
+                    padding: 10,       // Abstand zwischen Items
+                    font: {
+                        size: 14,
+                        weight: 'bold',
+                    }
+                },
+              },
+
               title: { display: true, text: <?= json_encode($this->headline ?? 'Sensorwerte über Zeit') ?> },
               tooltip: {
                 callbacks: {
