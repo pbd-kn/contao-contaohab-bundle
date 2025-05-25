@@ -118,3 +118,17 @@ class CohHistoryChart extends AbstractContentElementController
         return $colors[$idNumeric % count($colors)];
     }
 }
+/*
+Nur zum merken. so bekomme ich die neuesten werte der sensoren
+$rows = $this->connection->fetchAllAssociative(
+    'SELECT s1.*
+     FROM tl_coh_sensorvalue s1
+     INNER JOIN (
+         SELECT sensorID, MAX(tstamp) AS max_tstamp
+         FROM tl_coh_sensorvalue
+         GROUP BY sensorID
+     ) s2 ON s1.sensorID = s2.sensorID AND s1.tstamp = s2.max_tstamp
+     ORDER BY s1.sensorID ASC'
+);
+
+*/
