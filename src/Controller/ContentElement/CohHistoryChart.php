@@ -12,7 +12,7 @@ use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
 
-#[AsContentElement(CohHistoryChart::TYPE, category: 'COH-History', template: 'ce_coh_history_chart')]
+#[AsContentElement(CohHistoryChart::TYPE, category: 'COH')]
 class CohHistoryChart extends AbstractContentElementController
 {
     public const TYPE = 'coh_history_chart';
@@ -23,14 +23,21 @@ class CohHistoryChart extends AbstractContentElementController
     {
         $scope = System::getContainer()->get('request_stack')?->getCurrentRequest()?->attributes?->get('_scope');
         if ('backend' === $scope) {
-            $wildcard = new BackendTemplate('be_wildcard');
-            $wildcard->wildcard = '### COH HISTORY ###';
+            $templateName = $model->coh_history_template ?: 'coh_history_template';
+
+            $wildcard = new BackendTemplate('be_wildcard_coh');
             $wildcard->title = StringUtil::deserialize($model->headline)['value'] ?? 'Kein Titel';
             $wildcard->id = $model->id;
             $wildcard->href = 'contao?do=themes&table=tl_content&id=' . $model->id;
+            $wildcardtxt = "### COH HISTORY ###<br>Template: $templateName<br>";
+            $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
+            foreach ($selectedSensors as $s) $wildcardtxt .= "$s ";
+            $wildcard->wildcard = '<div class="text-truncate" title="'.$wildcardtxt.'">'.$wildcardtxt.'</div>';
             return new Response($wildcard->parse());
         }
-
+ // ?? Template dynamisch wählen ??
+        $templateName = $model->coh_history_template ?: 'coh_history_template';
+        $template = $this->createTemplate($model, $templateName);
         // Range-Parameter pro CE
         $unitField = 'unit_chart_' . $model->id;
         $valueField = 'value_chart_' . $model->id;
@@ -61,17 +68,23 @@ class CohHistoryChart extends AbstractContentElementController
 
         if (!empty($selectedSensors)) {
             $rows = $this->connection->fetchAllAssociative(
-                'SELECT tstamp, sensorID, sensorValue, sensorEinheit FROM tl_coh_sensorvalue
-                 WHERE tstamp >= ? AND tstamp < ? AND sensorID IN (?) ORDER BY tstamp ASC',
-                [$start->getTimestamp(), $end->getTimestamp(), $selectedSensors],
-                [\PDO::PARAM_INT, \PDO::PARAM_INT, Connection::PARAM_STR_ARRAY]
+                'SELECT sv.tstamp, sv.sensorID, sv.sensorValue, sv.sensorEinheit, s.sensorTitle
+                     FROM tl_coh_sensorvalue sv
+                     LEFT JOIN tl_coh_sensors s ON sv.sensorID = s.sensorID
+                         WHERE sv.tstamp >= ? AND sv.tstamp < ? AND sv.sensorID IN (?)
+                         ORDER BY sv.tstamp ASC',
+                    [$start->getTimestamp(), $end->getTimestamp(), $selectedSensors],
+                    [\PDO::PARAM_INT, \PDO::PARAM_INT, Connection::PARAM_STR_ARRAY]
             );
+
 
             foreach ($rows as $row) {
                 $ts = date('c', $row['tstamp']);
-                $id = $row['sensorID'];
+//                $id = $row['sensorID'];
+                $id = $row['sensorTitle'];
                 $val = (float) $row['sensorValue'];
                 $unitLabel = $row['sensorEinheit'] ?: '';
+                $sensorTitle = $row['sensorTitle'];
 
                 $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', $unitLabel);
                 $color = $this->getSensorColor($id);
@@ -113,22 +126,8 @@ class CohHistoryChart extends AbstractContentElementController
 
     private function getSensorColor(int|string $id): string
     {
-        $colors = ['#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];
+        $colors = ['purple','#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];
         $idNumeric = is_numeric($id) ? (int) $id : crc32($id);
         return $colors[$idNumeric % count($colors)];
     }
 }
-/*
-Nur zum merken. so bekomme ich die neuesten werte der sensoren
-$rows = $this->connection->fetchAllAssociative(
-    'SELECT s1.*
-     FROM tl_coh_sensorvalue s1
-     INNER JOIN (
-         SELECT sensorID, MAX(tstamp) AS max_tstamp
-         FROM tl_coh_sensorvalue
-         GROUP BY sensorID
-     ) s2 ON s1.sensorID = s2.sensorID AND s1.tstamp = s2.max_tstamp
-     ORDER BY s1.sensorID ASC'
-);
-
-*/

@@ -1,11 +1,64 @@
-<?php 
-//$GLOBALS['TL_CSS'][] = 'bundles/contaowowjs/animate.min.css'; 
-//Contao\Template::generateScriptTag('bundles/contaowowjs/wow.min.js')
+<?php
+// Framework7 CSS einbinden
 ?>
+<link rel="stylesheet" href="<?= Contao\System::getContainer()->get('assets.packages')->getUrl('bundles/pbdkncontaocontaohab/jsf7/framework7.min.css') ?>">
+<link rel="stylesheet" href="<?= Contao\System::getContainer()->get('assets.packages')->getUrl('bundles/pbdkncontaocontaohab/jsf7/framework7-icons.css') ?>">
+
+<?php
+// JavaScript-Dateien: Framework7, F7Item, Charts (Reihenfolge wichtig: erst Framework7, dann F7Item, dann Charts!)
+?>
+<?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsf7/framework7.min.js') ?>
+<?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsf7/F7Item.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/chart.umd.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/luxon.min.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/chartjs-adapter-luxon.umd.min.js') ?>
 
 <script>
-  console.log('pbd js_coh_chart_scripts gerufen');
+  // Framework7 global initialisieren, sobald die Datei geladen wird (ohne DOMContentLoaded!)
+  window.F7app = new Framework7({
+    el: '.framework7-container',  // Framework7-Root-Element (z. B. in CE-Templates verwenden)
+    theme: 'auto',
+    name: 'ContaoF7App',
+    version: '1.0.0',
+    id: 'com.pbdkn.contaof7',
+
+    data() {
+      return {
+        username: 'pbd-kn',  // Beispiel: Globale Daten für Framework7
+      };
+    },
+
+    methods: {
+      greet() {
+        const name = this.username || 'Nutzer';
+        this.dialog.alert(`Hallo ${name}!`);
+      },
+    },
+
+    on: {
+      init() {
+        console.log('Framework7 App gestartet!');
+      },
+    },
+
+    dialog: {
+      title: 'ContaoF7App',
+      buttonOk: 'OK',
+      buttonCancel: 'Abbrechen',
+    },
+
+    toast: {
+      closeTimeout: 3000
+    },
+
+    clicks: {
+      externalLinks: '.external'
+    }
+  });
+
+  console.log('Framework7 global initialisiert', window.F7app);
+</script>
+
+<script>
+  console.log('js_contaof7 Template geladen und Framework7 bereit.');
 </script>

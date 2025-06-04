@@ -1,0 +1,111 @@
+<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper framework7-container" style="max-width: 700px; padding: 1rem;">
+<?php
+// !!!! Achtung damit das template funktioniert js_coh_chart_script geladen wewrden. Beim deinstallieren muss dieser Haken auch im Layout unter den js_ entfernt werden sonst Absturz !!!!
+?>
+  <script>
+    const chartId = '<?= $this->chartId ?>';
+// reihenfolge der sensoren die dargestellt werden    
+    const sensorConfig = [
+      { sensorId: 'IQbattery_94_battery_stateOfCharge', icon: 'gauge', iconSize: 50, color: 'green'},
+      { sensorId: 'IQinverter_94_inverter_pvPower', icon: 'cloud_sun', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'IQinverter_94_inverter_selfConsumptionPower', icon: 'house', iconSize: 24, iconColor: 'green' },      
+      { sensorId: 'ELaktTemp2', icon: 'thermometer', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ELaktPwr', icon: 'power', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'IQBatt_Temp', icon: 'thermometer', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'IQbattery_94_battery_mode', icon: 'thermometer', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'IQbattery_94_battery_power', icon: 'battery_100', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ZWZZaehlerPower', icon: 'arrow_branch', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'ZWZZaehlerTotalPVEnergie', icon: 'arrow_branch', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'TS_Power', icon: 'power', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_in_108', icon: 'power', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_out_208', icon: 'power', iconSize: 24, iconColor: 'green' }
+    ];
+
+(function waitForF7App(maxAttempts = 50, attempt = 1) {
+  if (typeof window.F7app !== 'undefined' && F7app.gauge) {
+//    console.log('F7App gefunden, initialisiere Sensor-Widgets...');
+
+    const data = <?= json_encode($this->data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+    const wrapper = document.getElementById('wrapper_<?= $this->chartId ?>');
+
+    if (!wrapper) {
+      console.error('Wrapper nicht gefunden!');
+      return;
+    }
+
+    sensorConfig.forEach((config, index) => {                    // sensorConfig array durchlaufen
+      let sensor = data[config.sensorId];
+      if (!sensor) {
+        if (config.sensorId === 'ZWZZaehlerPower') {
+          let ZWZZaehlerPowerIntime = data['ZWZZaehlerPowerIn']['time']
+          let ZWZZaehlerPowerInVal = Number(data['ZWZZaehlerPowerIn']['sensorValue']) || 0;
+          let ZWZZaehlerPowerOutVal = Number(data['ZWZZaehlerPowerOut']['sensorValue']) || 0;
+          let sensorValue = ZWZZaehlerPowerOutVal - ZWZZaehlerPowerInVal;
+          let iconColor = 'red'
+          if (sensorValue >= 0) iconColor= 'green';
+          const targetSensor = sensorConfig.find(cfg => cfg.sensorId === 'ZWZZaehlerPower');
+          if (targetSensor) {
+            targetSensor.iconColor = iconColor;  // Ändern!
+          }
+          sensor = { time: ZWZZaehlerPowerIntime, label: "ZWZZaehlerPower", sensorTitle: "SWR akt. Import/Export", borderColor: "#34D399", sensorId: "ZWZZaehlerPower", sensorValue: sensorValue, sensorEinheit: "kW", sensorValueType: "", sensorSource: "IQbox", fill: false }
+
+        } else if (config.sensorId === 'ZWZZaehlerTotalPVEnergie') {
+//          console.log("pbd sensorId ZWZZaehlerTotalPVEnergie");
+          let ZWZZaehlerTotalPVEnergieTime = data['ZWZZaehlerPowerIn']['time']
+          let ZWZZaehlerTotalPVEnergieImport = Number(data['ZWZZaehlerTotalPVEnergieImport']['sensorValue']) || 0;
+          let ZWZZaehlerTotalPVEnergieExport = Number(data['ZWZZaehlerTotalPVEnergieExport']['sensorValue']) || 0;
+          let sensorValue = ZWZZaehlerTotalPVEnergieExport - ZWZZaehlerTotalPVEnergieImport;
+          let iconColor = 'red'
+          if (sensorValue >= 0) iconColor= 'green';
+          const targetSensor = sensorConfig.find(cfg => cfg.sensorId === 'ZWZZaehlerTotalPVEnergie');
+          if (targetSensor) {
+            targetSensor.iconColor = iconColor;  // Ändern!
+        //  targetSensor.description = 'Aktueller Zählerstand';  // Neues Feld hinzufügen
+          }
+          let importExportString = ZWZZaehlerTotalPVEnergieImport + "/" + ZWZZaehlerTotalPVEnergieExport;
+//          console.log("pbd sensorId ZWZZaehlerTotalPVEnergie--------------"+importExportString);
+          sensor = { time: ZWZZaehlerTotalPVEnergieTime, label: "ZWZZaehlerTotalPVEnergie", sensorTitle: "Ges. Import/Export", borderColor: "#34D399", sensorId: "ZWZZaehlerTotalPVEnergie", sensorValue: importExportString, sensorEinheit: "kWh", sensorValueType: "", sensorSource: "IQbox", fill: false }
+//          console.warn("pbd sensor ZWZZaehlerTotalPVEnergie neue gesetzt");
+//          console.warn("pbd sensorneu ",sensor);
+
+        } else {
+          console.warn(`Sensor mit ID ${config.sensorId} nicht gefunden`);
+          return;
+        }
+      }
+//      console.log("pbd sensor ",sensor);
+      if (config.sensorId === 'IQbattery_94_battery_power') {  // batteriefarbe korrieren
+          let iconColor = 'green'
+          if (parseFloat(sensor.sensorValue) >= 0) iconColor = 'red';
+          const targetSensor = sensorConfig.find(cfg => cfg.sensorId === config.sensorId);
+          if (targetSensor) {
+            targetSensor.iconColor = iconColor;  // Ändern!
+        //  targetSensor.description = 'Aktueller Zählerstand';  // Neues Feld hinzufügen
+          }
+      }
+
+      const item = new F7Item();
+      const configCopy = {
+        ...config,
+        gaugeId: `gauge-<?= $this->chartId ?>-${index}`,
+        sensorValue: sensor.sensorValue ?? 0,
+        sensorEinheit: sensor.sensorEinheit ?? '',
+        title: sensor.sensorTitle ?? ''
+      };
+      delete configCopy.sensorId;
+
+      item.setAll(configCopy);
+      item.set('title', sensor.sensorTitle ?? '');
+      item.render(wrapper);
+    });
+
+  } else if (attempt < maxAttempts) {
+//    console.log(`F7App noch nicht verfügbar, erneut versuchen... (${attempt}/${maxAttempts})`);
+    setTimeout(() => waitForF7App(maxAttempts, attempt + 1), 50); // 100 ms Delay
+  } else {
+    console.error(`F7App konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch. Kein Zugriff`);
+  }
+})();
+
+  </script>
+</div>

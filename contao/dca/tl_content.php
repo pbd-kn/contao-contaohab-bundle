@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use PbdKn\ContaoContaohabBundle\Controller\ContentElement\CohHistoryChart;
+use PbdKn\ContaoContaohabBundle\Controller\ContentElement\CohAktuellChart;
 use Contao\Controller;
 use Contao\System;
 
@@ -20,11 +21,16 @@ use Contao\System;
 /**
  * Content elements CohHistoryChart
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_legend},type,headline,coh_canvas_things,selectedSensors;{template_legend:hide},coh_canvas_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_legend},type,headline,coh_canvas_things,selectedSensors;{template_legend:hide},coh_history_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+
+/**
+ * Content elements CohAktuellChart
+ */
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,coh_canvas_things,selectedSensors;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 
 // Felder für Template-Auswahl definieren
-$GLOBALS['TL_DCA']['tl_content']['fields']['coh_canvas_template'] = [
-    'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_canvas_template'],
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_history_template'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_history_template'],
     'exclude' => true,
     'inputType' => 'select',
     'options_callback' => static function () {
@@ -48,6 +54,32 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['coh_canvas_template'] = [
     'eval' => ['tl_class' => 'w50', 'includeBlankOption' => false],
     'sql' => "varchar(64) NOT NULL default ''",
 ];
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_aktuell_template'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_aktuell_template'],
+    'exclude' => true,
+    'inputType' => 'select',
+    'options_callback' => static function () {
+        // Alle Templates holen, die mit 'ce_coh_' beginnen
+        $options = \Contao\Controller::getTemplateGroup('ce_coh_aktuell_');
+
+        // Das gewünschte Standard-Template
+        $defaultTemplate = 'ce_coh_aktuell_chart';
+
+        // Prüfen, ob das Standard-Template bereits in der Liste ist
+        if (!isset($options[$defaultTemplate])) {
+            // Nicht vorhanden → an den Anfang setzen und '(Standard)' ergänzen
+            $options = [$defaultTemplate => $defaultTemplate . ' (Standard)'] + $options;
+        } else {
+            // Vorhanden → nur '(Standard)' ergänzen
+            $options[$defaultTemplate] .= ' (Standard)';
+        }
+
+        return $options;
+    },
+    'eval' => ['tl_class' => 'w50', 'includeBlankOption' => false],
+    'sql' => "varchar(64) NOT NULL default ''",
+];
+
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['coh_canvas_things'] = [
     'label' => ['Anzuzeigende Things', 'Wählen Sie die Things, die in der Visualisierung angezeigt werden sollen.'],

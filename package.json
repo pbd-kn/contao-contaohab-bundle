@@ -1,15 +1,23 @@
 {
   "name": "contao-contaohab-bundle",
   "version": "1.0.0",
-  "description": "Contao Bundle mit Chart.js, Luxon und Adapter",
+  "description": "Contao Bundle mit Chart.js, Luxon, Framework7 und Icons",
   "dependencies": {
     "chart.js": "^4.4.0",
     "chartjs-adapter-luxon": "^1.3.1",
-    "luxon": "^3.6.1"
+    "framework7": "^8.3.4",
+    "framework7-icons": "^5.0.5",
+    "luxon": "^3.6.1",
+    "js-yaml": "^4.1.0"
   },
   "scripts": {
-    "mkdir": "if not exist public\\jsCharts mkdir public\\jsCharts",
-    "copy": "copy node_modules\\chart.js\\dist\\chart.umd.js public\\jsCharts\\ && copy node_modules\\luxon\\build\\global\\luxon.min.js public\\jsCharts\\ && copy node_modules\\chartjs-adapter-luxon\\dist\\chartjs-adapter-luxon.umd.min.js public\\jsCharts\\",
-    "build": "npm run mkdir && npm run copy"
+    "mkdir": "cmd /c \"if not exist public\\jsCharts mkdir public\\jsCharts\" && cmd /c \"if not exist public\\jsF7 mkdir public\\jsF7\" && cmd /c \"if not exist public\\jsF7\\fonts mkdir public\\jsF7\\fonts\"",
+    "copyf7:js": "copy /B node_modules\\framework7\\framework7-bundle.min.js public\\jsF7\\framework7.min.js",
+    "copyf7:css": "copy /B node_modules\\framework7\\framework7-bundle.min.css public\\jsF7\\framework7.min.css",
+    "copyf7:fonts": "xcopy /S /I node_modules\\framework7-icons\\fonts\\* public\\jsF7\\fonts\\",
+    "copyf7:iconscss": "copy /B node_modules\\framework7-icons\\css\\framework7-icons.css public\\jsF7\\framework7-icons.css && powershell -Command \"(Get-Content public/jsF7/framework7-icons.css) -replace '../fonts', './fonts' | Set-Content public/jsF7/framework7-icons.css\"",
+    "copyyaml": "copy /B node_modules\\js-yaml\\dist\\js-yaml.min.js public\\jsF7\\js-yaml.min.js",
+    "copychart": "copy /B node_modules\\chart.js\\dist\\chart.umd.js public\\jsCharts\\chart.umd.js && copy /B node_modules\\luxon\\build\\global\\luxon.min.js public\\jsCharts\\luxon.min.js && copy /B node_modules\\chartjs-adapter-luxon\\dist\\chartjs-adapter-luxon.umd.min.js public\\jsCharts\\chartjs-adapter-luxon.umd.min.js",
+    "build": "npm run mkdir && npm run copychart && npm run copyf7:js && npm run copyf7:css && npm run copyf7:fonts && npm run copyf7:iconscss && npm run copyyaml"
   }
 }
