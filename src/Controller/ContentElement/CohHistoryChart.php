@@ -11,14 +11,17 @@ use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
+use PbdKn\ContaoContaohabBundle\Service\SyncService;
 
 #[AsContentElement(CohHistoryChart::TYPE, category: 'COH')]
 class CohHistoryChart extends AbstractContentElementController
 {
     public const TYPE = 'coh_history_chart';
 
-    public function __construct(private readonly Connection $connection) {}
-
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly SyncService $syncService
+    ) {}
     protected function getResponse($template, ContentModel $model, Request $request): Response
     {
         $scope = System::getContainer()->get('request_stack')?->getCurrentRequest()?->attributes?->get('_scope');
@@ -38,6 +41,7 @@ class CohHistoryChart extends AbstractContentElementController
  // ?? Template dynamisch wählen ??
         $templateName = $model->coh_history_template ?: 'coh_history_template';
         $template = $this->createTemplate($model, $templateName);
+        $this->syncService->sync();
         // Range-Parameter pro CE
         $unitField = 'unit_chart_' . $model->id;
         $valueField = 'value_chart_' . $model->id;

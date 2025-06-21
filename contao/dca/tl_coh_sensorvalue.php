@@ -97,7 +97,7 @@ $GLOBALS['TL_DCA'][$strDca] = array(
             'filter'    => true,
             'sorting'   => true,
             'eval'      => array( 'maxlength' => 255, 'tl_class' => 'w50'),
-            'sql'       => "varchar(255) NOT NULL default ''"
+            'sql'       => "varchar(8192) NOT NULL default ''"
         ),
         'sensorEinheit'  => array(
             'inputType' => 'select',

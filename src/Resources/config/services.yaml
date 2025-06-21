@@ -11,7 +11,7 @@ services:
 
 
     PbdKn\ContaoContaohabBundle\:
-        resource: '../../*'
+        resource: '../../../src/'
         exclude: '../../{DependencyInjection,Resources,public,Tests}'
 
     PbdKn\ContaoContaohabBundle\Controller\:
@@ -46,16 +46,11 @@ services:
           $contaoLogger: '@monolog.logger.contao'
           $container: '@service_container' # Injiziere den service_container
 
-# Callbackroutinen für globale funktionen in der dca
-# in dieser klasse wird der button erstellt
-#    PbdKn\ContaoContaohabBundle\DataContainer\CohThings:             
-#        tags:
-#            - { name: contao.callback }
 
-
-#    PbdKn\ContaoContaohabBundle\Command\ContaohabDaemonCommand:
-#        tags: ['console.command']
-        
+    PbdKn\ContaoContaohabBundle\Command\SyncSensorDataCommand:
+        arguments:
+           $syncService: '@PbdKn\ContaoContaohabBundle\Service\SyncService'
+        tags: ['console.command']
 
     PbdKn\ContaoContaohabBundle\Sensor\SensorManager:
         public: true

@@ -11,13 +11,18 @@ use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
+use PbdKn\ContaoContaohabBundle\Service\SyncService;
+
 
 #[AsContentElement(CohAktuellChart::TYPE, category: 'COH')]
 class CohAktuellChart extends AbstractContentElementController
 {
     public const TYPE = 'ce_coh_aktuell_chart';
 
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly SyncService $syncService
+    ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
     {
@@ -40,7 +45,10 @@ class CohAktuellChart extends AbstractContentElementController
     $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
     $template = $this->createTemplate($model, $templateName);
 
-    
+    $error = $this->syncService->sync();
+    if ($error !== null) {
+        $template->syncError = $error;
+    }
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
 
@@ -67,29 +75,54 @@ class CohAktuellChart extends AbstractContentElementController
                 $ts = date('d.m.Y H:i', $row['tstamp']);
 
                 $id = $row['sensorID'];
-                $val = (float) $row['sensorValue'];
+                // Prüfen, ob numerisch (z. B. "12.3", "42", aber auch "3e5")
+                if (is_numeric($row['sensorValue'])) {
+                    $val = (float) $row['sensorValue'];
+                } else {
+                    $val = $row['sensorValue']; // als Text übernehmen
+                }
+//                $val = (float) $row['sensorValue'];
                 $unitLabel = $row['sensorEinheit'] ?: '';
                 $sensorTitle = $row['sensorTitle'] ?: 'Kein Titel';
 
 
-                $color = $this->getSensorColor($id);
+//                $color = $this->getSensorColor($id);
                 $data[$id]['time'] = $ts;
                 $data[$id]['label'] = $id;
                 $data[$id]['sensorTitle'] = $sensorTitle;
-                $data[$id]['borderColor'] = $color;
+//                $data[$id]['borderColor'] = $color;
                 $data[$id]['sensorId'] = $id;
-                isset($color) && $data[$id]['borderColor'] ??= $color;
+//                isset($color) && $data[$id]['borderColor'] ??= $color;
                 $data[$id]['sensorValue'] = $val;
                 $data[$id]['sensorEinheit'] = $unitLabel;
                 $data[$id]['sensorValueType'] = !empty($row['sensorValueType']) ? $row['sensorValueType'] : '';
                 $data[$id]['sensorSource'] = !empty($row['sensorSource']) ? $row['sensorSource'] : '';
-
-                $data[$id]['fill'] = false;
             }
         }
 
         $template->chartId = 'chart_' . $model->id;
         $template->data = $data;
+        $result = $this->connection
+          ->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'sensorvalue_pull'")
+          ->fetchOne();
+        if ($result) {
+            // Unix-Timestamp aus datetime erzeugen
+            $timestamp = strtotime($result);
+            $template->lastPullSync = date('d.m.Y H:i', $timestamp);
+        } else {
+            $template->lastPullSync = 'Keine Sync-Info vorhanden';
+        }          
+        $result = $this->connection
+          ->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'config_push'")
+          ->fetchOne();
+        if ($result) {
+            // Unix-Timestamp aus datetime erzeugen
+            $timestamp = strtotime($result);
+            $template->lastPushSync = date('d.m.Y H:i', $timestamp);
+        } else {
+            $template->lastPushSync = 'Keine Sync-Info vorhanden';
+        }          
+        
 
         return $template->getResponse();
     }

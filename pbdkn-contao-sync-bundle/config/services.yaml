@@ -1,0 +1,3 @@
+services:
+  PbdKn\ContaoSyncBundle\Command\SyncSensorDataCommand:
+    tags: ['console.command']

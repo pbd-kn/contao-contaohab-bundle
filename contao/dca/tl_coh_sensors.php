@@ -175,25 +175,18 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'sql'       => "varchar(255) NOT NULL default ''",
             'default'   => 'Text',
         ),
-        'sensorSource'  => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorSource'],
-            'inputType' => 'select',
-            'exclude'   => true,
-            'search'    => true,
-            'filter'    => true,
-            'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors'],
-            'options'   => [
-                              0 => 'Heizstab',
-                              1 => 'IQbox',
-                              2 => 'Tasmota',
-                              3 => 'PHP-Script',
-                              4 => 'sonst'
-                           ],
-            'eval'      => array('mandatory' => true,'includeBlankOption' => false, 'chosen' => true, 'tl_class' => 'w50'),
-            'sql'       => "varchar(255) NOT NULL default ''",
-            'default'   => 0,
-        ),
+        'sensorSource' => [
+            'label'         => &$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorSource'],
+            'inputType'     => 'select',
+            'exclude'       => true,
+            'search'        => true,
+            'filter'        => true,
+            'sorting'       => true,
+            'eval'          => ['mandatory' => true, 'includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'],
+            'sql'           => "varchar(255) NOT NULL default ''",
+            'options_callback' => ['tl_coh_sensors', 'getGeraeteIDs'],
+        ],
+
         'transFormProcedur'  => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['transFormProcedur'],
             'inputType' => 'select',
@@ -335,6 +328,19 @@ class tl_coh_sensors
 
         return $options;
     }
+    public function getGeraeteIDs(): array
+    {
+        $options = [];
+        $result = Database::getInstance()
+            ->prepare("SELECT geraeteID FROM tl_coh_geraete ORDER BY geraeteID")
+            ->execute();
+
+        while ($result->next()) {
+            $options[$result->geraeteID] = $result->geraeteID;
+        }
+
+        return $options;
+    }    
     
     /* wird bei speichern des datensatzes gerufen */
     public function onSubmitRecord(DataContainer $dc)

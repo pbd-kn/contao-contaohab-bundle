@@ -42,6 +42,10 @@ $GLOBALS['BE_MOD']['contao_hab']['RemotCfg'] = array (
 	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
     'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
 );
+$GLOBALS['BE_MOD']['contao_hab']['sync_log'] = [
+    'tables' => ['tl_coh_sync_log'],
+];
+
 /**
  * Models
  */
@@ -49,6 +53,7 @@ $GLOBALS['TL_MODELS']['tl_coh_things'] = ThingsModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_sensorvalue'] = SensorValueModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_sensors'] = SensorModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_geraete'] = GeraeteModel::class;
+$GLOBALS['TL_MODELS']['tl_coh_sync_log'] = RaspSyncModel::class;
 
 
 /**

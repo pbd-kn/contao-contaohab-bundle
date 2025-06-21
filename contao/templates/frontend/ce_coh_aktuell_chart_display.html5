@@ -1,10 +1,21 @@
 <div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper framework7-container" style="max-width: 700px; padding: 1rem;">
 <?php
-// !!!! Achtung damit das template funktioniert js_coh_chart_script geladen wewrden. Beim deinstallieren muss dieser Haken auch im Layout unter den js_ entfernt werden sonst Absturz !!!!
+// !!!! Achtung: Dieses Template benötigt das JS-Template js_coh_chart_script im Layout! Beim Deinstallieren den Eintrag aus dem Layout entfernen!
+?>
+<?php 
+if ($this->syncError) {
+  echo '<div class="error">'.$this->syncError.'</div>';
+} else {
+//var_dump($this->data);
+  echo '<p>akt. Werte vom:'.$this->lastPullSync.'</p>';
+  echo '<p>push Tabellen am:'.$this->lastPullSync.'</p>';
+}
 ?>
   <script>
     const chartId = '<?= $this->chartId ?>';
-// reihenfolge der sensoren die dargestellt werden    
+    const data = <?= json_encode($this->data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
+
     const sensorConfig = [
       { sensorId: 'IQbattery_94_battery_stateOfCharge', icon: 'gauge', iconSize: 50, color: 'green'},
       { sensorId: 'IQinverter_94_inverter_pvPower', icon: 'cloud_sun', iconSize: 24, iconColor: 'green' },
@@ -16,96 +27,100 @@
       { sensorId: 'IQbattery_94_battery_power', icon: 'battery_100', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ZWZZaehlerPower', icon: 'arrow_branch', iconSize: 24, iconColor: 'red' },
       { sensorId: 'ZWZZaehlerTotalPVEnergie', icon: 'arrow_branch', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'Kommentar', icon: 'chevron_right', iconSize: 12, sensorTitle: ' Tasmota SWR Zähler', sensorValue: 'Daten'},
       { sensorId: 'TS_Power', icon: 'power', iconSize: 24, iconColor: 'green' },
       { sensorId: 'TS_E_in_108', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_out_208', icon: 'power', iconSize: 24, iconColor: 'green' }
+      { sensorId: 'TS_E_out_208', icon: 'power', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'Kommentar', icon: 'chevron_right', iconSize: 12, sensorTitle: ' Heizstab', sensorValue: ''},
+      { sensorId: 'ELaktboostactive', icon: 'circle_fill', iconSize: 24, iconColor: 'green' }, 
+      { sensorId: 'RaspberryCheckHeizstabServer', icon: 'power', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerProtokoll', icon: 'power', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerIntervall', icon: 'arrow_2_squarepath', iconSize: 24, iconColor: 'green' }
+            
     ];
 
-(function waitForF7App(maxAttempts = 50, attempt = 1) {
-  if (typeof window.F7app !== 'undefined' && F7app.gauge) {
-//    console.log('F7App gefunden, initialisiere Sensor-Widgets...');
-
-    const data = <?= json_encode($this->data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-    const wrapper = document.getElementById('wrapper_<?= $this->chartId ?>');
-
-    if (!wrapper) {
-      console.error('Wrapper nicht gefunden!');
-      return;
-    }
-
-    sensorConfig.forEach((config, index) => {                    // sensorConfig array durchlaufen
-      let sensor = data[config.sensorId];
-      if (!sensor) {
-        if (config.sensorId === 'ZWZZaehlerPower') {
-          let ZWZZaehlerPowerIntime = data['ZWZZaehlerPowerIn']['time']
-          let ZWZZaehlerPowerInVal = Number(data['ZWZZaehlerPowerIn']['sensorValue']) || 0;
-          let ZWZZaehlerPowerOutVal = Number(data['ZWZZaehlerPowerOut']['sensorValue']) || 0;
-          let sensorValue = ZWZZaehlerPowerOutVal - ZWZZaehlerPowerInVal;
-          let iconColor = 'red'
-          if (sensorValue >= 0) iconColor= 'green';
-          const targetSensor = sensorConfig.find(cfg => cfg.sensorId === 'ZWZZaehlerPower');
-          if (targetSensor) {
-            targetSensor.iconColor = iconColor;  // Ändern!
-          }
-          sensor = { time: ZWZZaehlerPowerIntime, label: "ZWZZaehlerPower", sensorTitle: "SWR akt. Import/Export", borderColor: "#34D399", sensorId: "ZWZZaehlerPower", sensorValue: sensorValue, sensorEinheit: "kW", sensorValueType: "", sensorSource: "IQbox", fill: false }
-
-        } else if (config.sensorId === 'ZWZZaehlerTotalPVEnergie') {
-//          console.log("pbd sensorId ZWZZaehlerTotalPVEnergie");
-          let ZWZZaehlerTotalPVEnergieTime = data['ZWZZaehlerPowerIn']['time']
-          let ZWZZaehlerTotalPVEnergieImport = Number(data['ZWZZaehlerTotalPVEnergieImport']['sensorValue']) || 0;
-          let ZWZZaehlerTotalPVEnergieExport = Number(data['ZWZZaehlerTotalPVEnergieExport']['sensorValue']) || 0;
-          let sensorValue = ZWZZaehlerTotalPVEnergieExport - ZWZZaehlerTotalPVEnergieImport;
-          let iconColor = 'red'
-          if (sensorValue >= 0) iconColor= 'green';
-          const targetSensor = sensorConfig.find(cfg => cfg.sensorId === 'ZWZZaehlerTotalPVEnergie');
-          if (targetSensor) {
-            targetSensor.iconColor = iconColor;  // Ändern!
-        //  targetSensor.description = 'Aktueller Zählerstand';  // Neues Feld hinzufügen
-          }
-          let importExportString = ZWZZaehlerTotalPVEnergieImport + "/" + ZWZZaehlerTotalPVEnergieExport;
-//          console.log("pbd sensorId ZWZZaehlerTotalPVEnergie--------------"+importExportString);
-          sensor = { time: ZWZZaehlerTotalPVEnergieTime, label: "ZWZZaehlerTotalPVEnergie", sensorTitle: "Ges. Import/Export", borderColor: "#34D399", sensorId: "ZWZZaehlerTotalPVEnergie", sensorValue: importExportString, sensorEinheit: "kWh", sensorValueType: "", sensorSource: "IQbox", fill: false }
-//          console.warn("pbd sensor ZWZZaehlerTotalPVEnergie neue gesetzt");
-//          console.warn("pbd sensorneu ",sensor);
-
-        } else {
-          console.warn(`Sensor mit ID ${config.sensorId} nicht gefunden`);
-          return;
+    sensorConfig.forEach((config, index) => {
+       let sensor = data[config.sensorId];
+console.log("sensor "+config.sensorID);
+        if (sensor === undefined) {
+            // Spezialfall: ZWZZaehlerPower berechnen
+            if (config.sensorId === 'Kommentar') {
+                sensor = { time: '', label: config.sensorId,
+                sensorTitle: config.sensorTitle ?? '', sensorId: config.sensorId, sensorValue: '-------' + (config.sensorValue ?? '') + '------', sensorEinheit: '', sensorValueType: '',sensorSource: 'System'
+                };
+            }        
+            else if (config.sensorId === 'ZWZZaehlerPower') {
+                const inData = data['ZWZZaehlerPowerIn'];
+                const outData = data['ZWZZaehlerPowerOut'];
+                if (inData && outData) {
+                    const sensorValue = Number(outData.sensorValue) - Number(inData.sensorValue);
+                    const iconColor = sensorValue >= 0 ? 'green' : 'red';
+                    config.iconColor = iconColor;
+                    sensor = { time: inData.time, label: config.sensorId, sensorTitle: 'SWR akt. Import/Export', sensorId: config.sensorId, sensorValue, sensorEinheit: inData.sensorEinheit,
+                        sensorValueType: '',sensorSource: 'IQbox'
+                    };
+                }
+            }
+            // Spezialfall: ZWZZaehlerTotalPVEnergie berechnen
+            else if (config.sensorId === 'ZWZZaehlerTotalPVEnergie') {
+                const imp = data['ZWZZaehlerTotalPVEnergieImport'];
+                const exp = data['ZWZZaehlerTotalPVEnergieExport'];
+                if (imp && exp) {
+                    const sensorValue = Number(exp.sensorValue) - Number(imp.sensorValue);
+                    const iconColor = sensorValue >= 0 ? 'green' : 'red';
+                    config.iconColor = iconColor;
+                    sensor = { time: imp.time, label: config.sensorId, sensorTitle: 'Ges. Import/Export', sensorId: config.sensorId, sensorValue: `${imp.sensorValue}/${exp.sensorValue}`, sensorEinheit: imp.sensorEinheit,
+                        sensorValueType: '', sensorSource: 'IQbox'
+                    };
+                }
+            }
+            // Wenn immer noch nicht gefunden → Warnung + return
+            if (sensor === undefined) {
+                console.warn(`Sensor mit ID ${config.sensorId} nicht gefunden`);
+                return;
+            }
         }
-      }
-//      console.log("pbd sensor ",sensor);
-      if (config.sensorId === 'IQbattery_94_battery_power') {  // batteriefarbe korrieren
-          let iconColor = 'green'
-          if (parseFloat(sensor.sensorValue) >= 0) iconColor = 'red';
-          const targetSensor = sensorConfig.find(cfg => cfg.sensorId === config.sensorId);
-          if (targetSensor) {
-            targetSensor.iconColor = iconColor;  // Ändern!
-        //  targetSensor.description = 'Aktueller Zählerstand';  // Neues Feld hinzufügen
-          }
-      }
-
-      const item = new F7Item();
-      const configCopy = {
-        ...config,
-        gaugeId: `gauge-<?= $this->chartId ?>-${index}`,
-        sensorValue: sensor.sensorValue ?? 0,
-        sensorEinheit: sensor.sensorEinheit ?? '',
-        title: sensor.sensorTitle ?? ''
-      };
-      delete configCopy.sensorId;
-
-      item.setAll(configCopy);
-      item.set('title', sensor.sensorTitle ?? '');
-      item.render(wrapper);
+        // Farbanpassung für Heizstab booster
+        if (config.sensorId === 'ELaktboostactive') {
+            const iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
+            config.iconColor = iconColor;
+        }
+        // Farbanpassung für Heizstab-Server
+        if (config.sensorId === 'RaspberryCheckHeizstabServer') {
+            const iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
+            config.iconColor = iconColor;
+        }
+        if (config.sensorId === 'RaspberryHeizstabServerProtokoll') {
+            sensor.sensorValue = '<br>'+sensor.sensorValue;
+        }
+        // Beschreibung für Anzeige mit F7Item
+        config.description = `${sensor.sensorTitle || ''}: ${sensor.sensorValue ?? ''} ${sensor.sensorEinheit ?? ''}`.trim();
+        config.sensorValue = sensor.sensorValue ?? 0;
+        console.log(`[${index}] ${config.sensorId}: ${sensor.sensorTitle}:`);
+        console.log('sensor full:', sensor);
     });
 
-  } else if (attempt < maxAttempts) {
-//    console.log(`F7App noch nicht verfügbar, erneut versuchen... (${attempt}/${maxAttempts})`);
-    setTimeout(() => waitForF7App(maxAttempts, attempt + 1), 50); // 100 ms Delay
-  } else {
-    console.error(`F7App konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch. Kein Zugriff`);
-  }
-})();
+    (function waitForF7App(maxAttempts = 50, attempt = 1) {
+      if (typeof window.F7app !== 'undefined' && F7app.gauge) {
+        const wrapper = document.getElementById('wrapper_<?= $this->chartId ?>');
+        if (!wrapper) {
+          console.error('Wrapper nicht gefunden!');
+          return;
+        }
+        sensorConfig.forEach((config, index) => {
+          const item = new F7Item();
+          item.setAll({
+            ...config,
+            gaugeId: `gauge-<?= $this->chartId ?>-${index}`
+          });
+          item.render(wrapper);
+        });
 
+      } else if (attempt < maxAttempts) {
+        setTimeout(() => waitForF7App(maxAttempts, attempt + 1), 50);
+      } else {
+        console.error(`F7App konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch.`);
+      }
+    })();
   </script>
 </div>

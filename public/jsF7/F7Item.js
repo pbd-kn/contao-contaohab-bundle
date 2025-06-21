@@ -23,34 +23,42 @@ class F7Item {
       return;
     }
 
-    const { icon, sensorValue = 0, iconSize = 80, color = '#2196f3', title = '' } = this.params;
-    const titleText = `${this.params.title || ''}: ${this.params.sensorValue ?? ''} ${this.params.sensorEinheit ?? ''}`.trim();
+    const {
+      icon,
+      sensorValue = 0,
+      iconSize = 80,
+      color = '#2196f3',
+      title = '',
+      description = '',
+      gaugeId
+    } = this.params;
+
+    const titleText = description || title;
+
     if (icon === 'gauge') {
+      const gaugeSelector = `#${gaugeId || 'gaugeIdDummy'}`;
 
-        const gaugeId = this.params.gaugeId || 'gaugeIdDummy';
-        const gaugeSelector = `#${gaugeId}`; 
-        // Nutzt die Template-String-Syntax von JavaScript.
-    
-        // DOM-Elemente erzeugen
-        const container = document.createElement('div');
-        container.classList.add('f7-gauge-container');
+      // DOM-Elemente erzeugen
+      const container = document.createElement('div');
+      container.classList.add('f7-gauge-container');
 
-        const gaugeEl = document.createElement('div');
-            gaugeEl.classList.add('gauge');
-            gaugeEl.id = gaugeId;
-            gaugeEl.style.width = `${this.params.iconSize}px`;
-            gaugeEl.style.height = `${this.params.iconSize}px`;
-            gaugeEl.style.float = 'left';
-        container.appendChild(gaugeEl);
+      const gaugeEl = document.createElement('div');
+      gaugeEl.classList.add('gauge');
+      gaugeEl.id = gaugeId || 'gaugeIdDummy';
+      gaugeEl.style.width = `${iconSize}px`;
+      gaugeEl.style.height = `${iconSize}px`;
+      gaugeEl.style.float = 'left';
+      container.appendChild(gaugeEl);
 
-        const titleEl = document.createElement('div');
-            titleEl.classList.add('block-title');
-            titleEl.textContent = titleText;
-            titleEl.style.float = 'left';
-            container.appendChild(titleEl);
-        const clearDiv = document.createElement('div');
-            clearDiv.style.clear = 'both';
-        container.appendChild(clearDiv);
+      const titleEl = document.createElement('div');
+      titleEl.classList.add('block-title');
+      titleEl.textContent = titleText;
+      titleEl.style.float = 'left';
+      container.appendChild(titleEl);
+
+      const clearDiv = document.createElement('div');
+      clearDiv.style.clear = 'both';
+      container.appendChild(clearDiv);
 
       wrapper.appendChild(container);
 
@@ -60,11 +68,12 @@ class F7Item {
           window.F7app.gauge.create({
             el: gaugeSelector,
             type: 'circle',
-            value: sensorValue / 100,
+            value: Number(sensorValue) / 100,
             valueText: `${sensorValue}`,
             valueTextColor: color,
+            valueFontSize: Number(iconSize) || 40,
             borderColor: color,
-            borderWidth: 10,
+            borderWidth: 10
           });
         } else {
           console.error('F7app.gauge nicht verfügbar!');
@@ -77,13 +86,13 @@ class F7Item {
       if (this.params.iconSize) styleParts.push(`font-size: ${this.params.iconSize}px`);
       if (this.params.iconColor) styleParts.push(`color: ${this.params.iconColor}`);
       const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
-
-const html = `
-  <div class="f7-item" style="color: ${this.params.color || 'inherit'};">
-    <i class="${iconClass}"${iconStyle}>${icon}</i>
-    ${titleText}
-  </div>
-`;
+      const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
+      const html = `
+        <div class="f7-item" style="color: ${this.params.color || 'inherit'};">
+          <i class="${iconClass}"${iconStyle}>${icon}</i>
+          ${preparedTitle}
+        </div>
+      `;
       wrapper.innerHTML += html;
     }
   }
