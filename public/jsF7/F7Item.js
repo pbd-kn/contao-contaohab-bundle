@@ -95,6 +95,46 @@ class F7Item {
       `;
       wrapper.innerHTML += html;
     }
+    /*
+    Überprüfung ob fontgsawsom gedladen ist
+    function isFontAwesomeLoaded() {
+  const testEl = document.createElement('i');
+  testEl.className = 'fa-solid fa-gauge';
+  testEl.style.display = 'none';
+  document.body.appendChild(testEl);
+
+  const style = window.getComputedStyle(testEl);
+  const fontFamily = style.getPropertyValue('font-family');
+
+  document.body.removeChild(testEl);
+
+  return fontFamily && fontFamily.toLowerCase().includes('fontawesome');
+}
+
+if (isFontAwesomeLoaded()) {
+  console.log('✅ Font Awesome ist geladen.');
+} else {
+  console.warn('❌ Font Awesome ist NICHT geladen!');
+}
+
+    } else {
+  // Font Awesome Icon generieren
+  const iconClass = this.params.iconClass ? `fa-solid ${this.params.iconClass}` : 'fa-solid fa-gauge';
+  const styleParts = [];
+  if (this.params.iconSize) styleParts.push(`font-size: ${this.params.iconSize}px`);
+  if (this.params.iconColor) styleParts.push(`color: ${this.params.iconColor}`);
+  const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
+  const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
+  const html = `
+    <div class="f7-item" style="color: ${this.params.color || 'inherit'};">
+      <i class="${iconClass}"${iconStyle}></i>
+      ${preparedTitle}
+    </div>
+  `;
+  wrapper.innerHTML += html;
+}
+
+    */
   }
 }
 

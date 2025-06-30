@@ -35,7 +35,8 @@ if ($this->syncError) {
       { sensorId: 'ELaktboostactive', icon: 'circle_fill', iconSize: 24, iconColor: 'green' }, 
       { sensorId: 'RaspberryCheckHeizstabServer', icon: 'power', iconSize: 24, iconColor: 'green' },
       { sensorId: 'RaspberryHeizstabServerProtokoll', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberryHeizstabServerIntervall', icon: 'arrow_2_squarepath', iconSize: 24, iconColor: 'green' }
+      { sensorId: 'RaspberryHeizstabServerIntervall', icon: 'arrow_2_squarepath', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberrycheckSensorCollectorServer', icon: 'asterisk_circle_fill', iconSize: 24, iconColor: 'green' }
             
     ];
 
@@ -93,6 +94,10 @@ console.log("sensor "+config.sensorID);
         if (config.sensorId === 'RaspberryHeizstabServerProtokoll') {
             sensor.sensorValue = '<br>'+sensor.sensorValue;
         }
+        if (config.sensorId === 'RaspberrycheckSensorCollectorServer') {
+            sensor.sensorValue = 'Error: '+sensor.sensorValue;
+        }
+        
         // Beschreibung für Anzeige mit F7Item
         config.description = `${sensor.sensorTitle || ''}: ${sensor.sensorValue ?? ''} ${sensor.sensorEinheit ?? ''}`.trim();
         config.sensorValue = sensor.sensorValue ?? 0;
