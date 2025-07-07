@@ -17,32 +17,35 @@ if ($this->syncError) {
 
 
     const sensorConfig = [
-      { sensorId: 'IQbattery_94_battery_stateOfCharge', icon: 'gauge', iconSize: 50, color: 'green'},
-      { sensorId: 'IQinverter_94_inverter_pvPower', icon: 'cloud_sun', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'IQinverter_94_inverter_selfConsumptionPower', icon: 'house', iconSize: 24, iconColor: 'green' },      
-      { sensorId: 'ELaktTemp2', icon: 'thermometer', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'ELaktPwr', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'IQBatt_Temp', icon: 'thermometer', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'IQbattery_94_battery_mode', icon: 'thermometer', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'IQbattery_94_battery_power', icon: 'battery_100', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'ZWZZaehlerPower', icon: 'arrow_branch', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'ZWZZaehlerTotalPVEnergie', icon: 'arrow_branch', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'Kommentar', icon: 'chevron_right', iconSize: 12, sensorTitle: ' Tasmota SWR Zähler', sensorValue: 'Daten'},
-      { sensorId: 'TS_Power', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_in_108', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_out_208', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'Kommentar', icon: 'chevron_right', iconSize: 12, sensorTitle: ' Heizstab', sensorValue: ''},
-      { sensorId: 'ELaktboostactive', icon: 'circle_fill', iconSize: 24, iconColor: 'green' }, 
-      { sensorId: 'RaspberryCheckHeizstabServer', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberryHeizstabServerProtokoll', icon: 'power', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberryHeizstabServerIntervall', icon: 'arrow_2_squarepath', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberrycheckSensorCollectorServer', icon: 'asterisk_circle_fill', iconSize: 24, iconColor: 'green' }
+      { sensorId: 'IQbattery_94_battery_stateOfCharge',             icon: 'gauge', iconSize: 50, color: 'green'},
+      { sensorId: 'IQinverter_94_inverter_pvPower',                 icon: 'bi-sun-fill', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'bi-house', iconSize: 24, iconColor: 'green' },      
+      { sensorId: 'ELaktTemp2',                                     icon: 'bi-thermometer', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ELaktPwr',                                       icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'IQBatt_Temp',                                    icon: 'bi-thermometer', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'IQbattery_94_battery_mode',                      icon: 'bi-thermometer', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'IQbattery_94_battery_power',                     icon: 'bi-battery-full', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ZWZZaehlerPower',                                icon: 'bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'ZWZZaehlerTotalPVEnergie',                       icon: 'bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'Kommentar',                                      icon: 'bi-chevron-right', iconSize: 24, sensorTitle: ' Tasmota SWR Zähler', sensorValue: 'Daten',styles: {
+                    display: 'inline-block',transform: 'rotate(90deg)',
+            }
+      },
+      { sensorId: 'TS_Power',                                       icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_in_108',                                    icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_out_208',                                   icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'Kommentar',                                      icon: 'bi-chevron-right', iconSize: 24, sensorTitle: ' Heizstab', sensorValue: ''},
+      { sensorId: 'ELaktboostactive',                               icon: 'bi-circle-fill', iconSize: 24, iconColor: 'green' }, 
+      { sensorId: 'RaspberryCheckHeizstabServer',                   icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerIntervall',               icon: 'bi-square', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberrycheckSensorCollectorServer',            icon: 'bi-circle-fill', iconSize: 24, iconColor: 'green' }
             
     ];
 
     sensorConfig.forEach((config, index) => {
        let sensor = data[config.sensorId];
-console.log("sensor "+config.sensorID);
+//console.log("sensor "+config.sensorID);
         if (sensor === undefined) {
             // Spezialfall: ZWZZaehlerPower berechnen
             if (config.sensorId === 'Kommentar') {
@@ -98,22 +101,22 @@ console.log("sensor "+config.sensorID);
             sensor.sensorValue = 'Error: '+sensor.sensorValue;
         }
         
-        // Beschreibung für Anzeige mit F7Item
+        // Beschreibung für Anzeige mit CohItem
         config.description = `${sensor.sensorTitle || ''}: ${sensor.sensorValue ?? ''} ${sensor.sensorEinheit ?? ''}`.trim();
         config.sensorValue = sensor.sensorValue ?? 0;
-        console.log(`[${index}] ${config.sensorId}: ${sensor.sensorTitle}:`);
-        console.log('sensor full:', sensor);
+//        console.log(`[${index}] ${config.sensorId}: ${sensor.sensorTitle}:`);
+//        console.log('sensor full:', sensor);
     });
 
-    (function waitForF7App(maxAttempts = 50, attempt = 1) {
-      if (typeof window.F7app !== 'undefined' && F7app.gauge) {
+    (function waitForApp(maxAttempts = 50, attempt = 1) {
+      if (typeof window.RadialGauge !== 'undefined') {
         const wrapper = document.getElementById('wrapper_<?= $this->chartId ?>');
         if (!wrapper) {
           console.error('Wrapper nicht gefunden!');
           return;
         }
         sensorConfig.forEach((config, index) => {
-          const item = new F7Item();
+          const item = new CohItem();
           item.setAll({
             ...config,
             gaugeId: `gauge-<?= $this->chartId ?>-${index}`
@@ -122,9 +125,9 @@ console.log("sensor "+config.sensorID);
         });
 
       } else if (attempt < maxAttempts) {
-        setTimeout(() => waitForF7App(maxAttempts, attempt + 1), 50);
+        setTimeout(() => waitForApp(maxAttempts, attempt + 1), 50);
       } else {
-        console.error(`F7App konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch.`);
+        console.error(`Gauge konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch.`);
       }
     })();
   </script>

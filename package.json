@@ -1,23 +1,25 @@
 {
   "name": "contao-contaohab-bundle",
   "version": "1.0.0",
-  "description": "Contao Bundle mit Chart.js, Luxon, Framework7 und Icons",
+  "description": "Contao Bundle mit Chart.js, Luxon, Gauge und Icons",
   "dependencies": {
+    "bootstrap-icons": "^1.13.1",
+    "canvas-gauges": "^2.1.7",
     "chart.js": "^4.4.0",
     "chartjs-adapter-luxon": "^1.3.1",
-    "framework7": "^8.3.4",
-    "framework7-icons": "^5.0.5",
-    "luxon": "^3.6.1",
-    "js-yaml": "^4.1.0"
+    "luxon": "^3.6.1"
   },
   "scripts": {
-    "mkdir": "cmd /c \"if not exist public\\jsCharts mkdir public\\jsCharts\" && cmd /c \"if not exist public\\jsF7 mkdir public\\jsF7\" && cmd /c \"if not exist public\\jsF7\\fonts mkdir public\\jsF7\\fonts\"",
-    "copyf7:js": "copy /B node_modules\\framework7\\framework7-bundle.min.js public\\jsF7\\framework7.min.js",
-    "copyf7:css": "copy /B node_modules\\framework7\\framework7-bundle.min.css public\\jsF7\\framework7.min.css",
-    "copyf7:fonts": "xcopy /S /I node_modules\\framework7-icons\\fonts\\* public\\jsF7\\fonts\\",
-    "copyf7:iconscss": "copy /B node_modules\\framework7-icons\\css\\framework7-icons.css public\\jsF7\\framework7-icons.css && powershell -Command \"(Get-Content public/jsF7/framework7-icons.css) -replace '../fonts', './fonts' | Set-Content public/jsF7/framework7-icons.css\"",
-    "copyyaml": "copy /B node_modules\\js-yaml\\dist\\js-yaml.min.js public\\jsF7\\js-yaml.min.js",
+    "mkdir": "cmd /c \"if not exist public\\jsCharts mkdir public\\jsCharts\" && cmd /c \"if not exist public\\jsGauge mkdir public\\jsGauge\" &&  cmd /c \"if not exist public\\jsBootstrap mkdir public\\jsBootstrap\" && cmd /c \"if not exist public\\jsBootstrap\\fonts mkdir public\\jsBootstrap\\fonts\"",
+    
+    
+    
     "copychart": "copy /B node_modules\\chart.js\\dist\\chart.umd.js public\\jsCharts\\chart.umd.js && copy /B node_modules\\luxon\\build\\global\\luxon.min.js public\\jsCharts\\luxon.min.js && copy /B node_modules\\chartjs-adapter-luxon\\dist\\chartjs-adapter-luxon.umd.min.js public\\jsCharts\\chartjs-adapter-luxon.umd.min.js",
-    "build": "npm run mkdir && npm run copychart && npm run copyf7:js && npm run copyf7:css && npm run copyf7:fonts && npm run copyf7:iconscss && npm run copyyaml"
+    
+    "copy:gauge": "copy /B node_modules\\canvas-gauges\\gauge.min.js public\\jsGauge\\gauge.min.js",
+    
+    "copy:bootstrapicons": "copy /B node_modules\\bootstrap-icons\\font\\bootstrap-icons.css public\\jsBootstrap\\bootstrap-icons.css && xcopy /S /I /Y node_modules\\bootstrap-icons\\font\\fonts public\\jsBootstrap\\fonts\\",
+
+    "build": "npm run mkdir && npm run copychart && npm run copyf7:js && npm run copyf7:css && npm run copyf7:fonts && npm run copyf7:iconscss && npm run copyyaml && npm run copy:gauge && npm run copy:bootstrapicons"
   }
 }
