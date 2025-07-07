@@ -71,51 +71,14 @@ class CohItem {
         const canvas = document.querySelector(gaugeSelector);
         if (!canvas) return;
 
-        const gauge = new RadialGauge({
+        // die defult werte werden in gauge.defaults.js gesetzt. wird im js_coh_chart_scripts.html5 über das Layout gesetzt
+        const gauge = new RadialGauge(Object.assign({}, RadialGauge.prototype.options, {
             renderTo: canvas,
             width: iconSize,
             height: iconSize,
-            minValue: 0,
-            maxValue: 100,
-            //value: 30,
-            value: Number(sensorValue),           
-            startAngle: 180,
-            ticksAngle: 360,
-            tickWidth: 1,          // ⬅️ Dickere Skalenstriche
-            tickLength: 0,
-            // Ring-Farben und -Breite
-            barWidth: 15,                   // ⬅️ Ring dicker machen
-            colorBarProgress: '#00cc00',
-            colorBar: 'blue',
-            // Zeiger
-            needleType: 'arrow',
-            needleWidth: 10,          // breite Zeiger
-            needleCircleSize: 1,
-            needleCircleOuter: true,
-            needleCircleInner: false,
-            colorNeedle: 'red',
-            colorNeedleEnd: 'red',
-            // Skala
-            //majorTicks: ['0','10','20','30','40','50','60','70','80','90','100'],
-            //minorTicks: 2,
-            strokeTicks: false,
-            colorNumbers: 'transparent',
-            colorMajorTicks: 'transparent',
-            colorMinorTicks: 'transparent',
-            // Anzeige
-            units: '',
-            valueBox: false,
-            // Hintergrund entfernen
-            colorPlate: 'transparent',
-            borders: false,
-            borderOuterWidth: 0,
-            borderMiddleWidth: 0,
-            borderInnerWidth: 0,
-            borderShadowWidth: 0,
-            highlights: [],
-            animation: false,
-            highDpiSupport: true    
-        });
+            value: Number(sensorValue)
+        }));
+
         gauge.draw();
         }, 0);
     } else {

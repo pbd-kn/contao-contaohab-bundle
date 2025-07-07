@@ -7,6 +7,7 @@
 // JavaScript-Dateien:
 ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsGauge/gauge.min.js') ?>
+<?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsGauge/gauge.defaults.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCoh/CohItem.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/chart.umd.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/luxon.min.js') ?>
