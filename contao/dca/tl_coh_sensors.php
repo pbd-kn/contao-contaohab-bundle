@@ -50,8 +50,8 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array(
-            'fields' => array('sensorID','sensorLokalId','sensorEinheit','transFormProcedur'),
-            'format' => "sensorID: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorLokalId: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorEinheit: %s&nbsp;&nbsp;&nbsp;&nbsp;    transFormProcedur: %s",
+            'fields' => array('sensorID','sensorTitle','sensorLokalId','sensorEinheit','transFormProcedur'),
+            'format' => "sensorID: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorTitle: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorLokalId: %s&nbsp;&nbsp;&nbsp;&nbsp;sensorEinheit: %s&nbsp;&nbsp;&nbsp;&nbsp;    transFormProcedur: %s",
         ),
         'global_operations' => array(
             'csvimport' => [
