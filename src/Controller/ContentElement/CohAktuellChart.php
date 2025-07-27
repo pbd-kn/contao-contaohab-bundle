@@ -45,7 +45,7 @@ class CohAktuellChart extends AbstractContentElementController
     $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
     $template = $this->createTemplate($model, $templateName);
 
-    $error = $this->syncService->sync();
+    $error = $this->syncService->sync();              // Daten synchronisieren
     if ($error !== null) {
         $template->syncError = $error;
     }

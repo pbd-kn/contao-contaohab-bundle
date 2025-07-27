@@ -1,0 +1,201 @@
+<?php if ($this->headlineText): ?>
+  <<?= $this->headlineLevel ?>><?= $this->headlineText ?></<?= $this->headlineLevel ?>>
+<?php endif; ?>
+
+<div class="canvas-wrapper" id="canvas-wrapper-<?= $this->chartId ?>">
+  <canvas
+    class="coh_canvas"
+    id="<?= $this->chartId ?>"
+    width="<?= $this->canvasWidth ?>"
+    height="<?= $this->canvasHeight ?>">
+  </canvas>
+</div>
+<?php 
+    if ($this->syncError) {
+        echo '<div class="error">'.$this->syncError.'</div>';
+    } else {
+        //var_dump($this->data);
+    }
+?>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("<?= $this->chartId ?>");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const elements = <?= $this->elementData ?>;
+
+function drawBarElementLoop(el) {
+  const x = Number(el.x ?? 0);
+  const y = Number(el.y ?? 0);
+  const w = Number(el.width ?? 20);
+  const h = Number(el.height ?? 100);
+  const bg = el.background ?? null;
+  const color = el.color ?? '#f60';
+  const dir = (el.direction ?? 'up').toLowerCase();
+  const rotation = (el.rotation ?? 0) * Math.PI / 180;
+  const alpha = Number(el.opacity ?? 1);
+  const value = Number(el.value ?? 0); // <<< hier prüfen ob scroll
+
+  let offset = 0;
+  const progressLength = 5;  // gfröße des croll balkens
+  //const speed = 1;
+  const speed = 0.2; // Pixel pro Sekunde Geschwindigkeit des scrollbars
+
+  const pauseTime = 500;
+  let paused = false;
+
+  function drawStatic() {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(x - 2, y - 2, w + 4, h + 4);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = alpha > 0 ? alpha : 1;
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.rotate(rotation);
+    ctx.translate(-w / 2, -h / 2);
+
+    if (bg) {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    ctx.restore();
+    drawLabel(el, ctx);
+  }
+
+  function draw() {
+    if (paused) return;
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(x - 2, y - 2, w + 4, h + 4);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = alpha > 0 ? alpha : 1;
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.rotate(rotation);
+    ctx.translate(-w / 2, -h / 2);
+
+    if (bg) {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    ctx.fillStyle = color;
+
+    if (dir === 'up') {
+      const yStart = h - offset - progressLength;
+      ctx.fillRect(0, Math.max(0, yStart), w, progressLength);
+    } else if (dir === 'down') {
+      const yStart = offset;
+      ctx.fillRect(0, Math.min(h - progressLength, yStart), w, progressLength);
+    } else if (dir === 'left') {
+      const xStart = w - offset - progressLength;
+      ctx.fillRect(Math.max(0, xStart), 0, progressLength, h);
+    } else if (dir === 'right') {
+      const xStart = offset;
+      ctx.fillRect(Math.min(w - progressLength, xStart), 0, progressLength, h);
+    }
+
+    ctx.restore();
+    drawLabel(el, ctx);
+
+    offset += speed;
+    const maxOffset = (dir === 'up' || dir === 'down') ? h : w;
+
+    if (offset > maxOffset) {
+      paused = true;
+      setTimeout(() => {
+        offset = 0;
+        paused = false;
+        requestAnimationFrame(draw);
+      }, pauseTime);
+      return;
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  // ?? Auswahl: statisch oder animiert?
+  if (value <= 0) {
+    drawStatic();
+  } else {
+    requestAnimationFrame(draw);
+  }
+}
+
+
+  function drawImageElement(el) {
+    const img = new Image();
+    img.onload = () => {
+      setTimeout(() => {
+        const x = Number(el.x ?? 0);
+        const y = Number(el.y ?? 0);
+        const w = Number(el.width ?? 64);
+        const h = Number(el.height ?? 64);
+        const rotation = (el.rotation ?? 0) * Math.PI / 180;
+        const alpha = Number(el.opacity ?? 1);
+
+        ctx.save();
+        ctx.globalAlpha = alpha > 0 ? alpha : 1;
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.rotate(rotation);
+        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+
+        drawLabel(el, ctx);
+      }, 50);
+    };
+
+    img.onerror = () => {
+      console.error("? Bild konnte nicht geladen werden:", el.src);
+    };
+
+    img.src = el.src;
+  }
+
+
+
+  function drawLabel(el, ctx) {
+    const raw = el.label ?? '';
+    if (!raw) return;
+
+    const lines = raw.replace(/\r\n|\r|\u2028|\u2029/g, '\n').split('\n');
+    const w = Number(el.width ?? 0);
+    const h = Number(el.height ?? 0);
+    const x = Number(el.x ?? 0);
+    const y = Number(el.y ?? 0);
+
+    ctx.save();
+    ctx.fillStyle = el.labelColor ?? '#000';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';      // Links
+    ctx.textBaseline = 'top';    // Von oben zeichnen
+
+    lines.forEach((line, i) => {
+        ctx.fillText(line, x, y + h + 4 + i * 14);
+    });
+
+    ctx.restore();
+  }
+
+
+  elements.forEach(el => {
+    const type = (el.type || '').toLowerCase();
+
+    if (['bar'].includes(type)) {
+      drawBarElementLoop(el);
+    } else if (el.src) {
+      drawImageElement(el);
+    } else {
+      console.warn("? Unbekannter Typ oder fehlender Bildpfad", el);
+    }
+  });
+});
+</script>

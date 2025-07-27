@@ -5,7 +5,7 @@ class CohItem {
 
   set(key, value) {
     this.params[key] = value;
-    return this; // Für Kettenaufrufe
+    return this;
   }
 
   setAll(values) {
@@ -17,143 +17,101 @@ class CohItem {
     return this;
   }
 
-  render(wrapper) {
-    if (!wrapper) {
-      console.error('Kein Wrapper-Element angegeben!');
-      return;
+renderAsHtmlString() {
+  const {
+    icon,
+    sensorValue = 0,
+    iconSize = 80,
+    iconColor,
+    textColor,
+    title = '',
+    description = '',
+    gaugeId,
+    styles = {}
+  } = this.params;
+
+  const titleText = description || title;
+
+  if (icon === 'gauge') {
+    // Gauge-HTML zurückgeben
+    return `
+      <div class="gauge-container" style="display:flex; align-items:center;">
+        <canvas 
+          class="gauge-canvas" 
+          id="${gaugeId || 'gaugeIdDummy'}"
+          width="${iconSize}" 
+          height="${iconSize}" 
+          style="width:${iconSize}px;height:${iconSize}px"
+          data-value="${sensorValue}"
+          data-max="100"
+        ></canvas>
+        <div class="block-title" style="margin-left:20px; flex-shrink:1;${textColor ? ` color: ${textColor};` : ''}">
+          ${titleText}
+        </div>
+      </div>
+    `;
+  } else {
+    // Icon-Fall
+    const iconClass = this.params.iconClass ? `bi ${icon} ${this.params.iconClass}` : `bi ${icon}`;
+
+    const styleParts = [];
+    if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
+    if (iconColor) styleParts.push(`color: ${iconColor}`);
+    for (const [key, value] of Object.entries(styles)) {
+      styleParts.push(`${key}: ${value}`);
     }
+    const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
 
-    const {
-      icon,
-      sensorValue = 0,
-      iconSize = 80,
-      color = '#2196f3',
-      title = '',
-      description = '',
-      gaugeId
-    } = this.params;
+/*    const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
 
-    const titleText = description || title;
+    return `
+      <div class="coh--item" style="display: flex; align-items: center;${textColor ? ` color: ${textColor};` : ''}">
+        <i class="${iconClass}"${iconStyle}></i>
+        <div style="margin-left: 20px;">${preparedTitle}</div>
+      </div>
+    `;
+*/
+    const iconHtml = this.renderIconHtml(icon, styles, iconSize, iconColor);
+    const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
 
-    if (icon === 'gauge') {
-        const gaugeSelector = `#${gaugeId || 'gaugeIdDummy'}`;
+    return `
+        <div class="coh--item" style="display: flex; align-items: center;${textColor ? ` color: ${textColor};` : ''}">
+          ${iconHtml}
+          <div style="margin-left: 20px;">${preparedTitle}</div>
+        </div>
 
-        // DOM-Elemente erzeugen
-        const container = document.createElement('div');
-        container.classList.add('gauge-container');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        
-        const gaugeCanvas = document.createElement('canvas');
-        gaugeCanvas.classList.add('gauge-canvas');
-        gaugeCanvas.id = gaugeId || 'gaugeIdDummy';
-        gaugeCanvas.style.width = `${iconSize}px`;
-        gaugeCanvas.style.height = `${iconSize}px`;
-        gaugeCanvas.width = iconSize;
-        gaugeCanvas.height = iconSize;
-        gaugeCanvas.dataset.value = sensorValue;
-        gaugeCanvas.dataset.max = 100;
-        container.appendChild(gaugeCanvas);
+      `;
 
-        const titleEl = document.createElement('div');
-        titleEl.style.marginLeft = '20px'; // z. B. 10px Abstand
-        titleEl.style.flexShrink = '1';
-        
-        titleEl.classList.add('block-title');
-        titleEl.textContent = titleText;
-        container.appendChild(titleEl);
-
-
-        wrapper.appendChild(container);
-
-        // Initialisierung RadialGauge (canvas-gauges)
-        setTimeout(() => {
-        const canvas = document.querySelector(gaugeSelector);
-        if (!canvas) return;
-
-        // die defult werte werden in gauge.defaults.js gesetzt. wird im js_coh_chart_scripts.html5 über das Layout gesetzt
-        const gauge = new RadialGauge(Object.assign({}, RadialGauge.prototype.options, {
-            renderTo: canvas,
-            width: iconSize,
-            height: iconSize,
-            value: Number(sensorValue)
-        }));
-
-        gauge.draw();
-        }, 0);
-    } else {
-
-        // Klasse für das Icon, z. B. "bi cloud_sun"
-        const iconClass = this.params.iconClass? `bi ${icon} ${this.params.iconClass}`: `bi ${icon}`;
-
-        // Styles vorbereiten (font-size, color)
-        const styleParts = [];
-        if (this.params.iconSize) styleParts.push(`font-size: ${this.params.iconSize}px`);
-        if (this.params.iconColor) styleParts.push(`color: ${this.params.iconColor}`);
-        // Falls zusätzliche Styles definiert sind:
-        if (this.params.styles) {
-            for (const [key, value] of Object.entries(this.params.styles)) {
-                styleParts.push(`${key}: ${value}`);
-            }
-        }
-        const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
-
-        // Zeilenumbrüche im Titel umwandeln
-        const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
-
-
-const html = `
-  <div class="coh--item" style="display: flex; align-items: center; color: ${this.params.color || 'inherit'};">
-    <i class="${iconClass}"${iconStyle}></i>
-    <div style="margin-left: 20px;">${preparedTitle}</div>
-  </div>
-`;
-        
-
-        // In DOM einfügen
-        wrapper.innerHTML += html;
-      }
-    /*
-    Überprüfung ob fontgsawsom gedladen ist
-    function isFontAwesomeLoaded() {
-  const testEl = document.createElement('i');
-  testEl.className = 'fa-solid fa-gauge';
-  testEl.style.display = 'none';
-  document.body.appendChild(testEl);
-
-  const style = window.getComputedStyle(testEl);
-  const fontFamily = style.getPropertyValue('font-family');
-
-  document.body.removeChild(testEl);
-
-  return fontFamily && fontFamily.toLowerCase().includes('fontawesome');
-}
-
-if (isFontAwesomeLoaded()) {
-  console.log('✅ Font Awesome ist geladen.');
-} else {
-  console.warn('❌ Font Awesome ist NICHT geladen!');
-}
-
-    } else {
-  // Font Awesome Icon generieren
-  const iconClass = this.params.iconClass ? `fa-solid ${this.params.iconClass}` : 'fa-solid fa-gauge';
-  const styleParts = [];
-  if (this.params.iconSize) styleParts.push(`font-size: ${this.params.iconSize}px`);
-  if (this.params.iconColor) styleParts.push(`color: ${this.params.iconColor}`);
-  const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
-  const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
-  const html = `
-    <div class="f7-item" style="color: ${this.params.color || 'inherit'};">
-      <i class="${iconClass}"${iconStyle}></i>
-      ${preparedTitle}
-    </div>
-  `;
-  wrapper.innerHTML += html;
-}
-
-    */
   }
 }
+/* erzeugt den code zum einbringen des Icons abhängig vom Iconset der Kennzeichnung vor dem icon bs:   ... */
+renderIconHtml(iconSpec, styles = {}, iconSize, iconColor) {
+  const [iconSet, iconNameRaw] = (iconSpec || '').split(':');
+  const iconName = iconNameRaw?.trim() || '';
+  const styleParts = [];
 
+  if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
+  if (iconColor) styleParts.push(`color: ${iconColor}`);
+  for (const [key, value] of Object.entries(styles)) {
+    styleParts.push(`${key}: ${value}`);
+  }
+  const styleAttr = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
 
+  switch (iconSet) {
+    case 'bs':
+        return `<i class="bi ${iconName}"${styleAttr}></i>`;
+    case 'f7':
+        return `<i class="f7-icons"${styleAttr}>${iconName}</i>`;
+    case 'md':
+        return `<span class="material-icons"${styleAttr}>${iconName}</span>`;
+    case 'fa':
+        return `<i class="fa fa-${iconName}"${styleAttr}></i>`;
+    case 'fas': // Font Awesome Solid
+    case 'far': // Font Awesome Regular
+    case 'fab': // Font Awesome Brands
+        return `<i class="${iconSet} fa-${iconName}"${styleAttr}></i>`;      
+    default:
+        return `<i class="${iconSpec}"${styleAttr}></i>`; // fallback
+  }
+}
+}

@@ -1,15 +1,15 @@
-<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper framework7-container" style="max-width: 700px; padding: 1rem;">
+<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper actuell-data-container" >
 <?php
 // !!!! Achtung: Dieses Template benötigt das JS-Template js_coh_chart_script im Layout! Beim Deinstallieren den Eintrag aus dem Layout entfernen!
 ?>
 <?php 
-if ($this->syncError) {
-  echo '<div class="error">'.$this->syncError.'</div>';
-} else {
-//var_dump($this->data);
-  echo '<p>akt. Werte vom:'.$this->lastPullSync.'</p>';
-  echo '<p>push Tabellen am:'.$this->lastPullSync.'</p>';
-}
+    if ($this->syncError) {
+        echo '<div class="error">'.$this->syncError.'</div>';
+    } else {
+        //var_dump($this->data);
+        echo '<p>akt. Werte vom:'.$this->lastPullSync."</p>\n";
+        echo '<p>push Tabellen am:'.$this->lastPullSync."</p>\n";
+    }
 ?>
   <script>
     const chartId = '<?= $this->chartId ?>';
@@ -17,40 +17,41 @@ if ($this->syncError) {
 
 
     const sensorConfig = [
-      { sensorId: 'IQbattery_94_battery_stateOfCharge',             icon: 'gauge', iconSize: 50, color: 'green'},
-      { sensorId: 'IQinverter_94_inverter_pvPower',                 icon: 'bi-sun-fill', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'bi-house', iconSize: 24, iconColor: 'green' },      
-      { sensorId: 'IQBatt_Temp',                                    icon: 'bi-thermometer', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'IQbattery_94_battery_mode',                      icon: 'bi-thermometer', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'IQbattery_94_battery_power',                     icon: 'bi-battery-full', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'ZWZZaehlerPower',                                icon: 'bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'ZWZZaehlerTotalPVEnergie',                       icon: 'bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'Kommentar',                                      icon: 'bi-chevron-right', iconSize: 24, sensorTitle: ' Tasmota SWR Zähler', sensorValue: 'Daten',styles: {
+      { sensorId: 'IQbattery_94_battery_stateOfCharge',             icon: 'gauge', iconSize: 50, color: 'green',textColor: 'green'},
+      { sensorId: 'IQinverter_94_inverter_pvPower',                 icon: 'bs:bi-sun-fill', iconSize: 24, iconColor: 'green',textColor: 'blue' },
+      { sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'bs:bi-house', iconSize: 24, iconColor: 'green' },      
+      { sensorId: 'IQBatt_Temp',                                    icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'IQbattery_94_battery_mode',                      icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'IQbattery_94_battery_power',                     icon: 'bs:bi-battery-full', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ZWZZaehlerPower',                                icon: 'bs:bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'ZWZZaehlerTotalPVEnergie',                       icon: 'bs:bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
+      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Tasmota SWR Zähler', sensorValue: 'Daten',styles: {
                     transform: 'rotate(90deg)',
             }
       },
-      { sensorId: 'TS_Power',                                       icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_in_108',                                    icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_out_208',                                   icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'Kommentar',                                      icon: 'bi-chevron-right', iconSize: 24, sensorTitle: ' Heizstab', sensorValue: '',styles: {
+      { sensorId: 'TS_Power',                                       icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_in_108',                                    icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_out_208',                                   icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Heizstab', sensorValue: '',styles: {
                     transform: 'rotate(90deg)',
             }
       },
-      { sensorId: 'ELaktTemp2',                                     icon: 'bi-thermometer', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'ELaktPwr',                                       icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'ELaktboostactive',                               icon: 'bi-circle-fill', iconSize: 24, iconColor: 'green' }, 
-      { sensorId: 'Kommentar',                                      icon: 'bi-chevron-right', iconSize: 24, sensorTitle: ' Raspberry', sensorValue: 'Systemdaten',styles: {
+      { sensorId: 'ELaktTemp1',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ELaktTemp2',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ELaktPwr',                                       icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ELaktboostactive',                               icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' }, 
+      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Raspberry', sensorValue: 'Systemdaten',styles: {
                     transform: 'rotate(90deg)',
             }
       },
-      { sensorId: 'RaspberryCheckHeizstabServer',                   icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberryHeizstabServerIntervall',               icon: 'bi-square', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberrycheckSensorCollectorServer',            icon: 'bi-circle-fill', iconSize: 24, iconColor: 'green' }
+      { sensorId: 'RaspberryCheckHeizstabServer',                   icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerIntervall',               icon: 'bs:bi-square', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberrycheckSensorCollectorServer',            icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' }
             
     ];
 
-    sensorConfig.forEach((config, index) => {
+    sensorConfig.forEach((config, index) => {               // index ist der positionsindex in sensorConfig
        let sensor = data[config.sensorId];
 //console.log("sensor "+config.sensorID);
         if (sensor === undefined) {
@@ -93,14 +94,20 @@ if ($this->syncError) {
         }
         // Farbanpassung für Heizstab booster
         if (config.sensorId === 'ELaktboostactive') {
-            const iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
-            config.iconColor = iconColor;
+            config.iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
+            //config.iconColor = iconColor;
         }
         // Farbanpassung für Heizstab-Server
         if (config.sensorId === 'RaspberryCheckHeizstabServer') {
-            const iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
-            config.iconColor = iconColor;
+            config.iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
+            config.textColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
         }
+        // Farbanpassung für Akku laden
+        if (config.sensorId === 'IQbattery_94_battery_power') {
+            config.iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
+            config.textColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
+        }
+        
         if (config.sensorId === 'RaspberryHeizstabServerProtokoll') {
             sensor.sensorValue = '<br>'+sensor.sensorValue;
         }
@@ -116,26 +123,54 @@ if ($this->syncError) {
     });
 
     (function waitForApp(maxAttempts = 50, attempt = 1) {
-      if (typeof window.RadialGauge !== 'undefined') {
-        const wrapper = document.getElementById('wrapper_<?= $this->chartId ?>');
-        if (!wrapper) {
-          console.error('Wrapper nicht gefunden!');
-          return;
-        }
-        sensorConfig.forEach((config, index) => {
-          const item = new CohItem();
-          item.setAll({
-            ...config,
-            gaugeId: `gauge-<?= $this->chartId ?>-${index}`
-          });
-          item.render(wrapper);
-        });
+        if (typeof window.RadialGauge !== 'undefined') {
+            const wrapper = document.getElementById('wrapper_<?= $this->chartId ?>');
+            if (!wrapper) {
+                console.error('Wrapper nicht gefunden!');
+                return;
+            }
 
-      } else if (attempt < maxAttempts) {
-        setTimeout(() => waitForApp(maxAttempts, attempt + 1), 50);
-      } else {
-        console.error(`Gauge konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch.`);
-      }
+            let allHtml = '';
+            const gaugeInitList = [];
+
+            sensorConfig.forEach((config, index) => {     // index ist der positionsindex in sensorConfig
+                const item = new CohItem();
+                const gaugeId = `gauge-<?= $this->chartId ?>-${index}`;
+    
+                item.setAll({
+                    ...config,
+                    gaugeId
+                });
+
+                allHtml += item.renderAsHtmlString();
+
+                if (config.icon === 'gauge') {
+                    gaugeInitList.push({ gaugeId, iconSize: config.iconSize || 80, sensorValue: config.sensorValue });     // Gauge daten in gaugeInitList merken
+                }
+            });
+
+            wrapper.insertAdjacentHTML('beforeend', allHtml);
+
+
+            // Nun die Gauges initialisieren
+            gaugeInitList.forEach(({ gaugeId, iconSize, sensorValue }) => {
+                const canvas = document.getElementById(gaugeId);
+                    if (!canvas) return;                               // kein gauge
+
+                const gauge = new RadialGauge(Object.assign({}, RadialGauge.prototype.options, {
+                    renderTo: canvas,
+                    width: iconSize,
+                    height: iconSize,
+                    value: Number(sensorValue)
+                }));
+                gauge.draw();
+            });
+
+        } else if (attempt < maxAttempts) {
+            setTimeout(() => waitForApp(maxAttempts, attempt + 1), 50);
+        } else {
+            console.error(`Gauge konnte nach ${maxAttempts} Versuchen nicht geladen werden. Abbruch.`);
+        }
     })();
   </script>
 </div>

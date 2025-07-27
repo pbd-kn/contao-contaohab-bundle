@@ -17,6 +17,87 @@ use PbdKn\ContaoContaohabBundle\Controller\ContentElement\CohAktuellChart;
 use Contao\Controller;
 use Contao\System;
 
+/**
+ * Content elements Coh EKD Bilder
+ */
+/**
+ * Content elements Coh EKD Bilder
+ */
+
+
+$GLOBALS['TL_DCA']['tl_content']['palettes']['canvas_ekd'] =
+    '{type_legend},type,headline;' .
+    '{image_legend},canvas_ekd_data;' .
+    '{template_legend:hide},canvas_ekd_template;' .
+    '{expert_legend:hide},cssID,space';
+
+// Feld für das Template
+$GLOBALS['TL_DCA']['tl_content']['fields']['canvas_ekd_template'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_content']['canvas_ekd_template'],
+    'exclude' => true,
+    'inputType' => 'select',
+    'options_callback' => function () {
+        return \Contao\Controller::getTemplateGroup('ce_canvas_ekd');
+    },
+    'eval' => ['tl_class' => 'w50', 'includeBlankOption' => true],
+    'sql' => "varchar(64) NOT NULL default ''",
+];
+
+$GLOBALS['TL_DCA']['tl_content']['fields']['canvas_ekd_data'] = [
+    'inputType' => 'multiColumnWizard',
+    'eval' => [
+        'tl_class' => 'clr',
+        'columnOrder' => [  // <<< HIER Reihenfolge fixieren!
+            'image', 'type', 'x', 'y', 'width', 'height',
+            'rotation', 'opacity', 'color', 'background',
+            'value', 'direction', 'label'
+        ],
+        'columnFields' => [
+
+            // 1. Bild und Typ
+            'image' => [
+                'label' => ['Bild'],
+                'inputType' => 'fileTree',
+                'eval' => ['filesOnly' => true, 'fieldType' => 'radio', 'tl_class' => 'w50'],
+            ],
+            'type' => [
+                'label' => ['Typ'],
+                'inputType' => 'select',
+                'options' => ['Solarzelle','HomeSolar','Akku','Einspeisung','Haus','Heizstab','Bar'],
+                'eval' => ['chosen' => true, 'tl_class' => 'w25'],
+            ],
+
+            // 2. Position und Größe
+            'x' => ['label' => ['X'], 'inputType' => 'text', 'eval' => ['rgxp' => 'digit', 'tl_class' => 'w15']],
+            'y' => ['label' => ['Y'], 'inputType' => 'text', 'eval' => ['rgxp' => 'digit', 'tl_class' => 'w15']],
+            'width' => ['label' => ['Breite'], 'inputType' => 'text', 'eval' => ['rgxp' => 'digit', 'tl_class' => 'w15']],
+            'height' => ['label' => ['Höhe'], 'inputType' => 'text', 'eval' => ['rgxp' => 'digit', 'tl_class' => 'w15']],
+
+            // 3. Stil & Dynamik
+            'rotation' => ['label' => ['Rotation'], 'inputType' => 'text', 'eval' => ['rgxp' => 'numeric', 'tl_class' => 'w15']],
+            'opacity' => ['label' => ['Deckkraft'], 'inputType' => 'text', 'eval' => ['rgxp' => 'numeric', 'tl_class' => 'w15']],
+            'color' => ['label' => ['Farbe'], 'inputType' => 'text', 'eval' => ['tl_class' => 'w15']],
+            'background' => ['label' => ['Hintergrund'], 'inputType' => 'text', 'eval' => ['tl_class' => 'w15']],
+            'value' => ['label' => ['Füllstand'], 'inputType' => 'text', 'eval' => ['rgxp' => 'numeric', 'tl_class' => 'w15']],
+            'direction' => [
+                'label' => ['Richtung'],
+                'inputType' => 'select',
+                'options' => ['up' => 'oben', 'down' => 'unten', 'left' => 'links', 'right' => 'rechts'],
+                'eval' => ['tl_class' => 'w15'],
+            ],
+
+            // 4. Text
+            'label' => [
+                'label' => ['Text'],
+                'inputType' => 'textarea',
+                'eval' => ['style' => 'height:40px', 'tl_class' => 'w50'],
+            ],
+        ]
+    ],
+    'sql' => "blob NULL"
+];
+
+
 
 /**
  * Content elements CohHistoryChart
