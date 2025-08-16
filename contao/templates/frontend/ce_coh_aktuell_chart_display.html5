@@ -12,49 +12,56 @@
     }
 ?>
   <script>
+//@ sourceURL=coh_dashboard_inline.js
     const chartId = '<?= $this->chartId ?>';
     const data = <?= json_encode($this->data ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
 
     const sensorConfig = [
+
       { sensorId: 'IQbattery_94_battery_stateOfCharge',             icon: 'gauge', iconSize: 50, color: 'green',textColor: 'green'},
       { sensorId: 'IQinverter_94_inverter_pvPower',                 icon: 'bs:bi-sun-fill', iconSize: 24, iconColor: 'green',textColor: 'blue' },
       { sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'bs:bi-house', iconSize: 24, iconColor: 'green' },      
+      //{ sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'fa-regular:fa-house', iconSize: 24, iconColor: 'green' },      
       { sensorId: 'IQBatt_Temp',                                    icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'IQbattery_94_battery_mode',                      icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'IQbattery_94_battery_power',                     icon: 'bs:bi-battery-full', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ZWZZaehlerPower',                                icon: 'bs:bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
       { sensorId: 'ZWZZaehlerTotalPVEnergie',                       icon: 'bs:bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
       { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Tasmota SWR Zähler', sensorValue: 'Daten',styles: {
-                    transform: 'rotate(90deg)',
+                    transform: 'rotate(90deg)'
             }
       },
-      { sensorId: 'TS_Power',                                       icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_in_108',                                    icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'TS_E_out_208',                                   icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_Power',                                       icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_in_108',                                    icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'TS_E_out_208',                                   icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
       { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Heizstab', sensorValue: '',styles: {
-                    transform: 'rotate(90deg)',
+                    transform: 'rotate(90deg)'
             }
       },
       { sensorId: 'ELaktTemp1',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ELaktTemp2',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'ELaktPwr',                                       icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'ELaktPwr',                                       icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ELaktboostactive',                               icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' }, 
-      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Raspberry', sensorValue: 'Systemdaten',styles: {
-                    transform: 'rotate(90deg)',
-            }
+      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Raspberry', sensorValue: 'Systemdaten',styles: { transform: 'rotate(90deg)' }
       },
       { sensorId: 'RaspberryCheckHeizstabServer',                   icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bs:bi-list-ul', iconSize: 24, iconColor: 'green' },
       { sensorId: 'RaspberryHeizstabServerIntervall',               icon: 'bs:bi-square', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'RaspberrycheckSensorCollectorServer',            icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' }
+
+      { sensorId: 'RaspberrycheckSensorCollectorServer',            icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' },
+
+      { sensorId: 'RaspberrycheckPlattenbelegung',                  icon: 'bs:bi-sd-card', iconSize: 24, iconColor: 'green'}
+    
             
     ];
 
-    sensorConfig.forEach((config, index) => {               // index ist der positionsindex in sensorConfig
+
+    sensorConfig.forEach((config, index) => {                // index ist der positionsindex in sensorConfig
        let sensor = data[config.sensorId];
-//console.log("sensor "+config.sensorID);
+       config.extraText = '';
         if (sensor === undefined) {
+//console.log("-------------------------------sensor suche "+config.sensorID);
             // Spezialfall: ZWZZaehlerPower berechnen
             if (config.sensorId === 'Kommentar') {
                 sensor = { time: '', label: config.sensorId,
@@ -114,12 +121,33 @@
         if (config.sensorId === 'RaspberrycheckSensorCollectorServer') {
             sensor.sensorValue = 'Error: '+sensor.sensorValue;
         }
-        
+        if (config.sensorId === 'RaspberrycheckPlattenbelegung') {
+            const valObj = data['RaspberrycheckPlattenbelegung'];
+            const jsonString = valObj.sensorValue;
+            let jsndata;
+            try {
+                jsndata = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+            } catch (e) {
+                console.error("Fehler beim Parsen:", e);
+                jsndata = [];
+            }
+            config.extraText = '';
+            jsndata.forEach(item => {
+                Object.entries(item).forEach(([key, val]) => {
+                    if (config.extraText) {   // nur <br> anhängen, wenn schon Text vorhanden ist
+                       //config.extraText += '<br>';
+                       config.extraText += ' ';
+                }
+                config.extraText = (config.extraText || '') + `${key}: ${val}`;
+                console.log(`${key}: ${val}`);
+                });
+            });
+            console.log('---------------extraText '+config.extraText);
+        }        
         // Beschreibung für Anzeige mit CohItem
-        config.description = `${sensor.sensorTitle || ''}: ${sensor.sensorValue ?? ''} ${sensor.sensorEinheit ?? ''}`.trim();
+        config.description = `${sensor.sensorTitle ? sensor.sensorTitle + ':' : ''} ${sensor.sensorValue ?? ''} ${sensor.sensorEinheit ?? ''} ${config.extraText ?? ''}`.trim();
+
         config.sensorValue = sensor.sensorValue ?? 0;
-//        console.log(`[${index}] ${config.sensorId}: ${sensor.sensorTitle}:`);
-//        console.log('sensor full:', sensor);
     });
 
     (function waitForApp(maxAttempts = 50, attempt = 1) {

@@ -47,7 +47,7 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['sensorEinheit'] = ['Einheit','Einheit des
 $GLOBALS['TL_LANG']['tl_coh_sensors']['sensorSource'] = ['SensorSource','Geraät das diesem Senxor zugeprdnet ist'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['transFormProcedur'] = ['transFormProcedur','Der gelesene Wert kann geändert wird. Dies ist ein Prozedurname der in der GeräteSensorklasse verwendet werden kann. ReturnWert der Prozedur value und Einheit. Einheit erstzt den Wert von sensorEinheit'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['sensorLokalId'] = ['SensorlokalId','Beim Zugriff auf den sensor kann dieser Wert verwendet werden. Ansonsten wird sensorID verwendet'];
-$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent'] = ['Persostent speichern',' '];  // wird (noch) nicht verwendet
+$GLOBALS['TL_LANG']['tl_coh_sensors']['history'] = ['Histroy speichern','die werte werden in der History gespeichert, ansonsten wird nur der neueste Wert gespeichert'];  
 $GLOBALS['TL_LANG']['tl_coh_sensors']['lastUpdated'] = [' ',' ']; // wird  nicht angezeigt
 $GLOBALS['TL_LANG']['tl_coh_sensors']['pollInterval'] = [' ',' ']; // wird  nicht angezeigt
 $GLOBALS['TL_LANG']['tl_coh_sensors']['lastValue'] = [' ',' ']; // wird  nicht angezeigt
@@ -57,9 +57,9 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['lastError'] = [' ',' ']; // wird  nicht a
 /**
  * References
  */
-$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent'] = ['Persistent speichern', 'Soll der Sensorwert dauerhaft gespeichert werden?'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['history'] = ['History speichern', 'Soll der Sensorwert fortlaufend gespeichert werden?'];
 
-$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent_options'] = [
+$GLOBALS['TL_LANG']['tl_coh_sensors']['history_options'] = [
     0 => 'Nein',
     1 => 'Ja',
 ];
@@ -67,4 +67,3 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['persistent_options'] = [
  * Buttons
  */
 $GLOBALS['TL_LANG']['tl_coh_sensors']['customButton'] = "Custom Routine starten";
-$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent'] = ['Persistent speichern', 'Soll der Sensorwert dauerhaft gespeichert werden?'];

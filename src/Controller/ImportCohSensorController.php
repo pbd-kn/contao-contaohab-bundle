@@ -79,7 +79,7 @@ public function exportCsvAction(): StreamedResponse
 
         $delimiter = ';';  // Trennzeichen auf Semikolon setzen
         
-        $excludedFields = ['id', 'tstamp',  'persistent', 'lastUpdated', 'pollInterval', 'lastValue', 'lastError']; // ❌ Diese Spalten sollen NICHT exportiert werden
+        $excludedFields = ['id', 'tstamp',  'lastUpdated', 'pollInterval', 'lastValue', 'lastError']; // ❌ Diese Spalten sollen NICHT exportiert werden
         // Eine Beispielzeile holen, um Spaltennamen zu bekommen
         $exampleRow = Database::getInstance()
             ->prepare("SELECT * FROM tl_coh_sensors LIMIT 1")

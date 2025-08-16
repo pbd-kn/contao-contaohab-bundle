@@ -7,12 +7,29 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class SyncService
 {
+    /*  Es gilt:
+        Wenn der Tunnel offen ist ? Slave läuft über 127.0.0.1:3308.
+        Der tunnel witrd auf dem raspberry durxh den service raspi-lima-tunnel.service eingerichtet
+        sudo systemctl enable --now raspi-lima-tunnel.service
+            systemctl status raspi-lima-tunnel.service --no-pager
+            ? raspi-lima-tunnel.service - Reverse SSH Tunnel Raspi -> lima-city
+            Loaded: loaded (/etc/systemd/system/raspi-lima-tunnel.service; enabled; preset: enabled)
+            Active: active (running) since Sat 2025-08-16 10:33:28 CEST; 23ms ago
+            Process: 996576 ExecStartPre=/usr/bin/test -r /home/peter/.ssh/id_ed25519_lima (code=exited, status=0/SUCCESS)
+            Main PID: 996577 (autossh)
+            Tasks: 2 (limit: 8731)
+            CPU: 22ms
+            CGroup: /system.slice/raspi-lima-tunnel.service
+             +-996577 /usr/lib/autossh/autossh -M 0 -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailu…
+             +-996581 /usr/bin/ssh -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictH…
 
+        Wenn kein Tunnel ? Fallback auf lokale DB (localhost:3306).
+    */
     public function sync(?OutputInterface $output = null): ?string
     {
         mysqli_report(MYSQLI_REPORT_OFF);
 
-        // Master DB verbinden
+        // --- Master DB (läuft auf Lima selbst) ---
         $masterDb = mysqli_init();
         $masterDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
         if (!$masterDb->real_connect('localhost', 'peter', 'sql666sql', 'co5_solar')) {
@@ -21,13 +38,17 @@ class SyncService
             return $msg;
         }
 
-        // Slave DB (Raspberry) verbinden
+        // --- Slave DB (Raspberry, zuerst Tunnel 3308, dann Fallback auf localhost:3306) ---
         $slaveDb = mysqli_init();
         $slaveDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-        if (!$slaveDb->real_connect('raspberrypi', 'peter', 'sql666sql', 'co5_solar')) {
-            $msg = 'Slave DB-Verbindung fehlgeschlagen: ' . $slaveDb->connect_error;
-            $output?->writeln("<error>$msg</error>");
-            return $msg;
+
+        if (!$slaveDb->real_connect('127.0.0.1', 'peter', 'sql666sql', 'co5_solar', 3308)) {
+            $output?->writeln("<comment>Tunnel nicht erreichbar, versuche direkten Zugriff...</comment>");
+            if (!$slaveDb->real_connect('localhost', 'peter', 'sql666sql', 'co5_solar', 3306)) {
+                $msg = 'Slave DB-Verbindung fehlgeschlagen (Tunnel und Direktzugriff): ' . $slaveDb->connect_error;
+                $output?->writeln("<error>$msg</error>");
+                return $msg;
+            }
         }
 
         $output?->writeln('<info>Starte Synchronisation...</info>');

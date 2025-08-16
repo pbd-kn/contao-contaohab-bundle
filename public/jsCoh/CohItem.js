@@ -35,7 +35,7 @@ renderAsHtmlString() {
   if (icon === 'gauge') {
     // Gauge-HTML zurückgeben
     return `
-      <div class="gauge-container" style="display:flex; align-items:center;">
+      <div class="gauge-container" style="display:flex; align-items:flex-start;">
         <canvas 
           class="gauge-canvas" 
           id="${gaugeId || 'gaugeIdDummy'}"
@@ -65,7 +65,7 @@ renderAsHtmlString() {
 /*    const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
 
     return `
-      <div class="coh--item" style="display: flex; align-items: center;${textColor ? ` color: ${textColor};` : ''}">
+      <div class="coh--item" style="display: flex; align-items: flex-start;${textColor ? ` color: ${textColor};` : ''}">
         <i class="${iconClass}"${iconStyle}></i>
         <div style="margin-left: 20px;">${preparedTitle}</div>
       </div>
@@ -75,7 +75,7 @@ renderAsHtmlString() {
     const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
 
     return `
-        <div class="coh--item" style="display: flex; align-items: center;${textColor ? ` color: ${textColor};` : ''}">
+        <div class="coh--item" style="display: flex; align-items: flex-start;${textColor ? ` color: ${textColor};` : ''}">
           ${iconHtml}
           <div style="margin-left: 20px;">${preparedTitle}</div>
         </div>
@@ -85,6 +85,11 @@ renderAsHtmlString() {
   }
 }
 /* erzeugt den code zum einbringen des Icons abhängig vom Iconset der Kennzeichnung vor dem icon bs:   ... */
+/* font familien 
+   fawesome fas	Font Awesome Solid	gefüllt	Bestandteil von Free & Pro
+            far	Font Awesome Regular	dünnere Linien / nicht gefüllt	nur einige Icons in Free, alle in Pro
+            fab	Font Awesome Brands	Marken-Logos (Facebook, GitHub etc.)	komplett Free
+*/
 renderIconHtml(iconSpec, styles = {}, iconSize, iconColor) {
   const [iconSet, iconNameRaw] = (iconSpec || '').split(':');
   const iconName = iconNameRaw?.trim() || '';
@@ -106,12 +111,88 @@ renderIconHtml(iconSpec, styles = {}, iconSize, iconColor) {
         return `<span class="material-icons"${styleAttr}>${iconName}</span>`;
     case 'fa':
         return `<i class="fa fa-${iconName}"${styleAttr}></i>`;
-    case 'fas': // Font Awesome Solid
+    case 'fas': // Font Awesome Solid 6.
+    case 'fa-solid': // Font Awesome Solid 7.
     case 'far': // Font Awesome Regular
+    case 'fa-regular': // Font Awesome Regular 7
     case 'fab': // Font Awesome Brands
-        return `<i class="${iconSet} fa-${iconName}"${styleAttr}></i>`;      
+    case 'fa-brands': // Font Awesome Brands
+        return `<i class="${iconSet} ${iconName}"${styleAttr}></i>`;      
     default:
         return `<i class="${iconSpec}"${styleAttr}></i>`; // fallback
   }
 }
 }
+/*
+function checkFontAwesome6() {
+  const result = {
+    solid: false,
+    regular: false,
+    brands: false,
+    any: false
+  };
+
+  // --- 1. CSS-Klassen-Prüfung
+  const hasFAClass = Array.from(document.styleSheets).some(sheet => {
+    try {
+      return Array.from(sheet.cssRules || []).some(rule =>
+        rule.selectorText &&
+        (rule.selectorText.includes('.fa') || rule.selectorText.includes('.fa-solid'))
+      );
+    } catch (e) {
+      return false; // CORS-Schutz umgehen
+    }
+  });
+
+  if (!hasFAClass) {
+    console.warn('Font Awesome CSS nicht gefunden.');
+    return result;
+  }
+
+  // --- 2. Moderne Prüfung mit document.fonts
+  if (document.fonts && document.fonts.check) {
+    result.solid   = document.fonts.check('1em "Font Awesome 6 Free" 900');
+    result.regular = document.fonts.check('1em "Font Awesome 6 Free" 400');
+    result.brands  = document.fonts.check('1em "Font Awesome 6 Brands"');
+    result.any     = result.solid || result.regular || result.brands;
+    return result;
+  }
+
+  // --- 3. Fallback: DOM-Messung (nur Solid-Test)
+  const testEl = document.createElement('i');
+  testEl.className = 'fa-solid fa-star';
+  testEl.style.position = 'absolute';
+  testEl.style.left = '-9999px';
+  document.body.appendChild(testEl);
+
+  const w1 = testEl.offsetWidth;
+  testEl.className = '';
+  const w2 = testEl.offsetWidth;
+
+  document.body.removeChild(testEl);
+
+  result.solid = w1 !== w2;
+  result.any   = result.solid;
+  return result;
+}
+
+// --- Anwendung
+const faStatus = checkFontAwesome6();
+
+if (faStatus.any) {
+  console.log('✅ Font Awesome 6 geladen:', faStatus);
+} else {
+  console.log('❌ Font Awesome 6 fehlt:', faStatus);
+}
+
+
+
+
+if (document.fonts) {   bootstrap icons
+  const biLoaded = document.fonts.check('1em "bootstrap-icons"');
+  console.log('Bootstrap Icons geladen?', biLoaded);
+}
+
+
+checkFA6();
+*/

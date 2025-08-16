@@ -102,7 +102,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
     ),
     'palettes'    => array(
         '__selector__' => array('addSubpalette'),
-        'default'      => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur'
+        'default'      => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur,history'
     ),
     'fields'      => array(
         'id'             => array(
@@ -215,21 +215,21 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = array(
             'eval'      => array('maxlength' => 255, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
         ),
-        'persistent' => [                     // noch nicht verwendet
-            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent'],
+        'history' => [                     // noch nicht verwendet
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['history'],
             'inputType' => 'select',
             'exclude'   => true,
             'filter'    => true,
             'sorting'   => true,
             'options'   => [0, 1], // ? nur die Schluessel
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['persistent_options'], // ? Anzeigenamen
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['history_options'], // ? Anzeigenamen
             'eval' => [
                 'includeBlankOption' => false,
                 'tl_class' => 'w50',
                 'isBoolean' => true // ? erzwingt boolsche Behandlung (0/1)
             ],
             'sql' => "TINYINT(1) NOT NULL DEFAULT '0'",
-            'default' => 0
+            'default' => 1
         ],
         'lastUpdated' => [
             'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['lastUpdated'],
