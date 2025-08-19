@@ -139,10 +139,10 @@
                        config.extraText += ' ';
                 }
                 config.extraText = (config.extraText || '') + `${key}: ${val}`;
-                console.log(`${key}: ${val}`);
+                //console.log(`${key}: ${val}`);
                 });
             });
-            console.log('---------------extraText '+config.extraText);
+            //console.log('---------------extraText '+config.extraText);
         }        
         // Beschreibung für Anzeige mit CohItem
         config.description = `${sensor.sensorTitle ? sensor.sensorTitle + ':' : ''} ${sensor.sensorValue ?? ''} ${sensor.sensorEinheit ?? ''} ${config.extraText ?? ''}`.trim();
