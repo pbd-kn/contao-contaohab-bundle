@@ -21,7 +21,7 @@ class LoggerService
     // Variablen für späte Initialisierung
     private ?StreamHandler $streamHandler = null;
     
-    public function __construct(string $dateiname, Logger $contaoLogger, ContainerInterface $container)
+    public function __construct(string $dateiname = 'cohdebug.log', Logger $contaoLogger, ContainerInterface $container)
     {
         $this->dateiname = $dateiname;
         $this->contaoLogger = $contaoLogger;
