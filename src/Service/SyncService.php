@@ -47,6 +47,8 @@ class SyncService
         'db'   => 'co5_solar',
     ];
 
+//        'host' => 'raspberrypi',          // direkter Hostname im LAN
+//        'host' => '192.168.178.49',          // direkter Hostname im LAN
     private array $raspiDirect = [
         'host' => 'raspberrypi',          // direkter Hostname im LAN
         'port' => 3306,
@@ -84,7 +86,7 @@ class SyncService
         $slaveCfg = ($env === 'LIMA') ? $this->raspiTunnel : $this->raspiDirect;
         $slaveDb  = mysqli_init();
         $slaveDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-        if (!@$slaveDb->real_connect($slaveCfg['host'], $slaveCfg['user'], $slaveCfg['pass'], $slaveCfg['db'], $slaveCfg['port'])) {
+        if (!@$slaveDb->real_connect($slaveCfg['host'], $slaveCfg['user'], $slaveCfg['pass'], $slaveCfg['db'], $slaveCfg['port'],null)) {
             $msg = "Slave-Verbindung fehlgeschlagen ({$slaveCfg['host']}:{$slaveCfg['port']}) ? {$slaveDb->connect_error}";
             $output?->writeln("<error>$msg</error>");
             $this->logger->Error($msg);
@@ -143,7 +145,7 @@ class SyncService
                 }
 
                 $masterDb->query("UPDATE tl_coh_sync_log SET last_sync=NOW(), tstamp=UNIX_TIMESTAMP() WHERE sync_type='sensorvalue_pull'");
-                $output?->writeln("<info>Pull fertig: $i Sensorwerte übernommen.</info>");
+                $output?->writeln("<comment>Pull fertig: $i Sensorwerte übernommen.</comment>");
                 $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
             }
         } else {
