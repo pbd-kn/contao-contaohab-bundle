@@ -47,7 +47,7 @@ class CohAktuellChart extends AbstractContentElementController
 
     $error = $this->syncService->sync();              // Daten synchronisieren
     if ($error !== null) {
-        $template->syncError = $error;
+        $template->syncError = "<br>Syncronisation mit rasperrry fehlgeschlagen.<br>$error<br>Die angezeigten Daten beziehen sich auf einen alten Stand";
     }
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
