@@ -1,6 +1,0 @@
-CREATE TABLE IF NOT EXISTS tl_sync_log (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  sync_type VARCHAR(32) NOT NULL,
-  last_sync DATETIME DEFAULT NULL,
-  UNIQUE KEY (sync_type)
-);
