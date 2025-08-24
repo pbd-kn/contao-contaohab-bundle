@@ -19,9 +19,6 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
 use Symfony\Component\Config\FileLocator;
 
-
-
-
 class PbdKnContaoContaohabBundle extends Bundle
 {
 
