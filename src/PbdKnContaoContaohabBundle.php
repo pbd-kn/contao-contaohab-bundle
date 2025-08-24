@@ -26,7 +26,6 @@ class PbdKnContaoContaohabBundle extends Bundle
     {
         return 'Resources/contao/';
     }
-
     
     public function getPath(): string
     {
