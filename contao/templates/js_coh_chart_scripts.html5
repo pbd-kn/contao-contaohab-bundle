@@ -1,7 +1,7 @@
 <?php
-// Bootstrap Icons CSS
+// Bootstrap Icons CSS muesssn als cas aus files eingefügt werden
 ?>
-<link rel="stylesheet" href="<?= Contao\System::getContainer()->get('assets.packages')->getUrl('bundles/pbdkncontaocontaohab/jsbootstrap/bootstrap-icons.css') ?>">
+
 
 <?php
 // JavaScript-Dateien:
