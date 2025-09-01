@@ -7,8 +7,15 @@
         echo '<div class="error">'.$this->syncError.'</div>';
     } else {
         //var_dump($this->data);
-        echo '<p>akt. Werte vom:'.$this->lastPullSync."</p>\n";
-        echo '<p>push Tabellen am:'.$this->lastPullSync."</p>\n";
+        echo '<p>akt. Werte vom:'.$this->lastPullSync."\n";
+        echo '<br>push Tabellen am:'.$this->lastPullSync."\n";
+        echo '<br>Stand vom: '.$this->lastSensorChange."</p>";
+        // nur wenn Status NICHT OK
+        if ($this->lastSensorChangeStatus !== 'OK') {
+            echo '<div class="error">';
+            echo ' ('.$this->lastSensorChangeStatus.')';
+            echo '</div>';
+        }
     }
 ?>
   <script>

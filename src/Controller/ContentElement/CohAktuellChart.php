@@ -41,7 +41,7 @@ class CohAktuellChart extends AbstractContentElementController
             return new Response($wildcard->parse());
         }
 
- // ?? Template dynamisch w�hlen ??
+ // ?? Template dynamisch wählen ??
     $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
     $template = $this->createTemplate($model, $templateName);
 
@@ -75,11 +75,11 @@ class CohAktuellChart extends AbstractContentElementController
                 $ts = date('d.m.Y H:i', $row['tstamp']);
 
                 $id = $row['sensorID'];
-                // Pr�fen, ob numerisch (z.�B. "12.3", "42", aber auch "3e5")
+                // Prüfen, ob numerisch (z. B. "12.3", "42", aber auch "3e5")
                 if (is_numeric($row['sensorValue'])) {
                     $val = (float) $row['sensorValue'];
                 } else {
-                    $val = $row['sensorValue']; // als Text �bernehmen
+                    $val = $row['sensorValue']; // als Text übernehmen
                 }
 //                $val = (float) $row['sensorValue'];
                 $unitLabel = $row['sensorEinheit'] ?: '';
@@ -111,7 +111,26 @@ class CohAktuellChart extends AbstractContentElementController
             $template->lastPullSync = date('d.m.Y H:i', $timestamp);
         } else {
             $template->lastPullSync = 'Keine Sync-Info vorhanden';
-        }          
+        }   
+        // Letzte Änderung aus tl_coh_sensorvalue (Unix → DateTime)
+        $lastChange = $this->connection
+            ->executeQuery("SELECT MAX(tstamp) FROM tl_coh_sensorvalue")
+            ->fetchOne();
+
+        if ($lastChange) {
+            $template->lastSensorChange = date('d.m.Y H:i', (int)$lastChange);
+
+            // Prüfen ob älter als 15 Minuten
+            $diff = time() - (int)$lastChange;
+            if ($diff > 900) {
+                $template->lastSensorChangeStatus = 'Fehler: Letzter Eintrag älter als 15 Min';
+            } else {
+                $template->lastSensorChangeStatus = 'OK';
+            }
+        } else {
+            $template->lastSensorChange = 'Keine Daten in tl_coh_sensorvalue';
+            $template->lastSensorChangeStatus = 'Fehler';
+        }              
         $result = $this->connection
           ->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'config_push'")
           ->fetchOne();

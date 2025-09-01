@@ -41,14 +41,14 @@ class SyncService
 
     private array $raspiTunnel = [
         'host' => '127.0.0.1',
-        'port' => 3308,                   // Tunnelport von Lima zum Raspi
+        'port' => 3307,                   // Tunnelport von Lima zum Raspi funktioniet leider nicht conection refused beim tunnel von lima aus
         'user' => 'peter',
         'pass' => 'sql666sql',
         'db'   => 'co5_solar',
     ];
 
 //        'host' => 'raspberrypi',          // direkter Hostname im LAN
-//        'host' => '192.168.178.49',          // direkter Hostname im LAN
+//        'host' => '127.0.0.1',          // direkter Hostname im LAN
     private array $raspiDirect = [
         'host' => 'raspberrypi',          // direkter Hostname im LAN
         'port' => 3306,
@@ -84,10 +84,11 @@ class SyncService
 
         // --- SLAVE: immer Raspberry ---
         $slaveCfg = ($env === 'LIMA') ? $this->raspiTunnel : $this->raspiDirect;
+        //$slaveCfg = $this->raspiTunnel;
         $slaveDb  = mysqli_init();
         $slaveDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
         if (!@$slaveDb->real_connect($slaveCfg['host'], $slaveCfg['user'], $slaveCfg['pass'], $slaveCfg['db'], $slaveCfg['port'],null)) {
-            $msg = "Slave-Verbindung fehlgeschlagen ({$slaveCfg['host']}:{$slaveCfg['port']}) ? {$slaveDb->connect_error}";
+            $msg = "sync läuift auf $env Slave-Verbindung fehlgeschlagen ({$slaveCfg['host']}:{$slaveCfg['port']}) ? {$slaveDb->connect_error}";
             $output?->writeln("<error>$msg</error>");
             $this->logger->Error($msg);
             return $msg;
