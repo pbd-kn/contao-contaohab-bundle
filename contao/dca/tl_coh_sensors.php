@@ -12,14 +12,11 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
     'config' => [
         'dataContainer'    => DC_Table::class,
-        'enableVersioning' => true,
+        'enableVersioning' => false,
         'sql' => [
             'keys' => [
                 'id' => 'primary',
             ],
-        ],
-        'onsubmit_callback' => [
-            ['tl_coh_sensors', 'onSubmitRecord'],
         ],
     ],
 
@@ -54,18 +51,9 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
     ],
 
-    'palettes' => [
-        'default' =>
-            '{first_legend},
-            sensorID,
-            sensorTitle,
-            sensorEinheit,
-            sensorValueType,
-            sensorSource,
-            sensorLokalId,
-            transFormProcedur,
-            history',
-    ],
+'palettes' => [
+    'default' => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur,history',
+],
 
     'fields' => [
 
@@ -79,12 +67,21 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
         'sensorID' => [
             'inputType' => 'text',
+            // Listenfunktionen
+            'search'    => true,
+            'filter'    => true,
+            'sorting'   => true,            
             'eval' => ['mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'],
             'sql' => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorTitle' => [
             'inputType' => 'text',
+            // Listenfunktionen
+            'search'    => true,
+            'filter'    => true,
+            'sorting'   => true,            
+
             'eval' => ['mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'],
             'sql' => "varchar(255) NOT NULL default ''",
         ],
@@ -105,6 +102,11 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
         'sensorSource' => [
             'inputType' => 'select',
+            // Listenfunktionen
+            'search'    => true,
+            'filter'    => true,
+            'sorting'   => true,            
+
             'options_callback' => ['tl_coh_sensors', 'getGeraeteIDs'],
             'eval' => [
                 'mandatory' => false,
@@ -115,16 +117,18 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'sql' => "varchar(255) NOT NULL default ''",
         ],
 
-'sensorLokalId' => [
-    'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorLokalId'],
-    'inputType' => 'text',
-    'eval'      => [
-        'maxlength' => 255,
-        'tl_class'  => 'w50',
-    ],
-    'sql' => "varchar(255) NOT NULL DEFAULT ''",
-],
-
+        'sensorLokalId' => [
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorLokalId'],
+            'inputType' => 'text',
+            // Listenfunktionen
+            'search'    => true,
+            'filter'    => true,
+            'sorting'   => true,    'eval'      => [
+                'maxlength' => 255,
+                'tl_class'  => 'w50',
+            ],
+            'sql' => "varchar(255) NOT NULL DEFAULT ''",
+        ],
 
         'transFormProcedur' => [
             'inputType' => 'select',
@@ -168,26 +172,5 @@ class tl_coh_sensors
         return $options;
     }
 
-    public function onSubmitRecord(DataContainer $dc): void
-    {
-    /* funktioniert bei contao 5 nicht mehr
-        \System::log(
-            'Gespeichert: sensorLokalId=' . ($dc->activeRecord->sensorLokalId ?? 'NULL'),
-            __METHOD__,
-            TL_GENERAL
-        );
-    */
-        if (!$dc->id) {
-            return;
-        }
 
-        // Wert sensorLokalId direkt aus POST holen
-// Wert direkt aus dem ActiveRecord (bereits normalisiert durch Contao)
-$data = $dc->getCurrentRecord();
-    $value = (string) ($data['sensorLokalId'] ?? '');
-        \Contao\Database::getInstance()
-            ->prepare("UPDATE tl_coh_sensors SET sensorLokalId=? WHERE id=?")
-            ->execute($value, $dc->id);
-    
-    }
 }
