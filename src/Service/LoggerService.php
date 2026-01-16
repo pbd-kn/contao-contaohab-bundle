@@ -48,6 +48,32 @@ class LoggerService
         }
     }
 
+    public function debugDumpMe(mixed $var): void
+    {
+        if ($this->debug) {
+            if ($this->streamHandler === null) {
+                $logPath = $this->projectDir . '/var/logs/' . $this->dateiname;
+                $formatter = new LineFormatter('%datetime% [Logger] %message%' . PHP_EOL, null, true, true);
+                $this->streamHandler = new StreamHandler($logPath, Logger::INFO);
+                $this->streamHandler->setFormatter($formatter);
+                $this->contaoLogger->pushHandler($this->streamHandler);
+            }
+            // 🔍 Backtrace für Ort des Aufrufs
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+            $caller = $trace[1] ?? $trace[0];
+            $file = $caller['file'] ?? 'unknown file';
+            $line = $caller['line'] ?? 'unknown line';
+            if (is_array($var) || is_object($var)) {
+                ob_start();
+                var_dump($var);
+                $dump = ob_get_clean();
+            } else {
+                $dump = print_r($var, true);
+            }
+            $dump = trim($dump);
+            $this->contaoLogger->info(PHP_EOL . "--- DEBUG DUMP AT $file:$line ---" . PHP_EOL . $dump . PHP_EOL . "--- DEBUG DUMP END ---" . PHP_EOL);
+        }
+    }
     public function Error(string $txt): void
     {
         if ($this->streamHandler === null) { // Erst wenn der Debug-Modus aktiv ist und noch nicht initialisiert wurde

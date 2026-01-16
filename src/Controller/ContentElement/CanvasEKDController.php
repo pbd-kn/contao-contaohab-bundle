@@ -194,10 +194,10 @@ class CanvasEKDController extends AbstractContentElementController
                 $entry['src'] = $fileModel->path;
                 $entry['label'] = trim((string)($row['label'] ?? ''));
                 if (in_array(strtolower($type ?? ''), ['haus'], true)) {
-                    $valSolar=$dataSensor['IQinverter_94_inverter_pvPower']['sensorValue'];
-                    $valHeizstab=$dataSensor['ELaktPwr']['sensorValue'];
-                    $valAkku=$dataSensor['IQbattery_94_battery_power']['sensorValue'];
-                    $valSWR=$dataSensor['ZWZZaehlerPowerOut']['sensorValue']-$dataSensor['ZWZZaehlerPowerIn']['sensorValue'];
+                    $valSolar=(int)$dataSensor['IQinverter_94_inverter_pvPower']['sensorValue'];
+                    $valHeizstab=(int)$dataSensor['ELaktPwr']['sensorValue'];
+                    $valAkku=(int)$dataSensor['IQbattery_94_battery_power']['sensorValue'];
+                    $valSWR=(int)$dataSensor['ZWZZaehlerPowerOut']['sensorValue']-(int)$dataSensor['ZWZZaehlerPowerIn']['sensorValue'];
                     $valBerechnet = $valSolar-$valHeizstab-$valAkku-$valSWR;
                     $val = "Eigenverbrauch \n".$dataSensor['IQinverter_94_inverter_selfConsumptionPower']['sensorValue'].' '.$dataSensor['IQinverter_94_inverter_selfConsumptionPower']['sensorEinheit'];
                     $val .= "\nberechnet ".$valBerechnet.' '.$dataSensor['IQinverter_94_inverter_selfConsumptionPower']['sensorEinheit'];
