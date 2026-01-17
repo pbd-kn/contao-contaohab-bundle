@@ -150,7 +150,7 @@ class SyncService
                 $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
             }
         } else {
-                $this->logger->debugMe("Pull wegen time nicht noetig.");        
+                $this->logger->debugMe("Pull wegen time nicht noetig. Last Sync $lastSync ");        
         }
 
         // --- PUSH: Config vom Master ? Raspberry ---
@@ -187,7 +187,7 @@ class SyncService
             $this->logger->debugMe("Push: fertig");
             $output?->writeln("<info>Push fertig.</info>");
         } else {
-                $this->logger->debugMe("push wegen time nicht noetig.");        
+                $this->logger->debugMe("push wegen time nicht noetig.  Last Sync $lastSync ");        
         }
 
         $this->logger->debugMe("Synchronisation erfolgreich abgeschlossen.");

@@ -12,6 +12,7 @@ use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
 use PbdKn\ContaoContaohabBundle\Service\SyncService;
+use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 
 
 #[AsContentElement(CohAktuellChart::TYPE, category: 'COH')]
@@ -21,7 +22,8 @@ class CohAktuellChart extends AbstractContentElementController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly SyncService $syncService
+        private readonly SyncService $syncService,
+        private readonly LoggerService $logger
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -42,10 +44,13 @@ class CohAktuellChart extends AbstractContentElementController
         }
 
  // ?? Template dynamisch wählen ??
+    $this->logger->debugMe("getResponse: sensorwerte liefern");
+
     $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
     $template = $this->createTemplate($model, $templateName);
 
     $error = $this->syncService->sync();              // Daten synchronisieren
+    $this->logger->debugMe("getResponse: sync ok");
     if ($error !== null) {
         $template->syncError = "<br>Syncronisation mit rasperrry fehlgeschlagen.<br>$error<br>Die angezeigten Daten beziehen sich auf einen alten Stand";
     }
@@ -54,18 +59,23 @@ class CohAktuellChart extends AbstractContentElementController
 
         if (!empty($selectedSensors)) {
             $placeholders = implode(',', array_fill(0, count($selectedSensors), '?'));
-
+            //„letzter nicht-leerer Messwert pro Sensor“
             $rows = $this->connection->fetchAllAssociative(
-                'SELECT s1.*, s3.sensorTitle
-                 FROM tl_coh_sensorvalue s1
-                     INNER JOIN (
-                         SELECT sensorID, MAX(tstamp) AS max_tstamp
-                             FROM tl_coh_sensorvalue
-                             WHERE sensorID IN (?)
-                             GROUP BY sensorID
-                     ) s2 ON s1.sensorID = s2.sensorID AND s1.tstamp = s2.max_tstamp
-                     LEFT JOIN tl_coh_sensors s3 ON s1.sensorID = s3.sensorID
-                     ORDER BY s1.sensorID ASC',
+                'SELECT *
+                    FROM (
+                        SELECT s1.*, s3.sensorTitle,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY s1.sensorID
+                                ORDER BY s1.tstamp DESC, s1.id DESC
+                            ) rn
+                    FROM tl_coh_sensorvalue s1
+                        LEFT JOIN tl_coh_sensors s3 ON s1.sensorID = s3.sensorID
+                            WHERE s1.sensorID IN (?)
+                                AND s1.sensorValue IS NOT NULL
+                                AND s1.sensorValue <> \'\'
+                    ) x
+                WHERE rn = 1
+                ORDER BY sensorID',
                 [$selectedSensors],
                 [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
             );
@@ -75,6 +85,9 @@ class CohAktuellChart extends AbstractContentElementController
                 $ts = date('d.m.Y H:i', $row['tstamp']);
 
                 $id = $row['sensorID'];
+    //$this->logger->debugMe("getResponse: sensorID $id");
+    $this->logger->debugMe("ROW: id={$row['id']} sensorID={$row['sensorID']} tstamp={$row['tstamp']} raw=" . var_export($row['sensorValue'], true));
+
                 // Prüfen, ob numerisch (z. B. "12.3", "42", aber auch "3e5")
                 if (is_numeric($row['sensorValue'])) {
                     $val = (float) $row['sensorValue'];
@@ -97,6 +110,11 @@ class CohAktuellChart extends AbstractContentElementController
                 $data[$id]['sensorEinheit'] = $unitLabel;
                 $data[$id]['sensorValueType'] = !empty($row['sensorValueType']) ? $row['sensorValueType'] : '';
                 $data[$id]['sensorSource'] = !empty($row['sensorSource']) ? $row['sensorSource'] : '';
+                
+                
+                $str = print_r($data[$id], true);
+                $this->logger->debugMe("getResponse: data $str");
+
             }
         }
 

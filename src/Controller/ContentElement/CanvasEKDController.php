@@ -61,20 +61,25 @@ class CanvasEKDController extends AbstractContentElementController
         ];
         $placeholders = implode(',', array_fill(0, count($selectedSensors), '?'));
 
-        $rows = $this->connection->fetchAllAssociative(
-            'SELECT s1.*, s3.sensorTitle
-                 FROM tl_coh_sensorvalue s1
-                     INNER JOIN (
-                         SELECT sensorID, MAX(tstamp) AS max_tstamp
-                             FROM tl_coh_sensorvalue
-                             WHERE sensorID IN (?)
-                             GROUP BY sensorID
-                     ) s2 ON s1.sensorID = s2.sensorID AND s1.tstamp = s2.max_tstamp
-                     LEFT JOIN tl_coh_sensors s3 ON s1.sensorID = s3.sensorID
-                     ORDER BY s1.sensorID ASC',
+            $rows = $this->connection->fetchAllAssociative(
+                'SELECT *
+                    FROM (
+                        SELECT s1.*, s3.sensorTitle,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY s1.sensorID
+                                ORDER BY s1.tstamp DESC, s1.id DESC
+                            ) rn
+                    FROM tl_coh_sensorvalue s1
+                        LEFT JOIN tl_coh_sensors s3 ON s1.sensorID = s3.sensorID
+                            WHERE s1.sensorID IN (?)
+                                AND s1.sensorValue IS NOT NULL
+                                AND s1.sensorValue <> \'\'
+                    ) x
+                WHERE rn = 1
+                ORDER BY sensorID',
                 [$selectedSensors],
                 [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-        );
+            );
         // daten der Sensoren speichern
         $dataSensor = [];
         foreach ($rows as $row) {
