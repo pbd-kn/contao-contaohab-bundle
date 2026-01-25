@@ -110,7 +110,6 @@
         // Farbanpassung für Heizstab booster
         if (config.sensorId === 'ELaktboostactive') {
             config.iconColor = parseFloat(sensor.sensorValue) >= 0 ? 'green' : 'red';
-            sensor.sensorTitle = ' Heizstab Boost';
             //config.iconColor = iconColor;
         }
         // Farbanpassung für Heizstab-Server
