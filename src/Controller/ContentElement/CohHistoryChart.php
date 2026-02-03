@@ -130,7 +130,7 @@ class CohHistoryChart extends AbstractContentElementController
 
     private function getSensorColor(int|string $id): string
     {
-        $colors = ['purple','#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];
+        $colors = ['purple','yellow', 'green', 'blue', 'gray', 'red', '#F472B6'];
         $idNumeric = is_numeric($id) ? (int) $id : crc32($id);
         return $colors[$idNumeric % count($colors)];
     }
