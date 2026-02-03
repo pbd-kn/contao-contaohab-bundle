@@ -18,71 +18,84 @@ class CohItem {
   }
 
 renderAsHtmlString() {
-  const {
-    icon,
-    sensorValue = 0,
-    iconSize = 80,
-    iconColor,
-    textColor,
-    title = '',
-    description = '',
-    gaugeId,
-    styles = {}
-  } = this.params;
+    const {
+        icon,
+        iconType = '',
+        sensorValue = 0,
+        iconSize = 80,
+        iconColor,
+        textColor,
+        title = '',
+        description = '',
+        gaugeId,
+        sensorTitle,
+        styles = {}
+    } = this.params;
 
-  const titleText = description || title;
+    const titleText = description || title;
 
-  if (icon === 'gauge') {
-    // Gauge-HTML zurückgeben
-    return `
-      <div class="gauge-container" style="display:flex; align-items:flex-start;">
-        <canvas 
-          class="gauge-canvas" 
-          id="${gaugeId || 'gaugeIdDummy'}"
-          width="${iconSize}" 
-          height="${iconSize}" 
-          style="width:${iconSize}px;height:${iconSize}px"
-          data-value="${sensorValue}"
-          data-max="100"
-        ></canvas>
-        <div class="block-title" style="margin-left:20px; flex-shrink:1;${textColor ? ` color: ${textColor};` : ''}">
-          ${titleText}
-        </div>
-      </div>
-    `;
-  } else {
-    // Icon-Fall
-    const iconClass = this.params.iconClass ? `bi ${icon} ${this.params.iconClass}` : `bi ${icon}`;
+    if (iconType === 'gauge') {
+        // Gauge-HTML zurückgeben
+        return `
+            <div class="gauge-container" style="display:flex; align-items:flex-start;">
+                <canvas 
+                    class="gauge-canvas" 
+                    id="${gaugeId || 'gaugeIdDummy'}"
+                    width="${iconSize}" 
+                    height="${iconSize}" 
+                    style="width:${iconSize}px;height:${iconSize}px"
+                    data-value="${sensorValue}"
+                    data-max="100"
+                ></canvas>
+                <div class="block-title" style="margin-left:20px; flex-shrink:1;${textColor ? ` color: ${textColor};` : ''}">
+                    ${titleText}
+                </div>
+            </div>
+        `;
+    } else if (iconType === 'toggle') {
+        const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, "<br> iconType $iconType");
+        const styleParts = [];
+        if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
+        if (iconColor) styleParts.push(`color: ${iconColor}`);
+        for (const [key, value] of Object.entries(styles)) {
+            styleParts.push(`${key}: ${value}`);
+        }
+        const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
+        const iconHtml = this.renderIconHtml(icon, styles, iconSize, iconColor);
 
-    const styleParts = [];
-    if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
-    if (iconColor) styleParts.push(`color: ${iconColor}`);
-    for (const [key, value] of Object.entries(styles)) {
-      styleParts.push(`${key}: ${value}`);
+        let ret = "";
+        ret += "<details>";
+        ret += `<summary${textColor ? ` style="color: ${textColor};"` : ''}>${iconHtml} ${sensorTitle}</summary>`;
+        ret += "<div>";
+        ret += preparedTitle;
+        ret += "</div>";
+        ret += "</details>";
+        return ret;
+    } else {
+        // Icon-Fall
+        const iconClass = this.params.iconClass ? `bi ${icon} ${this.params.iconClass}` : `bi ${icon}`;
+    
+        const styleParts = [];
+        if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
+        if (iconColor) styleParts.push(`color: ${iconColor}`);
+        for (const [key, value] of Object.entries(styles)) {
+            styleParts.push(`${key}: ${value}`);
+        }
+        const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
+
+
+        const iconHtml = this.renderIconHtml(icon, styles, iconSize, iconColor);
+        const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, "<br> iconType $iconType");
+    
+
+        return `
+            <div class="coh--item" style="display: flex; align-items: flex-start;${textColor ? ` color: ${textColor};` : ''}">
+                ${iconHtml}
+                <div style="margin-left: 20px;">${preparedTitle}</div>
+            </div>
+        `;
+
     }
-    const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
-
-/*    const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
-
-    return `
-      <div class="coh--item" style="display: flex; align-items: flex-start;${textColor ? ` color: ${textColor};` : ''}">
-        <i class="${iconClass}"${iconStyle}></i>
-        <div style="margin-left: 20px;">${preparedTitle}</div>
-      </div>
-    `;
-*/
-    const iconHtml = this.renderIconHtml(icon, styles, iconSize, iconColor);
-    const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, '<br>');
-
-    return `
-        <div class="coh--item" style="display: flex; align-items: flex-start;${textColor ? ` color: ${textColor};` : ''}">
-          ${iconHtml}
-          <div style="margin-left: 20px;">${preparedTitle}</div>
-        </div>
-
-      `;
-
-  }
 }
 /* erzeugt den code zum einbringen des Icons abhängig vom Iconset der Kennzeichnung vor dem icon bs:   ... */
 /* font familien 

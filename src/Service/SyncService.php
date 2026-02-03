@@ -88,7 +88,7 @@ class SyncService
         $slaveDb  = mysqli_init();
         $slaveDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
         if (!@$slaveDb->real_connect($slaveCfg['host'], $slaveCfg['user'], $slaveCfg['pass'], $slaveCfg['db'], $slaveCfg['port'],null)) {
-            $msg = "sync läuift auf $env Slave-Verbindung fehlgeschlagen ({$slaveCfg['host']}:{$slaveCfg['port']}) ? {$slaveDb->connect_error}";
+            $msg = "sync läuift auf $env Slave-Verbindung fehlgeschlagen Vielleicht läuft Backup auf dem Raspbery oder Service mariadb läuft nicht ({$slaveCfg['host']}:{$slaveCfg['port']}) ? {$slaveDb->connect_error}";
             $output?->writeln("<error>$msg</error>");
             $this->logger->Error($msg);
             return $msg;
