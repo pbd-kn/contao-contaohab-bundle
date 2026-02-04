@@ -53,7 +53,7 @@ renderAsHtmlString() {
             </div>
         `;
     } else if (iconType === 'toggle') {
-        const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, "<br> iconType $iconType");
+        const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, "<br>");
         const styleParts = [];
         if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
         if (iconColor) styleParts.push(`color: ${iconColor}`);
