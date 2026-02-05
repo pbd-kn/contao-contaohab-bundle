@@ -21,16 +21,16 @@ $strDca='tl_coh_sensorvalue';
 
 
 $GLOBALS['TL_DCA'][$strDca] = array(
-    'config'      => array(
+    'config' => array(
         'dataContainer'    => DC_Table::class,
         'enableVersioning' => true,
         'sql'              => array(
             'keys' => array(
-                'id' => 'primary'
+                'id' => 'primary',
+                'sensorID,tstamp' => 'unique'
             )
         ),
-        'onsubmit_callback' => array ($strDca, 'onSubmitRecord'),   //wird bei speichern des satzes aufgerufen
-
+        'onsubmit_callback' => array ($strDca, 'onSubmitRecord'),
     ),
     'list'        => array(
         'sorting'           => array(

@@ -126,26 +126,50 @@ class SyncService
         $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='sensorvalue_pull'");
         $row = $res?->fetch_assoc();
         $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
-
         if (strtotime($lastSync) < time() - 5 * 60) {
-            $stmt = $slaveDb->prepare("SELECT * FROM tl_coh_sensorvalue WHERE tstamp > ?");
+            $stmt = $slaveDb->prepare("SELECT tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource FROM tl_coh_sensorvalue WHERE tstamp > ? ");
             if ($stmt) {
                 $ts = strtotime($lastSync);
                 $stmt->bind_param('i', $ts);
                 $stmt->execute();
                 $result = $stmt->get_result();
-
                 $i = 0;
+                $sql = "
+                    INSERT INTO tl_coh_sensorvalue (tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource) VALUES (?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        sensorValue      = VALUES(sensorValue),
+                        sensorEinheit    = VALUES(sensorEinheit),
+                        sensorValueType  = VALUES(sensorValueType),
+                        sensorSource     = VALUES(sensorSource)
+                ";
+                $insert = $masterDb->prepare($sql);
+                $insert->bind_param(
+                    'isssss',
+                    $tstamp,
+                    $sensorID,
+                    $sensorValue,
+                    $sensorEinheit,
+                    $sensorValueType,
+                    $sensorSource
+                );  
                 while ($r = $result->fetch_assoc()) {
-                    $columns = array_keys($r);
-                    $escaped = array_map([$masterDb, 'real_escape_string'], array_values($r));
-                    $colList = implode(',', array_map(fn($c) => "`$c`", $columns));
-                    $valList = "'" . implode("','", $escaped) . "'";
-                    $masterDb->query("REPLACE INTO tl_coh_sensorvalue ($colList) VALUES ($valList)");
-                    $i++;
+                    $tstamp          = (int) $r['tstamp'];
+                    $sensorID        = $r['sensorID'];
+                    $sensorValue     = $r['sensorValue'];
+                    $sensorEinheit   = $r['sensorEinheit'];
+                    $sensorValueType = $r['sensorValueType'];
+                    $sensorSource    = $r['sensorSource'];
+                    if (!$insert->execute()) {
+                        $this->logger->Error( 'Sensor-Sync Fehler (sensorID=' . $sensorID . ', tstamp=' . $tstamp . '): ' . $insert->error);
+                    } else {
+                        $i++;
+                    }
                 }
-
-                $masterDb->query("UPDATE tl_coh_sync_log SET last_sync=NOW(), tstamp=UNIX_TIMESTAMP() WHERE sync_type='sensorvalue_pull'");
+                $masterDb->query("
+                    UPDATE tl_coh_sync_log
+                    SET last_sync = NOW(), tstamp = UNIX_TIMESTAMP()
+                    WHERE sync_type = 'sensorvalue_pull'
+                ");
                 $output?->writeln("<comment>Pull fertig: $i Sensorwerte übernommen.</comment>");
                 $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
             }
