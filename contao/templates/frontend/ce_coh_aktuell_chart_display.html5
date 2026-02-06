@@ -41,14 +41,14 @@
       { sensorId: 'TS_Power',                                       icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
       { sensorId: 'TS_E_in_108',                                    icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
       { sensorId: 'TS_E_out_208',                                   icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'Kommentar',               icon: 'bs:bi-list-ul',  iconType: 'toggleend' },
+      { sensorId: 'Kommentar',                                      iconType: 'toggleend' },
 
-      { sensorId: 'Kommentar',                                      iconType: 'togglestart', iconSize: 24, sensorTitle: ' Heizstab',textColor: 'blue', sensorValue: 'open' },
+      { sensorId: 'Kommentar',                                      iconType: 'togglestart', iconSize: 24, sensorTitle: ' Heizstab Daten',textColor: 'blue', sensorValue: 'open' },
       { sensorId: 'ELaktTemp1',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ELaktTemp2',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ELaktboostactive',                               icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' }, 
       { sensorId: 'ELaktPwr',                                       icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'Kommentar',               icon: 'bs:bi-list-ul',  iconType: 'toggleend' },
+      { sensorId: 'Kommentar',                                      iconType: 'toggleend' },
 
       { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bs:bi-list-ul',  iconType: 'toggle', iconSize: 24, iconColor: 'green', sensorTitle: 'HeizstabServerProtokoll' },
       { sensorId: 'RaspberryHeizstabServerIntervall',               icon: 'bs:bi-square', iconSize: 24, iconColor: 'green' },
