@@ -36,30 +36,28 @@
       { sensorId: 'IQbattery_94_battery_power',                     icon: 'bs:bi-battery-full', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ZWZZaehlerPower',                                icon: 'bs:bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
       { sensorId: 'ZWZZaehlerTotalPVEnergie',                       icon: 'bs:bi-sign-intersection-y', iconSize: 24, iconColor: 'red' },
-      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Tasmota SWR Zähler',textColor: 'blue', sensorValue: 'Daten',styles: {
-                    transform: 'rotate(90deg)'
-            }
-      },
+
+      { sensorId: 'Kommentar',                                      iconType: 'togglestart', iconSize: 24, sensorTitle: ' Tasmota SWR Zähler',textColor: 'blue', sensorValue: 'Daten' },
       { sensorId: 'TS_Power',                                       icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
       { sensorId: 'TS_E_in_108',                                    icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
       { sensorId: 'TS_E_out_208',                                   icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Heizstab',textColor: 'blue', sensorValue: '',styles: {
-                    transform: 'rotate(90deg)'
-            }
-      },
+      { sensorId: 'Kommentar',               icon: 'bs:bi-list-ul',  iconType: 'toggleend' },
+
+      { sensorId: 'Kommentar',                                      iconType: 'togglestart', iconSize: 24, sensorTitle: ' Heizstab',textColor: 'blue', sensorValue: 'open' },
       { sensorId: 'ELaktTemp1',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ELaktTemp2',                                     icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'ELaktboostactive',                               icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' }, 
       { sensorId: 'ELaktPwr',                                       icon: 'bs:bi-lightning-fill', iconSize: 24, iconColor: 'green' },
+      { sensorId: 'Kommentar',               icon: 'bs:bi-list-ul',  iconType: 'toggleend' },
+
       { sensorId: 'RaspberryHeizstabServerProtokoll',               icon: 'bs:bi-list-ul',  iconType: 'toggle', iconSize: 24, iconColor: 'green', sensorTitle: 'HeizstabServerProtokoll' },
       { sensorId: 'RaspberryHeizstabServerIntervall',               icon: 'bs:bi-square', iconSize: 24, iconColor: 'green' },
-      { sensorId: 'Kommentar',                                      icon: 'bs:bi-chevron-right', iconSize: 24, sensorTitle: ' Raspberry',textColor: 'blue', sensorValue: 'Systemdaten',styles: { transform: 'rotate(90deg)' }
-      },
+
+      { sensorId: 'Kommentar',                                      iconType: 'togglestart', iconSize: 24, sensorTitle: ' Raspberry Systemdaten',textColor: 'blue', sensorValue: 'Systemdaten'},
       { sensorId: 'RaspberryCheckHeizstabServer',                   icon: 'bs:bi-bullseye', iconSize: 24, iconColor: 'green' },
-
       { sensorId: 'RaspberrycheckSensorCollectorServer',            icon: 'bs:bi-circle-fill', iconSize: 24, iconColor: 'green' },
-
-      { sensorId: 'RaspberrycheckPlattenbelegung',                  icon: 'bs:bi-sd-card', iconSize: 24, iconColor: 'green'}
+      { sensorId: 'RaspberrycheckPlattenbelegung',                  icon: 'bs:bi-sd-card', iconSize: 24, iconColor: 'green'},
+      { sensorId: 'Kommentar',                                      iconType: 'toggleend' }
     
             
     ];
@@ -183,6 +181,8 @@
             }
 
             let allHtml = '';
+            let toggleHtml = '';
+            let togglecollect = 0;
             const gaugeInitList = [];
 
             sensorConfig.forEach((config, index) => {     // index ist der positionsindex in sensorConfig
@@ -193,8 +193,23 @@
                     ...config,
                     gaugeId
                 });
-
-                allHtml += item.renderAsHtmlString();
+                if (config.iconType === 'togglestart') {
+                    togglecollect = 1;                
+                    toggleHtml += item.renderAsHtmlString();
+                    //console.log('togglestart' + toggleHtml);
+                } else if (config.iconType === 'toggleend') {
+                    togglecollect = 0;                
+                    toggleHtml += item.renderAsHtmlString();
+                    //console.log('toggleend' + toggleHtml);
+                    allHtml += toggleHtml;
+                    toggleHtml = '';
+                } else {
+                    if (togglecollect == 0) {
+                        allHtml += item.renderAsHtmlString();
+                    } else {
+                        toggleHtml += item.renderAsHtmlString();
+                    }
+                }
 
                 if (config.iconType === 'gauge') {
                     gaugeInitList.push({ gaugeId, iconSize: config.iconSize || 80, sensorValue: config.sensorValue });     // Gauge daten in gaugeInitList merken

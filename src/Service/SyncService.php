@@ -151,7 +151,8 @@ class SyncService
                     $sensorEinheit,
                     $sensorValueType,
                     $sensorSource
-                );  
+                ); 
+                $masterDb->begin_transaction(); 
                 while ($r = $result->fetch_assoc()) {
                     $tstamp          = (int) $r['tstamp'];
                     $sensorID        = $r['sensorID'];
@@ -165,6 +166,7 @@ class SyncService
                         $i++;
                     }
                 }
+                $masterDb->commit();
                 $masterDb->query("
                     UPDATE tl_coh_sync_log
                     SET last_sync = NOW(), tstamp = UNIX_TIMESTAMP()

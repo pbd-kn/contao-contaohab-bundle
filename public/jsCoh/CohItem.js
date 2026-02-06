@@ -33,7 +33,6 @@ renderAsHtmlString() {
     } = this.params;
 
     const titleText = description || title;
-
     if (iconType === 'gauge') {
         // Gauge-HTML zurückgeben
         return `
@@ -68,6 +67,28 @@ renderAsHtmlString() {
         ret += `<summary${textColor ? ` style="color: ${textColor};"` : ''}>${iconHtml} ${sensorTitle}</summary>`;
         ret += "<div>";
         ret += preparedTitle;
+        ret += "</div>";
+        ret += "</details>";
+        return ret;
+    } else if (iconType === 'togglestart') {
+        const preparedTitle = titleText.replace(/(\r\n|\n\r|\r|\n)/g, "<br>");
+        const styleParts = [];
+        if (iconSize) styleParts.push(`font-size: ${iconSize}px`);
+        if (iconColor) styleParts.push(`color: ${iconColor}`);
+        for (const [key, value] of Object.entries(styles)) {
+            styleParts.push(`${key}: ${value}`);
+        }
+        const iconStyle = styleParts.length ? ` style="${styleParts.join('; ')}"` : '';
+        const iconHtml = this.renderIconHtml(icon, styles, iconSize, iconColor);
+        let ret = "";
+        const isOpen = typeof sensorValue === 'string' && sensorValue.toLowerCase().includes('open') ? ' open' : '';
+        ret += `<details${isOpen}>`;
+        //ret += "<details>";
+        ret += `<summary${textColor ? ` style="color: ${textColor};"` : ''}>${iconHtml} ${sensorTitle}</summary>`;
+        ret += "<div>";
+        return ret;
+    } else if (iconType === 'toggleend') {
+        let ret = "";
         ret += "</div>";
         ret += "</details>";
         return ret;
