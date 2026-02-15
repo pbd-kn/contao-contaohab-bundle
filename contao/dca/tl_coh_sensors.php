@@ -51,9 +51,9 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
     ],
 
-'palettes' => [
-    'default' => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur,history',
-],
+    'palettes' => [
+        'default' => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur,history,outputMode',
+    ],
 
     'fields' => [
 
@@ -147,7 +147,22 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'eval' => ['isBoolean'=>true, 'tl_class'=>'w50'],
             'sql' => "tinyint(1) NOT NULL default '0'",
         ],
+        'outputMode' => [
+            'label' => ['Ausgabemodus', 'Wie soll der Wert berechnet werden?'],
+            'inputType' => 'select',
+            'options' => [
+                'absolute' => 'Absolut (Rohwert)',
+                'daily'    => 'Tageswert (00:00 ? jetzt)'
+            ],
+            'eval' => [
+                'mandatory' => true,
+                'tl_class'  => 'w50',
+                'chosen'    => true
+            ],
+            'sql' => "varchar(20) NOT NULL default 'absolute'"
+        ],
     ],
+    
 ];
 
 class tl_coh_sensors

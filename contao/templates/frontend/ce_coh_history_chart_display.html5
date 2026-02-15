@@ -1,9 +1,5 @@
 <?php use Contao\StringUtil; ?>
-<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper" style="max-width: 700px; padding: 1rem;">
-<?php
-// !!!! Achtung damit das template funktioniert js_coh_chart_script geladen wewrden. Beim deinstallieren muss dieser Haken auch im Layout unter den js_ entfernt werden sonst Absturz !!!!
-?>
-
+<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper actuell-history-container">
 <?php
 $headline = StringUtil::deserialize($this->headline);
 $chartTitle = 'Sensorwerte über Zeit';
@@ -24,120 +20,245 @@ if (is_string($headline)) {
     <?php endif; ?>
   <?php endforeach; ?>
 
-  <div class="" style="display:flex">
-    <select class="button button-tonal-md" style='margin-right: 10px;' name="<?= $this->unitField ?>" onchange="this.form.submit()">
+  <div style="display:flex">
+    <select class="button button-tonal-md" style="margin-right: 10px;" name="<?= $this->unitField ?>" onchange="this.form.submit()">
       <option value="day" <?= $this->currentUnit === 'day' ? 'selected' : '' ?>>Tag</option>
       <option value="week" <?= $this->currentUnit === 'week' ? 'selected' : '' ?>>Woche</option>
       <option value="month" <?= $this->currentUnit === 'month' ? 'selected' : '' ?>>Monat</option>
       <option value="year" <?= $this->currentUnit === 'year' ? 'selected' : '' ?>>Jahr</option>
     </select>
-    <button class="button button-tonal-md" type="submit" style="width: auto;" name="<?= $this->valueField ?>" value="<?= (new DateTime($this->currentValue))->modify('-1 ' . $this->currentUnit)->format('Y-m-d') ?>">←</button>
-    <span class="button button-tonal-md" style="margin: 0 0.5rem;"><?= $this->rangeLabel ?></span>
-    <button class="button button-tonal-md" type="submit" style="width: auto;" name="<?= $this->valueField ?>" value="<?= (new DateTime($this->currentValue))->modify('+1 ' . $this->currentUnit)->format('Y-m-d') ?>">→</button>
+
+    <button class="button button-tonal-md" type="submit"
+      name="<?= $this->valueField ?>"
+      value="<?= (new DateTime($this->currentValue))->modify('-1 ' . $this->currentUnit)->format('Y-m-d') ?>">
+      ←
+    </button>
+
+    <span class="button button-tonal-md" style="margin: 0 0.5rem;">
+      <?= $this->rangeLabel ?>
+    </span>
+
+    <button class="button button-tonal-md" type="submit"
+      name="<?= $this->valueField ?>"
+      value="<?= (new DateTime($this->currentValue))->modify('+1 ' . $this->currentUnit)->format('Y-m-d') ?>">
+      →
+    </button>
   </div>
 </form>
 
 <?php if ($chartdataRaw = $this->chartdata): ?>
+
   <canvas id="<?= $this->chartId ?>"></canvas>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      luxon.Settings.defaultLocale = 'de';
+<script>
 
-      const chartData = <?= $chartdataRaw ?>;
-      const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
+document.addEventListener('DOMContentLoaded', () => {
 
-      const xUnit = chartData.xUnit;
-      const timeUnit = xUnit === 'day' ? 'hour' :
-                       xUnit === 'week' ? 'day' :
-                       xUnit === 'month' ? 'day' :
-                       xUnit === 'year' ? 'month' : 'day';
+  luxon.Settings.defaultLocale = 'de';
 
-      const timeFormats = xUnit === 'week'
-        ? { tooltipFormat: 'cccc', displayFormats: { day: 'ccc' } }
-        : xUnit === 'month'
-        ? { tooltipFormat: 'dd.LLL', displayFormats: { day: 'd.' } }
-        : {};
+  const chartData = <?= $chartdataRaw ?>;
+  const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
 
-      const scales = {
-        x: {
-          type: 'time',
-          time: { unit: timeUnit, ...timeFormats },
-          title: { display: true, text: 'Zeit' }
-        }
-      };
+  function getTimeConfig(unit) {
 
-      let useLeft = true;
-      for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
-        const color = info.color || '#000';
-        scales[axisId] = {
-          position: useLeft ? 'left' : 'right',
-          title: { display: true, text: info.unit, color },
-          ticks: { color, callback: val => info.unit ? `${val} ${info.unit}` : val },
-          grid: { drawOnChartArea: useLeft }
+    switch (unit) {
+
+      case 'day':
+        return {
+          unit: 'hour',
+          displayFormats: { hour: 'HH:mm' },
+          tooltipFormat: 'HH:mm'
         };
-        useLeft = !useLeft;
-      }
 
-      new Chart(ctx, {
-        type: 'line',
-        data: { labels: chartData.labels, datasets: chartData.datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          aspectRatio: 2,
-          interaction: { mode: 'nearest', intersect: false },
-          scales,
-          elements: {
-              line: {
-                  borderWidth: 1
-              },
-              point: {
-                  radius: 1,
-                  pointStyle: 'circle',
-                  backgroundColor: '#fff',
-                  borderColor: '#333',
-                  borderWidth: 2
-              }
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top',
-              align: 'start',
-              labels: {
-                  boxWidth: 20,
-                  boxHeight: 10,
-                  usePointStyle: true,
-                  pointStyle: 'circle',
-                  padding: 10,
-                  font: {
-                      size: 14,
-                      weight: 'bold',
-                  }
-              }
-            },
-            title: {
-              display: true,
-              text: <?= json_encode($chartTitle) ?>
-            },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const label = ctx.dataset.label || '';
-                  const value = ctx.parsed.y;
-                  const axisId = ctx.dataset.yAxisID;
-                  const unit = chartData.axes?.[axisId]?.unit || '';
-                  return `${label}: ${value}${unit !== 'default' ? ' ' + unit : ''}`;
-                }
-              }
+      case 'week':
+        return {
+          unit: 'day',
+          displayFormats: { day: 'ccc dd.MM' },
+          tooltipFormat: 'cccc dd.MM.yyyy'
+        };
+
+      case 'month':
+        return {
+          unit: 'day',
+          displayFormats: { day: 'dd.MM' },
+          tooltipFormat: 'dd.MM.yyyy'
+        };
+
+      case 'year':
+        return {
+          unit: 'month',
+          displayFormats: { month: 'MM.yyyy' },
+          tooltipFormat: 'LLLL yyyy'
+        };
+
+      default:
+        return { unit: 'day' };
+    }
+  }
+
+  const scales = {
+    x: {
+      type: 'time',
+      time: getTimeConfig(chartData.xUnit),
+      title: { display: true, text: 'Zeit' }
+    }
+  };
+
+  let useLeft = true;
+
+  for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
+
+    const color = info.color || '#000';
+
+    scales[axisId] = {
+      position: useLeft ? 'left' : 'right',
+      title: { display: true, text: info.unit, color },
+      ticks: {
+        color,
+        callback: value => Math.round(value * 100) / 100
+      },
+      grid: { drawOnChartArea: useLeft }
+    };
+
+    useLeft = !useLeft;
+  }
+const resetPlugin = {
+  id: 'resetPlugin',
+  afterDraw(chart, args, options) {
+    const {ctx, chartArea: {top, right}} = chart;
+
+    ctx.save();
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'right';
+    ctx.fillText('⟲ Reset Zoom', right - 10, top + 15);
+    ctx.restore();
+  },
+
+  afterEvent(chart, args) {
+    const {event} = args;
+    if (event.type !== 'click') return;
+
+    const {chartArea: {top, right}} = chart;
+
+    if (
+      event.x > right - 100 &&
+      event.x < right &&
+      event.y > top &&
+      event.y < top + 25
+    ) {
+      chart.resetZoom();
+    }
+  }
+};
+Chart.register(resetPlugin);
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: chartData.datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      scales,
+      elements: {
+        line: { borderWidth: 1 },
+        point: {
+          radius: 1,
+          pointStyle: 'circle',
+          backgroundColor: '#fff',
+          borderColor: '#333',
+          borderWidth: 2
+        }
+      },
+      plugins: {
+ zoom: {
+
+    // 🔹 Verschieben (Desktop + Touch)
+    pan: {
+      enabled: true,
+      mode: 'x'
+    },
+
+    // 🔹 Zoomen
+    zoom: {
+      wheel: {
+        enabled: true     // Mausrad Desktop
+      },
+      pinch: {
+        enabled: true     // Zwei Finger Smartphone
+      },
+      drag: {
+        enabled: true     // Mit Maus Bereich markieren
+      },
+      mode: 'x'
+    }
+  },      
+         legend: {
+          display: true,
+          position: 'top',
+          align: 'start',
+          labels: {
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 8,
+            font: {
+              size: 11,
+              weight: 'normal'
             }
           }
+        },
+        title: {
+          display: true,
+          text: <?= json_encode($chartTitle) ?>,
+          font: {
+            size: 20,
+            weight: 'bold'
+          }
+        },
+        tooltip: {
+            backgroundColor: '#222',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#666',
+            borderWidth: 1,
+            padding: 5,
+            cornerRadius: 6,
+            displayColors: false,
+            titleFont: {
+                size: 8,
+                weight: 'bold'
+            },
+            bodyFont: {
+                size: 8
+            },
+            callbacks: {
+                label: ctx => {
+                    const label = ctx.dataset.label || '';
+                    const value = ctx.parsed.y;
+                    const axisId = ctx.dataset.yAxisID;
+                    const unit = chartData.axes?.[axisId]?.unit || '';
+                    return `${label}: ${value}${unit ? ' ' + unit : ''}`;
+                }
+            }
         }
-      });
-    });
-  </script>
+      }
+    }
+  });
+
+});
+</script>
+
 <?php else: ?>
-  <p><em>Keine Sensordaten für Chart <?= '<strong>' . htmlspecialchars(is_array($headline) ? ($headline['value'] ?? '') : $headline) . '</strong>' ?> im gewählten Zeitraum gefunden.</em></p>
+  <p>
+    <em>Keine Sensordaten für Chart 
+      <?= '<strong>' . htmlspecialchars(is_array($headline) ? ($headline['value'] ?? '') : $headline) . '</strong>' ?>
+      im gewählten Zeitraum gefunden.
+    </em>
+  </p>
 <?php endif; ?>
 </div>

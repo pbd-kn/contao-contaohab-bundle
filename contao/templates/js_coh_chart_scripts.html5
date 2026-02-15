@@ -12,4 +12,9 @@
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/chart.umd.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/luxon.min.js') ?>
 <?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/chartjs-adapter-luxon.umd.min.js') ?>
+<!-- Zoom Plugin 
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+-->
+<?= Contao\Template::generateScriptTag('bundles/pbdkncontaocontaohab/jsCharts/chartjs-plugin-zoom.min.js') ?>
+
 

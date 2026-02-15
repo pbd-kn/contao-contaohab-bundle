@@ -29,6 +29,8 @@
 
       { sensorId: 'IQbattery_94_battery_stateOfCharge',             icon: 'gauge',  iconType: 'gauge', iconSize: 50, color: 'green',textColor: 'green'},
       { sensorId: 'IQinverter_94_inverter_pvPower',                 icon: 'bs:bi-sun-fill', iconSize: 24, iconColor: 'green',textColor: 'blue' },
+      { sensorId: 'IQSolar_harmonized_work_Solar_gesamt',                 icon: 'bs:bi-sunset', iconSize: 24, iconColor: 'green',textColor: 'blue' },
+      { sensorId: 'IQSolar_harmonized_work_Solar_Tag',                 icon: 'bs:bi-sunset', iconSize: 24, iconColor: 'green',textColor: 'blue' },
       { sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'bs:bi-house', iconSize: 24, iconColor: 'green' },      
       //{ sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'fa-regular:fa-house', iconSize: 24, iconColor: 'green' },      
       { sensorId: 'IQBatt_Temp',                                    icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
@@ -160,7 +162,7 @@
                        //config.extraText += '<br>';
                        config.extraText += ' ';
                 }
-                config.extraText = (config.extraText || '') + `${key}: ${val}`;
+                //config.extraText = (config.extraText || '') + `${key}: ${val}`;
                 //console.log(`${key}: ${val}`);
                 });
             });
