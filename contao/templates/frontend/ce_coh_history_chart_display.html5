@@ -159,9 +159,11 @@ Chart.register(resetPlugin);
       datasets: chartData.datasets
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,   // seitenverhaeltnis brieite zu höhe
       interaction: { mode: 'nearest', intersect: false },
+      resizeDelay: 0,   // 🔥 wichtig bei Flexbox
       scales,
       elements: {
         line: { borderWidth: 1 },
@@ -174,7 +176,7 @@ Chart.register(resetPlugin);
         }
       },
       plugins: {
- zoom: {
+    zoom: {
 
     // 🔹 Verschieben (Desktop + Touch)
     pan: {

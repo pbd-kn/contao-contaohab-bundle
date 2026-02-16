@@ -32,7 +32,6 @@
       { sensorId: 'IQSolar_harmonized_work_Solar_gesamt',                 icon: 'bs:bi-sunset', iconSize: 24, iconColor: 'green',textColor: 'blue' },
       { sensorId: 'IQSolar_harmonized_work_Solar_Tag',                 icon: 'bs:bi-sunset', iconSize: 24, iconColor: 'green',textColor: 'blue' },
       { sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'bs:bi-house', iconSize: 24, iconColor: 'green' },      
-      //{ sensorId: 'IQinverter_94_inverter_selfConsumptionPower',    icon: 'fa-regular:fa-house', iconSize: 24, iconColor: 'green' },      
       { sensorId: 'IQBatt_Temp',                                    icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'IQbattery_94_battery_mode',                      icon: 'bs:bi-thermometer', iconSize: 24, iconColor: 'green' },
       { sensorId: 'IQbattery_94_battery_power',                     icon: 'bs:bi-battery-full', iconSize: 24, iconColor: 'green' },
