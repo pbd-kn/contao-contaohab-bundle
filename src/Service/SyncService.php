@@ -40,13 +40,12 @@ class SyncService
     ];
 
     private array $raspiTunnel = [
-        'host' => '127.0.0.1',
-        'port' => 3307,                   // Tunnelport von Lima zum Raspi funktioniet leider nicht conection refused beim tunnel von lima aus
+        'host' => '10.0.0.2',   // WireGuard-IP Raspberry
+        'port' => 3306,
         'user' => 'peter',
         'pass' => 'sql666sql',
         'db'   => 'co5_solar',
-    ];
-
+        ];
 //        'host' => 'raspberrypi',          // direkter Hostname im LAN
 //        'host' => '127.0.0.1',          // direkter Hostname im LAN
     private array $raspiDirect = [
