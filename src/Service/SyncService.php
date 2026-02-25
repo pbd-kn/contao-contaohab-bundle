@@ -44,7 +44,7 @@ class SyncService
         'port' => 3306,
         'user' => 'peter',
         'pass' => 'sql666sql',
-        'db'   => 'co5_solar' ,
+        'db'   => 'co5_solar',
         ];
 //        'host' => 'raspberrypi',          // direkter Hostname im LAN
 //        'host' => '127.0.0.1',          // direkter Hostname im LAN
