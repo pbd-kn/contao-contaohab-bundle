@@ -84,6 +84,7 @@ class SyncService
         // --- SLAVE: immer Raspberry ---
         $slaveCfg = ($env === 'LIMA') ? $this->raspiTunnel : $this->raspiDirect;
         //$slaveCfg = $this->raspiTunnel;
+        $this->logger->debugMe('slave cfg (MASTER= '.$env.', SLAVE= '.$slaveCfg['host'].':'.$slaveCfg['port']);
         $slaveDb  = mysqli_init();
         $slaveDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
         if (!@$slaveDb->real_connect($slaveCfg['host'], $slaveCfg['user'], $slaveCfg['pass'], $slaveCfg['db'], $slaveCfg['port'],null)) {
