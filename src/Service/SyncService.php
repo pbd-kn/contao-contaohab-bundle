@@ -8,21 +8,22 @@ use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 
 class SyncService
 {
-    /*  Es gilt:
-        Die aktuelle datenbank wird geprüft, ob sie auf lima oder lokal läuft Routine)
-        ist keine der beiden möglich fehlerausgabe
-        zugriff auf slave (Raspbery festlegen ob über tunnel oder direkt         
-        $slaveCfg = ($env === 'LIMA') ? 
-        $this->raspiTunnel : zugriff über tunnel
-        $this->raspiDirect;) zugriff über hostname
-        Der tunnel witrd auf dem raspberry durch den service raspi-lima-tunnel.service eingerichtet
-        sudo systemctl status (start/stop) raspi-lima-tunnel.service
-        Wenn keine Slaveverbindung Error.
-        logfile:
-        debugMe nur wenn im debugmodus
-        Error Fehlerausgabe
-        logfile default cohdebug.log in var/logs 
+    /*
+        MASTER: Lima oder Local (connectFirstAvailable)
+        SLAVE (Raspberry): NICHT mehr via MySQL, sondern via HTTPS JSON API
+
+        Pull:
+          Hoster/Lokal -> HTTPS GET -> Raspi sensorvalues.php -> JSON -> in MASTER-DB schreiben
+
+        Push (auskommentiert):
+          MASTER-DB lesen -> HTTPS POST -> Raspi config_push.php -> Raspi schreibt lokal
+
+        Hinweis:
+          - lanBase = Zugriff im LAN (z.B. https://192.168.178.49)
+          - wanBase = Zugriff von außen (MyFritz/DynDNS), Fritzbox Portfreigabe TCP 443 -> 192.168.178.49:443
+          - Token MUSS auf Raspi und hier identisch sein
     */
+    //  die jewewiligen db -zugriffe
     private array $local = [
         'host' => '127.0.0.1',
         'port' => 3306,
@@ -39,31 +40,31 @@ class SyncService
         'db'   => 'db_261774_20',
     ];
 
-    private array $raspiTunnel = [
-        'host' => '10.0.0.2',   // WireGuard-IP Raspberry
-        'port' => 3306,
-        'user' => 'peter',
-        'pass' => 'sql666sql',
-        'db'   => 'co5_solar',
-        ];
-//        'host' => 'raspberrypi',          // direkter Hostname im LAN
-//        'host' => '127.0.0.1',          // direkter Hostname im LAN
-    private array $raspiDirect = [
-        'host' => 'raspberrypi',          // direkter Hostname im LAN
-        'port' => 3306,
-        'user' => 'peter',
-        'pass' => 'sql666sql',
-        'db'   => 'co5_solar',
+    // ===== Raspberry API Konfiguration =====
+    private array $raspiApi = [
+        // LAN Zugriff (wenn Sync lokal läuft, env=LOCAL)
+        'lanBase' => 'http://192.168.178.49',
+        // WAN Zugriff (wenn Sync am Hoster läuft, env=LIMA) -> MyFritz/DynDNS:
+        //'wanBase' => 'https://DEINNAME.myfritz.net',
+        'wanBase' => 'http://31.47.83.250',                  // angebblich kann ich auf meinem hoster eine subdomain einrrichten und dann per
+                                                            // A-Record raspi 31.47.83.250 einrichten dann kann mann immer die subdomaoin raspi.pb-broghammer.de verwenden
+        // Token wie in sensorvalues.php / config_push.php:
+        'token'   => 'COH_CODE',
+        // API Pfade:
+        'pullPath' => '/api/coh/sensorvalues.php',
+        'pushPath' => '/api/coh/config_push.php',
     ];
+
     private ?LoggerService $logger = null;
-        
+
     public function __construct(LoggerService $logger)
     {
-        $this->logger = $logger;        
+        $this->logger = $logger;
     }
+
     public function sync(?OutputInterface $output = null): ?string
     {
-        $output?->writeln("<info>Starte Synchronisation </info>");
+        $output?->writeln("<info>Starte Synchronisation</info>");
         $this->logger->debugMe("Start Synchronisation");
 
         mysqli_report(MYSQLI_REPORT_OFF);
@@ -81,33 +82,11 @@ class SyncService
             return $msg;
         }
 
-        // --- SLAVE: immer Raspberry ---
-        $slaveCfg = ($env === 'LIMA') ? $this->raspiTunnel : $this->raspiDirect;
-        //$slaveCfg = $this->raspiTunnel;
-        $this->logger->debugMe('slave cfg (MASTER= '.$env.', SLAVE= '.$slaveCfg['host'].':'.$slaveCfg['port']);
-        $slaveDb  = mysqli_init();
-        $slaveDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-        if (!@$slaveDb->real_connect($slaveCfg['host'], $slaveCfg['user'], $slaveCfg['pass'], $slaveCfg['db'], $slaveCfg['port'],null)) {
-            $msg = "sync läuift auf $env Slave-Verbindung fehlgeschlagen Vielleicht läuft Backup auf dem Raspbery oder Service mariadb läuft nicht ({$slaveCfg['host']}:{$slaveCfg['port']}) ? {$slaveDb->connect_error}";
-            $output?->writeln("<error>$msg</error>");
-            $this->logger->Error($msg);
-            return $msg;
-        }
+        $raspiBase = $this->getRaspiBaseUrl($env);
+        $this->logger->debugMe("RASPI API Base ($env): " . $raspiBase);
 
-        // --- Schutz: Master darf nicht gleich Slave sein ---
-        if (
-            $masterCfg['host'] === $slaveCfg['host'] &&
-            $masterCfg['port'] === $slaveCfg['port'] &&
-            $masterCfg['db']   === $slaveCfg['db']
-        ) {
-            $msg = "ABBRUCH: Master und Slave sind identisch ({$masterCfg['host']}:{$masterCfg['port']} ? {$masterCfg['db']})";
-            $output?->writeln("<error>$msg</error>");
-            $this->logger->Error($msg);
-            return $msg;
-        }
-
-        $output?->writeln("<info>Starte Synchronisation (MASTER={$env}, SLAVE={$slaveCfg['host']}:{$slaveCfg['port']})...</info>");
-        $this->logger->debugMe('Starte Synchronisation (MASTER= '.$env.', SLAVE= '.$slaveCfg['host'].':'.$slaveCfg['port']);
+        $output?->writeln("<info>Starte Synchronisation (MASTER={$env}, RASPI_API={$raspiBase})...</info>");
+        $this->logger->debugMe("Starte Synchronisation (MASTER={$env}, RASPI_API={$raspiBase})");
 
         // --- Sicherstellen: tl_coh_sync_log auf MASTER ---
         foreach (['sensorvalue_pull', 'config_push'] as $type) {
@@ -122,103 +101,220 @@ class SyncService
             }
         }
 
-        // --- PULL: Sensorwerte vom Raspberry ? Master ---
+        // =========================================================
+        // ===================== PULL (AKTIV) ======================
+        // =========================================================
         $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='sensorvalue_pull'");
         $row = $res?->fetch_assoc();
         $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+
         if (strtotime($lastSync) < time() - 5 * 60) {
-            $stmt = $slaveDb->prepare("SELECT tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource FROM tl_coh_sensorvalue WHERE tstamp > ? ");
-            if ($stmt) {
-                $ts = strtotime($lastSync);
-                $stmt->bind_param('i', $ts);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $i = 0;
-                $sql = "
-                    INSERT INTO tl_coh_sensorvalue (tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource) VALUES (?, ?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE
-                        sensorValue      = VALUES(sensorValue),
-                        sensorEinheit    = VALUES(sensorEinheit),
-                        sensorValueType  = VALUES(sensorValueType),
-                        sensorSource     = VALUES(sensorSource)
-                ";
-                $insert = $masterDb->prepare($sql);
-                $insert->bind_param(
-                    'isssss',
-                    $tstamp,
-                    $sensorID,
-                    $sensorValue,
-                    $sensorEinheit,
-                    $sensorValueType,
-                    $sensorSource
-                ); 
-                $masterDb->begin_transaction(); 
-                while ($r = $result->fetch_assoc()) {
-                    $tstamp          = (int) $r['tstamp'];
-                    $sensorID        = $r['sensorID'];
-                    $sensorValue     = $r['sensorValue'];
-                    $sensorEinheit   = $r['sensorEinheit'];
-                    $sensorValueType = $r['sensorValueType'];
-                    $sensorSource    = $r['sensorSource'];
-                    if (!$insert->execute()) {
-                        $this->logger->Error( 'Sensor-Sync Fehler (sensorID=' . $sensorID . ', tstamp=' . $tstamp . '): ' . $insert->error);
-                    } else {
-                        $i++;
-                    }
-                }
-                $masterDb->commit();
-                $masterDb->query("
-                    UPDATE tl_coh_sync_log
-                    SET last_sync = NOW(), tstamp = UNIX_TIMESTAMP()
-                    WHERE sync_type = 'sensorvalue_pull'
-                ");
-                $output?->writeln("<comment>Pull fertig: $i Sensorwerte übernommen.</comment>");
-                $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
+
+            $sinceTs = strtotime($lastSync);
+
+            $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $sinceTs;
+            $this->logger->debugMe("API PULL URL: " . $pullUrl . ' token ' . $this->raspiApi['token']);
+
+            try {
+                $api = $this->apiGetJson($pullUrl);
+            } catch (\Throwable $e) {
+                $msg = "API Pull fehlgeschlagen: " . $e->getMessage();
+                $output?->writeln("<error>$msg</error>");
+                $this->logger->Error($msg);
+                return $msg;
             }
+
+            $rows = $api['rows'] ?? [];
+            $i = 0;
+
+            $sql = "
+                INSERT INTO tl_coh_sensorvalue (tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource) VALUES (?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    sensorValue      = VALUES(sensorValue),
+                    sensorEinheit    = VALUES(sensorEinheit),
+                    sensorValueType  = VALUES(sensorValueType),
+                    sensorSource     = VALUES(sensorSource)
+            ";
+
+            $insert = $masterDb->prepare($sql);
+            if (!$insert) {
+                $msg = "Prepare fehlgeschlagen (MASTER insert): " . $masterDb->error;
+                $output?->writeln("<error>$msg</error>");
+                $this->logger->Error($msg);
+                return $msg;
+            }
+
+            $insert->bind_param('isssss', $tstamp, $sensorID, $sensorValue, $sensorEinheit, $sensorValueType, $sensorSource);
+
+            $masterDb->begin_transaction();
+
+            foreach ($rows as $r) {
+                $tstamp          = (int)($r['tstamp'] ?? 0);
+                $sensorID        = (string)($r['sensorID'] ?? '');
+                $sensorValue     = (string)($r['sensorValue'] ?? '');
+                $sensorEinheit   = (string)($r['sensorEinheit'] ?? '');
+                $sensorValueType = (string)($r['sensorValueType'] ?? '');
+                $sensorSource    = (string)($r['sensorSource'] ?? '');
+
+                if ($tstamp <= 0 || $sensorID === '') {
+                    continue;
+                }
+
+                if (!$insert->execute()) {
+                    $this->logger->Error('Sensor-API-Sync Fehler (sensorID=' . $sensorID . ', tstamp=' . $tstamp . '): ' . $insert->error);
+                } else {
+                    $i++;
+                }
+            }
+
+            $masterDb->commit();
+
+            $masterDb->query("
+                UPDATE tl_coh_sync_log
+                SET last_sync = NOW(), tstamp = UNIX_TIMESTAMP()
+                WHERE sync_type = 'sensorvalue_pull'
+            ");
+
+            $output?->writeln("<comment>Pull fertig: $i Sensorwerte übernommen.</comment>");
+            $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
+
         } else {
-                $this->logger->debugMe("Pull wegen time nicht noetig. Last Sync $lastSync ");        
+            $this->logger->debugMe("Pull wegen time nicht noetig. Last Sync $lastSync");
         }
 
-        // --- PUSH: Config vom Master ? Raspberry ---
+        // =========================================================
+        // ===================== PUSH (AUSKOMMENTIERT) ==============
+        // =========================================================
+        /*
         $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='config_push'");
         $row = $res?->fetch_assoc();
         $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
 
         if (strtotime($lastSync) < time() - 10 * 60) {
+
             foreach (['tl_coh_sensors', 'tl_coh_cfgcollect', 'tl_coh_geraete'] as $table) {
                 $output?->writeln("<info>Push: $table</info>");
                 $this->logger->debugMe("Push: Tabelle $table");
 
-                $check = $slaveDb->query("SHOW TABLES LIKE '$table'");
-                if (!$check || $check->num_rows === 0) {
-                    $cr = $masterDb->query("SHOW CREATE TABLE $table");
-                    if ($cr && $def = $cr->fetch_assoc()) {
-                        $createSql = $def['Create Table'];
-                        $slaveDb->query($createSql);
-                    }
+                $rs = $masterDb->query("SELECT * FROM $table");
+                if (!$rs) {
+                    $this->logger->Error("Push: SELECT Fehler $table: " . $masterDb->error);
+                    continue;
                 }
 
-                $slaveDb->query("DELETE FROM $table");
-                $rs = $masterDb->query("SELECT * FROM $table");
+                $rows = [];
                 while ($r = $rs->fetch_assoc()) {
-                    $columns = array_keys($r);
-                    $escaped = array_map([$slaveDb, 'real_escape_string'], array_values($r));
-                    $colList = implode(',', array_map(fn($c) => "`$c`", $columns));
-                    $valList = "'" . implode("','", $escaped) . "'";
-                    $slaveDb->query("REPLACE INTO $table ($colList) VALUES ($valList)");
+                    $rows[] = $r;
+                }
+
+                $pushUrl = $raspiBase . $this->raspiApi['pushPath'];
+                $this->logger->debugMe("API PUSH URL: " . $pushUrl . " (table=$table, rows=" . count($rows) . ")");
+
+                try {
+                    $resp = $this->apiPostJson($pushUrl, [
+                        'table' => $table,
+                        'rows'  => $rows,
+                    ]);
+                    $this->logger->debugMe("Push OK: " . json_encode($resp));
+                } catch (\Throwable $e) {
+                    $msg = "API Push fehlgeschlagen ($table): " . $e->getMessage();
+                    $output?->writeln("<error>$msg</error>");
+                    $this->logger->Error($msg);
+                    return $msg;
                 }
             }
 
             $masterDb->query("UPDATE tl_coh_sync_log SET last_sync=NOW(), tstamp=UNIX_TIMESTAMP() WHERE sync_type='config_push'");
             $this->logger->debugMe("Push: fertig");
             $output?->writeln("<info>Push fertig.</info>");
+
         } else {
-                $this->logger->debugMe("push wegen time nicht noetig.  Last Sync $lastSync ");        
+            $this->logger->debugMe("push wegen time nicht noetig. Last Sync $lastSync");
         }
+        */
 
         $this->logger->debugMe("Synchronisation erfolgreich abgeschlossen.");
         $output?->writeln('<info>Synchronisation erfolgreich abgeschlossen.</info>');
+
         return null;
+    }
+
+    // ========================= Helpers =========================
+
+    private function getRaspiBaseUrl(string $env): string
+    {
+        // Wenn Master=LIMA (Hoster), braucht es WAN URL (MyFritz/DynDNS)
+        // Wenn Master=LOCAL (dein PC im LAN), kann LAN URL genutzt werden
+        return ($env === 'LIMA') ? $this->raspiApi['wanBase'] : $this->raspiApi['lanBase'];
+    }
+
+    private function apiGetJson(string $url): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT        => 25,
+            CURLOPT_HTTPHEADER     => [
+                'X-COH-TOKEN: ' . $this->raspiApi['token'],
+                'Accept: application/json',
+            ],
+            // Wenn du (noch) ein selbstsigniertes Zertifikat hast, ggf. TEMPORÄR aktivieren:
+            // CURLOPT_SSL_VERIFYPEER => false,
+            // CURLOPT_SSL_VERIFYHOST => false,
+        ]);
+
+        $body = curl_exec($ch);
+        $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($body === false || $http !== 200) {
+            throw new \RuntimeException("API GET failed HTTP=$http err=$err url=$url body=" . substr((string)$body, 0, 200));
+        }
+
+        $json = json_decode((string)$body, true);
+        if (!is_array($json) || empty($json['ok'])) {
+            throw new \RuntimeException("API GET invalid JSON url=$url body=" . substr((string)$body, 0, 200));
+        }
+
+        return $json;
+    }
+
+    private function apiPostJson(string $url, array $payload): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT        => 25,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            CURLOPT_HTTPHEADER     => [
+                'X-COH-TOKEN: ' . $this->raspiApi['token'],
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            // Wenn du (noch) ein selbstsigniertes Zertifikat hast, ggf. TEMPORÄR aktivieren:
+            // CURLOPT_SSL_VERIFYPEER => false,
+            // CURLOPT_SSL_VERIFYHOST => false,
+        ]);
+
+        $body = curl_exec($ch);
+        $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($body === false || $http !== 200) {
+            throw new \RuntimeException("API POST failed HTTP=$http err=$err url=$url body=" . substr((string)$body, 0, 200));
+        }
+
+        $json = json_decode((string)$body, true);
+        if (!is_array($json) || empty($json['ok'])) {
+            throw new \RuntimeException("API POST invalid JSON url=$url body=" . substr((string)$body, 0, 200));
+        }
+
+        return $json;
     }
 
     private function connectFirstAvailable(array $candidates, ?OutputInterface $output): array
@@ -228,7 +324,6 @@ class SyncService
             $db = mysqli_init();
             $db->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
 
-            // Fehlerunterdrückung mit @
             if (@$db->real_connect($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['db'], $cfg['port'])) {
                 $output?->writeln("<info>Verbunden: {$c['name']} ({$cfg['host']}:{$cfg['port']})</info>");
                 $this->logger->debugMe('Verbunden: '.$c['name'].' host ('.$cfg['host'].':'.$cfg['port'].')');
