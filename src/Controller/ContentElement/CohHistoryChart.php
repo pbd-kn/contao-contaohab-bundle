@@ -51,13 +51,28 @@ protected function getResponse($template, ContentModel $model, Request $request)
     $this->syncService->sync();
 
     // Range-Parameter
-    $unitField = 'unit_chart_' . $model->id;
+    $unitField  = 'unit_chart_' . $model->id;
     $valueField = 'value_chart_' . $model->id;
 
-    $unit = $request->query->get($unitField, 'day');
-    $currentValue = $request->query->get($valueField, (new \DateTimeImmutable())->format('Y-m-d'));
-    $date = new \DateTimeImmutable($currentValue);
+    $allowedUnits = ['day', 'week', 'month', 'year'];
 
+    // Unit lesen + absichern
+    $unit = (string) $request->query->get($unitField, 'day');
+    if (!in_array($unit, $allowedUnits, true)) {
+        $unit = 'day';
+    }
+
+    // Datum lesen + absichern (nur Y-m-d akzeptieren)
+    $currentValue = (string) $request->query->get($valueField, '');
+    $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $currentValue);
+
+    // Wenn kein/ungültiges Datum übergeben wurde => heute
+    if (!$dt || $dt->format('Y-m-d') !== $currentValue) {
+        $dt = new \DateTimeImmutable('today');
+        $currentValue = $dt->format('Y-m-d');
+    }
+
+    $date = $dt;
     $start = match ($unit) {
         'day'   => $date->setTime(0, 0),
         'week'  => $date->modify('monday this week')->setTime(0, 0),
