@@ -70,19 +70,29 @@ class SyncService
         mysqli_report(MYSQLI_REPORT_OFF);
 
         // --- MASTER: Lima oder Local ---
+/*
         [$masterDb, $env, $masterCfg] = $this->connectFirstAvailable([
             ['name' => 'LIMA',  'cfg' => $this->lima],
             ['name' => 'LOCAL', 'cfg' => $this->local],
         ], $output);
+*/
+        $result = $this->connectFirstAvailable([
+            ['name' => 'LIMA',  'cfg' => $this->lima],
+            ['name' => 'LOCAL', 'cfg' => $this->local],
+            ], $output);
 
+        $masterDb  = $result[0];    // connect zu localen db
+        $env       = $result[1];    // name
+        $masterCfg = $result[2];    // this-> lima opder this->local
+        
         if (!$masterDb) {
-            $msg = 'Keine Master-DB Verbindung möglich (Lima & Local fehlgeschlagen).';
+            $msg = 'Keine Master-DB Verbindung möglich (Lima und Local fehlgeschlagen).';
             $output?->writeln("<error>$msg</error>");
             $this->logger->Error($msg);
             return $msg;
         }
 
-        $raspiBase = $this->getRaspiBaseUrl($env);
+        $raspiBase = $this->getRaspiBaseUrl($env);   // basisadresse zum requesrt auf den Raspbi
         $this->logger->debugMe("RASPI API Base ($env): " . $raspiBase);
 
         $output?->writeln("<info>Starte Synchronisation (MASTER={$env}, RASPI_API={$raspiBase})...</info>");
@@ -183,55 +193,55 @@ class SyncService
         }
 
         // =========================================================
-        // ===================== PUSH (AUSKOMMENTIERT) ==============
+        // ===================== PUSH nur von local ==============
         // =========================================================
-        /*
-        $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='config_push'");
-        $row = $res?->fetch_assoc();
-        $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+        if ($env == 'LOCAL') {
+            $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='config_push'");
+            $row = $res?->fetch_assoc();
+            $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
 
-        if (strtotime($lastSync) < time() - 10 * 60) {
+            if (strtotime($lastSync) < time() - 10 * 60) {
 
-            foreach (['tl_coh_sensors', 'tl_coh_cfgcollect', 'tl_coh_geraete'] as $table) {
-                $output?->writeln("<info>Push: $table</info>");
-                $this->logger->debugMe("Push: Tabelle $table");
+                foreach (['tl_coh_sensors', 'tl_coh_cfgcollect', 'tl_coh_geraete'] as $table) {
+                    $output?->writeln("<info>Push: $table</info>");
+                    $this->logger->debugMe("Push: Tabelle $table");
 
-                $rs = $masterDb->query("SELECT * FROM $table");
-                if (!$rs) {
-                    $this->logger->Error("Push: SELECT Fehler $table: " . $masterDb->error);
-                    continue;
+                    $rs = $masterDb->query("SELECT * FROM $table");
+                    if (!$rs) {
+                        $this->logger->Error("Push: SELECT Fehler $table: " . $masterDb->error);
+                        continue;
+                    }
+
+                    $rows = [];
+                    while ($r = $rs->fetch_assoc()) {
+                        $rows[] = $r;
+                    }
+
+                    $pushUrl = $raspiBase . $this->raspiApi['pushPath'];
+                    $this->logger->debugMe("API PUSH URL: " . $pushUrl . " (table=$table, rows=" . count($rows) . ")");
+
+                    try {
+                        $resp = $this->apiPostJson($pushUrl, [
+                            'table' => $table,
+                            'rows'  => $rows,
+                        ]);
+                        $this->logger->debugMe("Push OK: " . json_encode($resp));
+                    } catch (\Throwable $e) {
+                        $msg = "API Push fehlgeschlagen ($table): " . $e->getMessage();
+                        $output?->writeln("<error>$msg</error>");
+                        $this->logger->Error($msg);
+                        return $msg;
+                    }
                 }
 
-                $rows = [];
-                while ($r = $rs->fetch_assoc()) {
-                    $rows[] = $r;
-                }
-
-                $pushUrl = $raspiBase . $this->raspiApi['pushPath'];
-                $this->logger->debugMe("API PUSH URL: " . $pushUrl . " (table=$table, rows=" . count($rows) . ")");
-
-                try {
-                    $resp = $this->apiPostJson($pushUrl, [
-                        'table' => $table,
-                        'rows'  => $rows,
-                    ]);
-                    $this->logger->debugMe("Push OK: " . json_encode($resp));
-                } catch (\Throwable $e) {
-                    $msg = "API Push fehlgeschlagen ($table): " . $e->getMessage();
-                    $output?->writeln("<error>$msg</error>");
-                    $this->logger->Error($msg);
-                    return $msg;
-                }
+                $masterDb->query("UPDATE tl_coh_sync_log SET last_sync=NOW(), tstamp=UNIX_TIMESTAMP() WHERE sync_type='config_push'");
+                $this->logger->debugMe("Push: fertig");
+                $output?->writeln("<info>Push fertig.</info>");
             }
-
-            $masterDb->query("UPDATE tl_coh_sync_log SET last_sync=NOW(), tstamp=UNIX_TIMESTAMP() WHERE sync_type='config_push'");
-            $this->logger->debugMe("Push: fertig");
-            $output?->writeln("<info>Push fertig.</info>");
-
         } else {
             $this->logger->debugMe("push wegen time nicht noetig. Last Sync $lastSync");
         }
-        */
+        
 
         $this->logger->debugMe("Synchronisation erfolgreich abgeschlossen.");
         $output?->writeln('<info>Synchronisation erfolgreich abgeschlossen.</info>');
