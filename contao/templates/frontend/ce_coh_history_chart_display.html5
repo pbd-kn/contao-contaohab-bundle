@@ -47,7 +47,6 @@ if (is_string($headline)) {
 </form>
 
 <?php if ($chartdataRaw = $this->chartdata): ?>
-
   <canvas id="<?= $this->chartId ?>"></canvas>
 
 <script>

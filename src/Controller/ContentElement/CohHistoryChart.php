@@ -12,6 +12,7 @@ use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
 use PbdKn\ContaoContaohabBundle\Service\SyncService;
+use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 
 #[AsContentElement(CohHistoryChart::TYPE, category: 'COH')]
 class CohHistoryChart extends AbstractContentElementController
@@ -20,7 +21,8 @@ class CohHistoryChart extends AbstractContentElementController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly SyncService $syncService
+        private readonly SyncService $syncService,
+        private readonly LoggerService $logger
     ) {}
 protected function getResponse($template, ContentModel $model, Request $request): Response
 {
@@ -47,6 +49,7 @@ protected function getResponse($template, ContentModel $model, Request $request)
     // Template wählen
     $templateName = $model->coh_history_template ?: 'coh_history_template';
     $template = $this->createTemplate($model, $templateName);
+    $this->logger->debugMe("getResponse: sensorwerte liefern template $templateName");
 
     $this->syncService->sync();
 
@@ -121,6 +124,7 @@ protected function getResponse($template, ContentModel $model, Request $request)
             $unitLabel = $firstRow['sensorEinheit'] ?: '';
             $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', $unitLabel);
             $color = $this->getSensorColor($sensorTitle);
+            $this->logger->debugMe("getResponse: sensorwerte liefern mode $mode");
             if ($mode === 'daily') {
                 $rowsArray = array_values($sensorRows);
                 // kein Wert oder erster Wert nicht numerisch ? abbrechen
@@ -135,6 +139,7 @@ protected function getResponse($template, ContentModel $model, Request $request)
                     $val = $currentSensorValue >= $firstValue ? $currentSensorValue - $firstValue : $currentSensorValue;
                     $val = round($val, 2);
                     $timestamps[] = $ts;
+                    $this->logger->debugMe("getResponse: sensorwerte liefern mode $mode val $val");
                     // exakt gleiche Struktur wie im ALL-Block
                     $datasets[$sensorTitle]['label'] ??= $sensorTitle;
                     $datasets[$sensorTitle]['data'][] = [
@@ -158,6 +163,7 @@ protected function getResponse($template, ContentModel $model, Request $request)
                     $datasets[$sensorTitle]['fill'] = false;
                     $datasets[$sensorTitle]['tension'] = 0.1;
                     $datasets[$sensorTitle]['yAxisID'] = $axisId;
+                    $this->logger->debugMe("getResponse: sensorwerte liefern mode $mode val $val");
                 }
             }
             $axes[$axisId] ??= [
