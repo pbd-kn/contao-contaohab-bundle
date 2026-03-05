@@ -237,9 +237,9 @@ class SyncService
                 $masterDb->query("UPDATE tl_coh_sync_log SET last_sync=NOW(), tstamp=UNIX_TIMESTAMP() WHERE sync_type='config_push'");
                 $this->logger->debugMe("Push: fertig");
                 $output?->writeln("<info>Push fertig.</info>");
+            } else {
+                $this->logger->debugMe("push wegen time nicht noetig. Last Sync $lastSync");
             }
-        } else {
-            $this->logger->debugMe("push wegen time nicht noetig. Last Sync $lastSync");
         }
         
 

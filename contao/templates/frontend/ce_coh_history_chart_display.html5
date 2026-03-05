@@ -160,7 +160,7 @@ Chart.register(resetPlugin);
     options: {
         responsive: true,
         maintainAspectRatio: true,
-        aspectRatio: 2,   // seitenverhaeltnis brieite zu höhe
+        aspectRatio: 1.4,   // seitenverhaeltnis brieite zu höhe
       interaction: { mode: 'nearest', intersect: false },
       resizeDelay: 0,   // 🔥 wichtig bei Flexbox
       scales,
