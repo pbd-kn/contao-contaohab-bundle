@@ -117,13 +117,14 @@ class SyncService
         $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='sensorvalue_pull'");
         $row = $res?->fetch_assoc();
         $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
-
+        $this->logger->debugMe("Pull lastSync $lastSync ".strtotime($lastSync) . " time " . time() - 5 * 60);
+//$lastSync='1970-01-01 00:00:00';   immer pull
         if (strtotime($lastSync) < time() - 5 * 60) {
 
             $sinceTs = strtotime($lastSync);
 
             $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $sinceTs;
-            $this->logger->debugMe("API PULL URL: " . $pullUrl . ' token ' . $this->raspiApi['token']);
+            $this->logger->debugMe("API PULL URL: " . $pullUrl . '&' . $this->raspiApi['token']);
 
             try {
                 $api = $this->apiGetJson($pullUrl);
@@ -199,7 +200,7 @@ class SyncService
             $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='config_push'");
             $row = $res?->fetch_assoc();
             $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
-
+//$lastSync='1970-01-01 00:00:00';   immer push
             if (strtotime($lastSync) < time() - 10 * 60) {
 
                 foreach (['tl_coh_sensors', 'tl_coh_cfgcollect', 'tl_coh_geraete'] as $table) {
@@ -291,41 +292,49 @@ class SyncService
         return $json;
     }
 
-    private function apiPostJson(string $url, array $payload): array
-    {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT        => 25,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            CURLOPT_HTTPHEADER     => [
-                'X-COH-TOKEN: ' . $this->raspiApi['token'],
-                'Content-Type: application/json',
-                'Accept: application/json',
-            ],
-            // Wenn du (noch) ein selbstsigniertes Zertifikat hast, ggf. TEMPORÄR aktivieren:
-            // CURLOPT_SSL_VERIFYPEER => false,
-            // CURLOPT_SSL_VERIFYHOST => false,
-        ]);
+private function apiPostJson(string $url, array $payload): array
+{
+    $ch = curl_init($url);
 
-        $body = curl_exec($ch);
-        $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err  = curl_error($ch);
-        curl_close($ch);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT        => 25,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER     => [
+            'X-COH-TOKEN: ' . $this->raspiApi['token'],
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ],
+    ]);
 
-        if ($body === false || $http !== 200) {
-            throw new \RuntimeException("API POST failed HTTP=$http err=$err url=$url body=" . substr((string)$body, 0, 200));
-        }
+    $body = curl_exec($ch);
+    $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err  = curl_error($ch);
 
-        $json = json_decode((string)$body, true);
-        if (!is_array($json) || empty($json['ok'])) {
-            throw new \RuntimeException("API POST invalid JSON url=$url body=" . substr((string)$body, 0, 200));
-        }
+    curl_close($ch);
 
-        return $json;
+    if ($body === false) {
+        throw new \RuntimeException("API CURL ERROR: $err url=$url");
     }
+
+    if ($http !== 200) {
+        throw new \RuntimeException("API HTTP ERROR: HTTP=$http body=$body");
+    }
+
+    $json = json_decode($body, true);
+
+    if (!is_array($json)) {
+        throw new \RuntimeException("API INVALID JSON: $body");
+    }
+
+    if (empty($json['ok'])) {
+        throw new \RuntimeException("API ERROR: " . json_encode($json));
+    }
+
+    return $json;
+}
 
     private function connectFirstAvailable(array $candidates, ?OutputInterface $output): array
     {
