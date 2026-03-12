@@ -2,24 +2,6 @@
     <h2>Ausgewählte Things und ihre Sensoren aus Default</h2>
 <?php
 
-    if (!empty($this->sensorData) && is_array($this->sensorData)) {
-      echo "<strong>sensorData</strong><br>";
-      echo "<ul>";
-      foreach ($this->sensorData as $k=>$v) {   // Thing data
-            echo "<li>$k: <br>";
-            if (is_array($v)) {
-                foreach ($v as $k1=>$v1) {
-                    echo "$k1: $v1<br>";
-                }
-            } else {
-              echo "$v<br>";
-            }
-            echo "</li>";
-      }
-      echo "</ul>";
-    } else {
-      echo "sensorData mod_coh_things_default Template keine sensordaten aus fetch ..Service<br>";
-    }
     if (!empty($this->things) && is_array($this->things)) {
       echo "<strong>Things</strong><br>";
       echo "<ul>";

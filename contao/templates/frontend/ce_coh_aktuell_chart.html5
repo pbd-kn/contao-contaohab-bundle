@@ -1,4 +1,4 @@
-<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper framework7-container" style="max-width: 700px; padding: 1rem;">
+<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper " style=" padding: 1rem;">
 <?php
 echo "Template ce_coh_aktuell_chart <br>";
 echo "Dump der übergebenenen selectoren mit Werten<br>";

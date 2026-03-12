@@ -7,7 +7,6 @@ use Contao\Module;
 use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 
-use PbdKn\ContaoContaohabBundle\Sensor\SensorManager;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 use Contao\BackendTemplate;
 use Contao\System;
@@ -97,11 +96,8 @@ class ModuleCohThings extends Module
       /* nun die werte lesen */
 
       
-      $sensorManager = System::getContainer()->get(SensorManager::class);
-
-      $data = $sensorManager->fetchAll($sensorNamen);
-        // Jetzt kannst du die $data im Template verwenden:
-      $this->Template->sensorData = $data;
+//        $data = [];
+//      $this->Template->sensorData = $data;
       
       return;
     }

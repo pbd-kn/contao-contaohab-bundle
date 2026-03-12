@@ -46,8 +46,9 @@ class SyncService
         'lanBase' => 'http://192.168.178.49',
         // WAN Zugriff (wenn Sync am Hoster läuft, env=LIMA) -> MyFritz/DynDNS:
         //'wanBase' => 'https://DEINNAME.myfritz.net',
-        'wanBase' => 'http://31.47.83.250',                  // angebblich kann ich auf meinem hoster eine subdomain einrrichten und dann per
+        //'wanBase' => 'http://31.47.83.250',                  // angebblich kann ich auf meinem hoster eine subdomain einrrichten und dann per
                                                             // A-Record raspi 31.47.83.250 einrichten dann kann mann immer die subdomaoin raspi.pb-broghammer.de verwenden
+        'wanBase' => 'http://p1pu92iv4i9yh2m2.myfritz.net',                                                            
         // Token wie in sensorvalues.php / config_push.php:
         'token'   => 'COH_CODE',
         // API Pfade:

@@ -52,10 +52,10 @@ services:
            $syncService: '@PbdKn\ContaoContaohabBundle\Service\SyncService'
         tags: ['console.command']
 
-    PbdKn\ContaoContaohabBundle\Sensor\SensorManager:
-        public: true
-        arguments:
-          $fetchers: !tagged_iterator sensor.fetcher
+#    PbdKn\ContaoContaohabBundle\Sensor\SensorManager:
+#        public: true
+#        arguments:
+#          $fetchers: !tagged_iterator sensor.fetcher
 
     PbdKn\ContaoContaohabBundle\Sensor\IQBoxSensorService:
         tags: ['sensor.fetcher']        

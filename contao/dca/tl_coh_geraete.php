@@ -144,7 +144,7 @@ $GLOBALS['TL_DCA'][$strTable] = array(
                               'tl_class'  => 'w50',
                                
                            ],
-            'sql'       => "varchar(255) NOT NULL default ''"
+            'sql'       => "varchar(2048) NOT NULL default ''"
         ),
     )
 );
