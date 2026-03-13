@@ -213,4 +213,74 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['selectedSensors'] = [
     },
     'sql' => "blob NULL"
 ];
+/**
+ * Content element SensorElement
+ */
+
+$GLOBALS['TL_DCA']['tl_content']['palettes']['coh_sensorelement'] =
+    '{type_legend},type,headline;
+     {sensor_legend},coh_selectedSensor,coh_template;
+     {template_legend:hide},customTpl;
+     {expert_legend:hide},cssID;
+     {invisible_legend:hide},invisible,start,stop';
+
+/*
+-----------------------------------------
+Sensor Auswahl
+-----------------------------------------
+*/
+
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_selectedSensor'] = [
+    'label' => ['Sensoren', 'Wählen Sie die Sensoren aus'],
+    'inputType' => 'select',
+    'eval' => [
+        'multiple' => true,
+        'chosen' => true,
+        'tl_class' => 'clr w50'
+    ],
+    'options_callback' => function () {
+
+        $db = \Contao\System::getContainer()->get('database_connection');
+
+        $rows = $db->fetchAllAssociative(
+            "SELECT sensorID, sensorTitle FROM tl_coh_sensors ORDER BY sensorTitle"
+        );
+
+        $options = [];
+
+        foreach ($rows as $row) {
+
+            $title = $row['sensorTitle'] ?: $row['sensorID'];
+
+            $options[$row['sensorID']] =
+                $title . ' (' . $row['sensorID'] . ')';
+        }
+
+        return $options;
+    },
+    'sql' => "blob NULL"
+];
+
+
+/*
+-----------------------------------------
+Template Auswahl
+-----------------------------------------
+*/
+
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_template'] = [
+    'label' => ['Template', 'Template für das Sensorelement'],
+    'exclude' => true,
+    'inputType' => 'select',
+    'options_callback' => static function () {
+
+        return \Contao\Controller::getTemplateGroup('ce_coh_');
+
+    },
+    'eval' => [
+        'tl_class' => 'w50',
+        'includeBlankOption' => true
+    ],
+    'sql' => "varchar(64) NOT NULL default ''"
+];
 
