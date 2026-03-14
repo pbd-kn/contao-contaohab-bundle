@@ -42,75 +42,60 @@ class SensorElement extends AbstractContentElementController
 
         if ('backend' === $scope) {
 
-$wildcard = new BackendTemplate('be_wildcard');
+            $wildcard = new BackendTemplate('be_wildcard');
 
-$headline = StringUtil::deserialize($model->headline);
-
-$wildcard->wildcard = '### COH SENSOR ELEMENT ###';
-$wildcard->title = $headline['value'] ?? 'COH Sensor Element';
-$wildcard->id = $model->id;
-$wildcard->link = $wildcard->title;
-$wildcard->href = 'contao?do=themes&table=tl_content&id='.$model->id;
+            $headline = StringUtil::deserialize($model->headline);
+            $wildcard->wildcard = '### COH SENSOR ELEMENT ###';
+            $wildcard->title = $headline['value'] ?? 'COH Sensor Element';
+            $wildcard->id = $model->id;
+            $wildcard->link = $wildcard->title;
+            $wildcard->href = 'contao?do=themes&table=tl_content&id='.$model->id;
             return new Response($wildcard->parse());
         }
-
         /*
         -----------------------------------------
         Template wählen
         -----------------------------------------
         */
-
         $templateName = $model->coh_template ?: 'ce_coh_sensorelement';
         $template = $this->createTemplate($model, $templateName);
-
         /*
         -----------------------------------------
         eindeutiger Formularparameter
         -----------------------------------------
         */
-
         $field = 'sensor_'.$model->id;
-
         /*
         -----------------------------------------
         Frontend Auswahl
         -----------------------------------------
         */
-
         $selectedSensors = $request->query->all($field);
-
         /*
         -----------------------------------------
         Fallback auf DCA
         -----------------------------------------
         */
-
         if (empty($selectedSensors)) {
             $selectedSensors = StringUtil::deserialize($model->coh_selectedSensor, true);
         }
-
         /*
         -----------------------------------------
         Alle Sensoren laden (für Checkboxliste)
         -----------------------------------------
         */
-
         $allSensors = $this->connection->fetchAllAssociative(
             "SELECT sensorID, sensorTitle, sensorEinheit
              FROM tl_coh_sensors
              ORDER BY sensorTitle"
         );
-
         /*
         -----------------------------------------
         Gewählte Sensoren laden + letzter Wert
         -----------------------------------------
         */
-
         $sensors = [];
-
         if (!empty($selectedSensors)) {
-
             $rows = $this->connection->fetchAllAssociative(
                 "SELECT s.*,
                         sv.sensorValue,
@@ -130,28 +115,20 @@ $wildcard->href = 'contao?do=themes&table=tl_content&id='.$model->id;
                 [$selectedSensors],
                 [Connection::PARAM_STR_ARRAY]
             );
-
             foreach ($rows as $row) {
-
-                $row['date'] = !empty($row['tstamp'])
-                    ? date('d.m.Y H:i:s', (int)$row['tstamp'])
-                    : '';
-
+                $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
                 $sensors[] = $row;
             }
         }
-
         /*
         -----------------------------------------
         Template Variablen
         -----------------------------------------
         */
-
         $template->allSensors = $allSensors;
         $template->sensors = $sensors;
         $template->selectedSensors = $selectedSensors;
         $template->fieldName = $field;
-
         return $template->getResponse();
     }
 }
