@@ -1,0 +1,595 @@
+<div id="cohPanel_<?= $this->chartId ?>" class="coh-panel">
+
+<?php
+$d = $this->data ?? [];
+
+if (!function_exists('coh_v')) {
+    function coh_v(array $d, string $id, $default = '-')
+    {
+        return $d[$id]['sensorValue'] ?? $default;
+    }
+}
+
+if (!function_exists('coh_e')) {
+    function coh_e(array $d, string $id, string $default = '')
+    {
+        return $d[$id]['sensorEinheit'] ?? $default;
+    }
+}
+
+if (!function_exists('coh_title')) {
+    function coh_title(array $d, string $id, string $default = '')
+    {
+        return $d[$id]['sensorTitle'] ?? $default;
+    }
+}
+
+if (!function_exists('coh_num')) {
+    function coh_num($value, $default = 0.0): float
+    {
+        if ($value === null || $value === '' || $value === '-') {
+            return (float) $default;
+        }
+        return (float) str_replace(',', '.', (string) $value);
+    }
+}
+
+/*
+ * Abgeleitete Werte wie im alten Template
+ */
+$zwzPower = '-';
+$zwzPowerUnit = 'kW';
+if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
+    $zwzPower = round(
+        coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),
+        2
+    );
+    $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
+}
+
+$zwzTotal = '-';
+$zwzTotalUnit = 'kWh';
+if (isset($d['ZWZZaehlerTotalPVEnergieImport'], $d['ZWZZaehlerTotalPVEnergieExport'])) {
+    $imp = $d['ZWZZaehlerTotalPVEnergieImport']['sensorValue'] ?? '-';
+    $exp = $d['ZWZZaehlerTotalPVEnergieExport']['sensorValue'] ?? '-';
+    $zwzTotal = $imp.'/'.$exp;
+    $zwzTotalUnit = $d['ZWZZaehlerTotalPVEnergieImport']['sensorEinheit'] ?? 'kWh';
+}
+
+$batteryPercent = coh_num(coh_v($d, 'IQbattery_94_battery_stateOfCharge', 0), 0);
+$batteryPower   = coh_num(coh_v($d, 'IQbattery_94_battery_power', 0), 0);
+$boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
+
+$heizstabServerOk = coh_num(coh_v($d, 'RaspberryCheckHeizstabServer', -1), -1) >= 0;
+$collectorServerVal = (string) coh_v($d, 'RaspberrycheckSensorCollectorServer', '-');
+
+$plattenText = '';
+$plattenRaw = coh_v($d, 'RaspberrycheckPlattenbelegung', '');
+if ($plattenRaw && $plattenRaw !== '-') {
+    $parsed = json_decode((string) $plattenRaw, true);
+    if (is_array($parsed)) {
+        $lines = [];
+        foreach ($parsed as $item) {
+            if (is_array($item)) {
+                foreach ($item as $k => $v) {
+                    $lines[] = $k.': '.$v;
+                }
+            }
+        }
+        $plattenText = implode(' | ', $lines);
+    } else {
+        $plattenText = (string) $plattenRaw;
+    }
+}
+
+$protokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
+$protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
+
+$akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
+
+$boostClass = 'is-gray';
+if ($boostValue < 0) {
+    $boostClass = 'is-red';
+} elseif ($boostValue == 0) {
+    $boostClass = 'is-gray';
+} elseif ($boostValue == 1 || $boostValue == 2) {
+    $boostClass = 'is-green';
+} elseif ($boostValue > 2) {
+    $boostClass = 'is-blue';
+}
+?>
+
+<style>
+#cohPanel_<?= $this->chartId ?> {
+    --coh-bg: #ffffff;
+    --coh-border: #d9e3ec;
+    --coh-soft: #eef4f8;
+    --coh-text: #31475b;
+    --coh-muted: #6e8193;
+    --coh-green: #178a2f;
+    --coh-red: #c62828;
+    --coh-blue: #1d4ed8;
+    --coh-orange: #c97a00;
+    --coh-gray: #6b7280;
+    --coh-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--coh-text);
+}
+
+#cohPanel_<?= $this->chartId ?> * {
+    box-sizing: border-box;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-meta,
+#cohPanel_<?= $this->chartId ?> .coh-card,
+#cohPanel_<?= $this->chartId ?> .coh-toggle {
+    background: var(--coh-bg);
+    border: 1px solid var(--coh-border);
+    border-radius: 12px;
+    box-shadow: var(--coh-shadow);
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-meta {
+    padding: 12px 14px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-meta-line {
+    margin: 0 0 4px 0;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-meta-line:last-child {
+    margin-bottom: 0;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-error {
+    margin-top: 8px;
+    color: var(--coh-red);
+    font-weight: 700;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-card {
+    padding: 14px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: #284b63;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-gauge-wrap {
+    width: 90px;
+    min-width: 90px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-hero-text {
+    flex: 1;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-hero-label {
+    font-size: 13px;
+    color: var(--coh-muted);
+    margin-bottom: 2px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-hero-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--coh-green);
+    line-height: 1.1;
+    margin-bottom: 6px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-mini-box {
+    background: #f7fafc;
+    border: 1px solid #e4edf3;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-mini-label {
+    font-size: 12px;
+    color: var(--coh-muted);
+    margin-bottom: 2px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-mini-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--coh-blue);
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-list {
+    margin-top: 6px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #edf2f7;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-row:last-child {
+    border-bottom: none;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-icon {
+    width: 22px;
+    text-align: center;
+    font-size: 14px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-label {
+    min-width: 0;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-value {
+    font-weight: 700;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-subtext {
+    display: block;
+    color: var(--coh-muted);
+    font-size: 12px;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+#cohPanel_<?= $this->chartId ?> .is-green { color: var(--coh-green); }
+#cohPanel_<?= $this->chartId ?> .is-red { color: var(--coh-red); }
+#cohPanel_<?= $this->chartId ?> .is-blue { color: var(--coh-blue); }
+#cohPanel_<?= $this->chartId ?> .is-orange { color: var(--coh-orange); }
+#cohPanel_<?= $this->chartId ?> .is-gray { color: var(--coh-gray); }
+
+#cohPanel_<?= $this->chartId ?> .coh-toggle {
+    overflow: hidden;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-toggle summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #284b63;
+    background: linear-gradient(180deg, #f8fbff 0%, #f1f7fb 100%);
+    border-bottom: 1px solid #e7eef4;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-toggle summary::-webkit-details-marker {
+    display: none;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-toggle summary::before {
+    content: "▶ ";
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-toggle[open] summary::before {
+    content: "▼ ";
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-toggle-body {
+    padding: 8px 14px 10px 14px;
+}
+
+#cohPanel_<?= $this->chartId ?> .coh-pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.35;
+    margin: 0;
+}
+
+@media (max-width: 700px) {
+    #cohPanel_<?= $this->chartId ?> .coh-hero {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    #cohPanel_<?= $this->chartId ?> .coh-mini-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #cohPanel_<?= $this->chartId ?> .coh-row {
+        grid-template-columns: 22px 1fr;
+    }
+
+    #cohPanel_<?= $this->chartId ?> .coh-value {
+        grid-column: 2;
+        margin-left: 0;
+        white-space: normal;
+    }
+}
+</style>
+
+<div class="coh-stack">
+
+    <div class="coh-meta">
+        <div class="coh-meta-line">Push Tabellen: <?= $this->lastPullSync ?></div>
+        <div class="coh-meta-line">Stand Sensoren: <?= $this->lastSensorChange ?></div>
+
+        <?php if (($this->lastSensorChangeStatus ?? 'OK') !== 'OK'): ?>
+            <div class="coh-error">Status: <?= $this->lastSensorChangeStatus ?></div>
+        <?php endif; ?>
+
+        <?php if (!empty($this->syncError)): ?>
+            <div class="coh-error"><?= $this->syncError ?></div>
+        <?php endif; ?>
+    </div>
+
+    <div class="coh-card">
+        <div class="coh-card-title">Akku &amp; Solar</div>
+
+        <div class="coh-hero">
+            <div class="coh-gauge-wrap">
+                <canvas id="cohGauge_<?= $this->chartId ?>" width="90" height="90"></canvas>
+            </div>
+
+            <div class="coh-hero-text">
+                <div class="coh-hero-label">Füllstand Akku</div>
+                <div class="coh-hero-value"><?= coh_v($d, 'IQbattery_94_battery_stateOfCharge') ?> %</div>
+
+                <div class="coh-mini-grid">
+                    <div class="coh-mini-box">
+                        <div class="coh-mini-label">Leistung Solar</div>
+                        <div class="coh-mini-value"><?= coh_v($d, 'IQinverter_94_inverter_pvPower') ?> kW</div>
+                    </div>
+                    <div class="coh-mini-box">
+                        <div class="coh-mini-label">Solar heute</div>
+                        <div class="coh-mini-value"><?= coh_v($d, 'IQSolar_harmonized_work_Solar_Tag') ?> kWh</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="coh-list">
+            <div class="coh-row is-blue">
+                <div class="coh-icon">☀️</div>
+                <div class="coh-label">Solarzelle gesamt</div>
+                <div class="coh-value"><?= coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') ?> kWh</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">🏠</div>
+                <div class="coh-label">Eigenverbrauch</div>
+                <div class="coh-value"><?= coh_v($d, 'IQinverter_94_inverter_selfConsumptionPower') ?> kW</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">🌡️</div>
+                <div class="coh-label">Akku Temp</div>
+                <div class="coh-value"><?= coh_v($d, 'IQBatt_Temp') ?> °C</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">🔋</div>
+                <div class="coh-label">Akku Modus</div>
+                <div class="coh-value"><?= coh_v($d, 'IQbattery_94_battery_mode') ?><?= coh_e($d, 'IQbattery_94_battery_mode') ? ' '.coh_e($d, 'IQbattery_94_battery_mode') : '' ?></div>
+            </div>
+
+            <div class="coh-row <?= $akkuPowerClass ?>">
+                <div class="coh-icon">⚡</div>
+                <div class="coh-label">Akku Laden/Entladen</div>
+                <div class="coh-value"><?= coh_v($d, 'IQbattery_94_battery_power') ?> kW</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">🔀</div>
+                <div class="coh-label">SWR akt. Import/Export</div>
+                <div class="coh-value"><?= $zwzPower ?> <?= $zwzPowerUnit ?></div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">📊</div>
+                <div class="coh-label">Ges. Import/Export</div>
+                <div class="coh-value"><?= $zwzTotal ?> <?= $zwzTotalUnit ?></div>
+            </div>
+        </div>
+    </div>
+
+    <details class="coh-toggle">
+        <summary>🔌 Tasmota SWR Zähler</summary>
+        <div class="coh-toggle-body">
+            <div class="coh-row">
+                <div class="coh-icon">⚡</div>
+                <div class="coh-label">Power</div>
+                <div class="coh-value"><?= coh_v($d, 'TS_Power') ?> W</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">⬇️</div>
+                <div class="coh-label">Bezug</div>
+                <div class="coh-value"><?= coh_v($d, 'TS_E_in_108') ?> kWh</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">⬆️</div>
+                <div class="coh-label">Einspeisung</div>
+                <div class="coh-value"><?= coh_v($d, 'TS_E_out_208') ?> kWh</div>
+            </div>
+        </div>
+    </details>
+
+    <details class="coh-toggle" open>
+        <summary>🔥 Heizstab Daten</summary>
+        <div class="coh-toggle-body">
+            <div class="coh-row">
+                <div class="coh-icon">🌡️</div>
+                <div class="coh-label">Heizstab Temp1</div>
+                <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">🌡️</div>
+                <div class="coh-label">Heizstab Temp2</div>
+                <div class="coh-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
+            </div>
+
+            <div class="coh-row <?= $boostClass ?>">
+                <div class="coh-icon">🔥</div>
+                <div class="coh-label">BoostStatus</div>
+                <div class="coh-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">⚡</div>
+                <div class="coh-label">Heizstab Akt. Leistung</div>
+                <div class="coh-value"><?= coh_v($d, 'ELaktPwr') ?> kW</div>
+            </div>
+        </div>
+    </details>
+
+    <details class="coh-toggle">
+        <summary>📝 HeizstabServerProtokoll</summary>
+        <div class="coh-toggle-body">
+            <div class="coh-row <?= $protokollHasError ? 'is-red' : '' ?>">
+                <div class="coh-icon">📄</div>
+                <div class="coh-label">
+                    Protokoll
+                    <?php if ($protokollHasError): ?>
+                        <span class="coh-subtext is-red">Fehler im Protokoll erkannt</span>
+                    <?php endif; ?>
+                </div>
+                <div class="coh-value"></div>
+            </div>
+            <pre class="coh-pre"><?= htmlspecialchars($protokollText) ?></pre>
+
+            <div class="coh-row" style="margin-top:8px;">
+                <div class="coh-icon">🕒</div>
+                <div class="coh-label">Intervall</div>
+                <div class="coh-value"><?= coh_v($d, 'RaspberryHeizstabServerIntervall') ?></div>
+            </div>
+        </div>
+    </details>
+
+    <details class="coh-toggle">
+        <summary>🖥️ Raspberry Systemdaten</summary>
+        <div class="coh-toggle-body">
+            <div class="coh-row <?= $heizstabServerOk ? 'is-green' : 'is-red' ?>">
+                <div class="coh-icon">🎯</div>
+                <div class="coh-label">Raspberry Check HeizstabServer</div>
+                <div class="coh-value"><?= coh_v($d, 'RaspberryCheckHeizstabServer') ?></div>
+            </div>
+
+            <div class="coh-row <?= preg_match('/error|fehler/i', $collectorServerVal) ? 'is-red' : '' ?>">
+                <div class="coh-icon">🧠</div>
+                <div class="coh-label">SensorCollectorServer</div>
+                <div class="coh-value"><?= $collectorServerVal ?></div>
+            </div>
+
+            <div class="coh-row">
+                <div class="coh-icon">💾</div>
+                <div class="coh-label">
+                    Plattenbelegung
+                    <?php if ($plattenText): ?>
+                        <span class="coh-subtext"><?= htmlspecialchars($plattenText) ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="coh-value"><?= coh_v($d, 'RaspberrycheckPlattenbelegung') && !$plattenText ? coh_v($d, 'RaspberrycheckPlattenbelegung') : '' ?></div>
+            </div>
+        </div>
+    </details>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function initGauge_<?= $this->chartId ?>(retry) {
+        retry = retry || 0;
+
+        if (typeof window.RadialGauge === 'undefined') {
+            if (retry < 30) {
+                setTimeout(function () {
+                    initGauge_<?= $this->chartId ?>(retry + 1);
+                }, 100);
+            }
+            return;
+        }
+
+        var canvasId = 'cohGauge_<?= $this->chartId ?>';
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            return;
+        }
+
+        var gauge = new RadialGauge({
+            renderTo: canvasId,
+            width: 90,
+            height: 90,
+            minValue: 0,
+            maxValue: 100,
+            value: <?= json_encode($batteryPercent) ?>,
+            units: "%",
+            exactTicks: false,
+            majorTicks: ["0", "20", "40", "60", "80", "100"],
+            minorTicks: 2,
+            strokeTicks: true,
+            highlights: [
+                { from: 0, to: 20, color: "rgba(198,40,40,.25)" },
+                { from: 20, to: 60, color: "rgba(201,122,0,.20)" },
+                { from: 60, to: 100, color: "rgba(23,138,47,.20)" }
+            ],
+            colorPlate: "#ffffff",
+            borderShadowWidth: 0,
+            borders: true,
+            needleType: "arrow",
+            needleWidth: 3,
+            needleCircleSize: 7,
+            needleCircleOuter: true,
+            needleCircleInner: false,
+            animationDuration: 500,
+            animationRule: "linear",
+            colorMajorTicks: "#666",
+            colorMinorTicks: "#888",
+            colorTitle: "#333",
+            colorUnits: "#333",
+            colorNumbers: "#333",
+            colorNeedle: "#cc3333",
+            colorNeedleEnd: "#cc3333",
+            colorBarProgress: "#2b6cf0",
+            colorBar: "#e5e7eb",
+            fontNumbersSize: 18,
+            fontUnitsSize: 20,
+            fontTitleSize: 0
+        });
+
+        gauge.draw();
+    }
+
+    initGauge_<?= $this->chartId ?>(0);
+});
+</script>
+
+</div>

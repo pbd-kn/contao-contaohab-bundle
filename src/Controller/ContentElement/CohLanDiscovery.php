@@ -44,10 +44,11 @@ class CohLanDiscovery extends AbstractContentElementController
 
         $deviceMap = [
 
-            "b8-d8-12-a1-e0-4f" => "SmartBox",
+            "b8-d8-12-a1-e0-4f" => "IQBox",
             "d4-8a-fc-15-ff-98" => "Tasmota",
             "98-6d-35-c1-23-52" => "myPV",
-            "d8-3a-dd-66-0c-92" => "Raspberry"
+            "d8-3a-dd-66-0c-92" => "Raspberry",
+            "60-e8-5b-6e-b0-44" => "SYR Leckage"
 
         ];
 
