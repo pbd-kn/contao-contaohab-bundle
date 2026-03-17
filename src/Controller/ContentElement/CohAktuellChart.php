@@ -47,7 +47,7 @@ protected function getResponse($template, ContentModel $model, Request $request)
         return new Response($wildcard->parse());
     }
 
-    $this->addCssOnce('bundles/contaocontaohab/css/coh_aktuell_panel.css');
+    $this->addCssOnce('bundles/pbdkncontaocontaohab/css/coh_aktuell_panel.css');
     $this->logger->debugMe("getResponse: sensorwerte liefern");
 
     $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
