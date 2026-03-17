@@ -47,6 +47,7 @@ protected function getResponse($template, ContentModel $model, Request $request)
         return new Response($wildcard->parse());
     }
 
+    $this->addCssOnce('bundles/contaocontaohab/css/coh_aktuell_panel.css');
     $this->logger->debugMe("getResponse: sensorwerte liefern");
 
     $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
@@ -190,7 +191,12 @@ protected function getResponse($template, ContentModel $model, Request $request)
 
     return $template->getResponse();
 }
+private function addCssOnce(string $file): void
+{
+    $file .= '|static';
 
+    if (!in_array($file, $GLOBALS['TL_CSS'] ?? [], true)) { $GLOBALS['TL_CSS'][] = $file; }
+}
     private function getSensorColor(int|string $id): string
     {
         $colors = ['#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#F472B6'];

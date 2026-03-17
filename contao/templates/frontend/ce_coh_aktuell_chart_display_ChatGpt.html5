@@ -5,9 +5,7 @@ $d = $this->data ?? [];
 
 if (!function_exists('coh_v')) {
     function coh_v(array $d, string $id, $default = '-')
-    {
-        return $d[$id]['sensorValue'] ?? $default;
-    }
+    { return $d[$id]['sensorValue'] ?? $default; }
 }
 
 if (!function_exists('coh_e')) {
@@ -40,10 +38,7 @@ if (!function_exists('coh_num')) {
 $zwzPower = '-';
 $zwzPowerUnit = 'kW';
 if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
-    $zwzPower = round(
-        coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),
-        2
-    );
+    $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
     $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
 }
 
@@ -88,14 +83,10 @@ $protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
 $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
 
 $boostClass = 'is-gray';
-if ($boostValue < 0) {
-    $boostClass = 'is-red';
-} elseif ($boostValue == 0) {
-    $boostClass = 'is-gray';
-} elseif ($boostValue == 1 || $boostValue == 2) {
-    $boostClass = 'is-green';
-} elseif ($boostValue > 2) {
-    $boostClass = 'is-blue';
+if ($boostValue < 0) { $boostClass = 'is-red';
+} elseif ($boostValue == 0) { $boostClass = 'is-gray';
+} elseif ($boostValue == 1 || $boostValue == 2) { $boostClass = 'is-green';
+} elseif ($boostValue > 2) { $boostClass = 'is-blue';
 }
 ?>
 
@@ -548,42 +539,39 @@ document.addEventListener('DOMContentLoaded', function () {
             renderTo: canvasId,
             width: 90,
             height: 90,
-            minValue: 0,
-            maxValue: 100,
             value: <?= json_encode($batteryPercent) ?>,
             units: "%",
-            exactTicks: false,
-            majorTicks: ["0", "20", "40", "60", "80", "100"],
-            minorTicks: 2,
-            strokeTicks: true,
-            highlights: [
-                { from: 0, to: 20, color: "rgba(198,40,40,.25)" },
-                { from: 20, to: 60, color: "rgba(201,122,0,.20)" },
-                { from: 60, to: 100, color: "rgba(23,138,47,.20)" }
-            ],
-            colorPlate: "#ffffff",
-            borderShadowWidth: 0,
-            borders: true,
-            needleType: "arrow",
-            needleWidth: 3,
-            needleCircleSize: 7,
+            startAngle: 180,
+            ticksAngle: 360,
+            minValue: 0,
+            maxValue: 100,
+            barWidth: 15,
+            colorBarProgress: '#00cc00',
+            colorBar: 'blue',
+            needleType: 'arrow',
+            needleWidth: 10,
+            needleCircleSize: 1,
             needleCircleOuter: true,
             needleCircleInner: false,
-            animationDuration: 500,
-            animationRule: "linear",
-            colorMajorTicks: "#666",
-            colorMinorTicks: "#888",
-            colorTitle: "#333",
-            colorUnits: "#333",
-            colorNumbers: "#333",
-            colorNeedle: "#cc3333",
-            colorNeedleEnd: "#cc3333",
-            colorBarProgress: "#2b6cf0",
-            colorBar: "#e5e7eb",
-            fontNumbersSize: 18,
-            fontUnitsSize: 20,
-            fontTitleSize: 0
-        });
+            colorNeedle: 'red',
+            colorNeedleEnd: 'red',
+            valueBox: false,
+            strokeTicks: false,
+            colorNumbers: 'transparent',
+            colorMajorTicks: 'transparent',
+            colorMinorTicks: 'transparent',
+            majorTicks: [],
+            minorTicks: 0,
+            colorPlate: 'transparent',
+            borders: false,
+            borderOuterWidth: 0,
+            borderMiddleWidth: 0,
+            borderInnerWidth: 0,
+            borderShadowWidth: 0,
+            highlights: [],
+            animation: false,
+            highDpiSupport: true        
+      });
 
         gauge.draw();
     }

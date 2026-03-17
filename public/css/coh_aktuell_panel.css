@@ -1,0 +1,189 @@
+/* CSS Document */
+/* diese styles beziehen sich auf die darstellung der einzeln attributliste  z.b. 
+   im Template ce_coh_aktuell....
+   dort witd die klasse coh-panel verwendet
+   das file files\themes\bootstrap\css\coh_aktuell_panel.css kopierern
+*/
+/* =========================================
+   COH PANEL BASIS
+   ========================================= */
+
+.coh-panel {
+    --coh-bg: #ffffff;
+    --coh-border: #d9e3ec;
+    --coh-soft: #eef4f8;
+    --coh-text: #31475b;
+    --coh-muted: #6e8193;
+    --coh-green: #178a2f;
+    --coh-red: #c62828;
+    --coh-blue: #1d4ed8;
+    --coh-orange: #c97a00;
+    --coh-gray: #6b7280;
+    --coh-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--coh-text);
+}
+
+.coh-panel * {
+    box-sizing: border-box;
+}
+
+/* Layout */
+
+.coh-panel .coh-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Meta */
+
+.coh-panel .coh-meta,
+.coh-panel .coh-card,
+.coh-panel .coh-toggle {
+    background: var(--coh-bg);
+    border: 1px solid var(--coh-border);
+    border-radius: 12px;
+    box-shadow: var(--coh-shadow);
+}
+
+.coh-panel .coh-meta {
+    padding: 12px 14px;
+}
+
+.coh-panel .coh-meta-line {
+    margin: 0 0 4px 0;
+}
+
+.coh-panel .coh-error {
+    margin-top: 8px;
+    color: var(--coh-red);
+    font-weight: 700;
+}
+
+/* Card */
+
+.coh-panel .coh-card {
+    padding: 14px;
+}
+
+.coh-panel .coh-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #284b63;
+}
+
+/* Hero */
+
+.coh-panel .coh-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.coh-panel .coh-gauge-wrap {
+    width: 90px;
+}
+
+.coh-panel .coh-hero-label {
+    font-size: 13px;
+    color: var(--coh-muted);
+}
+
+.coh-panel .coh-hero-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--coh-green);
+}
+
+/* Mini grid */
+
+.coh-panel .coh-mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.coh-panel .coh-mini-box {
+    background: #f7fafc;
+    border: 1px solid #e4edf3;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+.coh-panel .coh-mini-value {
+    font-weight: 700;
+    color: var(--coh-blue);
+}
+
+/* Rows */
+
+.coh-panel .coh-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.coh-panel .coh-row:last-child {
+    border-bottom: none;
+}
+
+.coh-panel .coh-icon {
+    text-align: center;
+}
+
+.coh-panel .coh-value {
+    font-weight: 700;
+}
+
+.coh-panel .coh-subtext {
+    font-size: 12px;
+    color: var(--coh-muted);
+}
+
+/* Colors */
+
+.coh-panel .is-green { color: var(--coh-green); }
+.coh-panel .is-red { color: var(--coh-red); }
+.coh-panel .is-blue { color: var(--coh-blue); }
+.coh-panel .is-orange { color: var(--coh-orange); }
+.coh-panel .is-gray { color: var(--coh-gray); }
+
+/* Toggle */
+
+.coh-panel .coh-toggle summary {
+    cursor: pointer;
+    padding: 12px;
+    font-weight: 700;
+}
+
+.coh-panel .coh-toggle-body {
+    padding: 10px;
+}
+
+.coh-panel .coh-pre {
+    font-size: 13px;
+    white-space: pre-wrap;
+}
+
+/* Responsive */
+
+@media (max-width: 700px) {
+    .coh-panel .coh-hero {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .coh-panel .coh-mini-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .coh-panel .coh-row {
+        grid-template-columns: 22px 1fr;
+    }
+}
