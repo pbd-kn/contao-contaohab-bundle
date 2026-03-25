@@ -85,7 +85,7 @@ class SensorElement extends AbstractContentElementController
         -----------------------------------------
         */
         $allSensors = $this->connection->fetchAllAssociative(
-            "SELECT sensorID, sensorTitle, sensorEinheit
+            "SELECT sensorID, sensorTitle, sensorEinheit, sensorLokalId, outputMode
              FROM tl_coh_sensors
              ORDER BY sensorTitle"
         );
@@ -116,8 +116,28 @@ class SensorElement extends AbstractContentElementController
                 [Connection::PARAM_STR_ARRAY]
             );
             foreach ($rows as $row) {
-                $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
-                $sensors[] = $row;
+                if (strtolower($row['outputMode']) == 'json') {
+                    $sensorArray = json_decode($row['sensorValue'], true);
+                    $str = nl2br(htmlspecialchars(print_r($sensorArray, true)));
+                    $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
+                    $row['sensorValue']=$str;
+                    $sensors[] = $row;
+                    foreach ($sensorArray as $k=>$v) {
+                        $res=[];
+                        $res['sensorID'] = $row['sensorTitle'] .$k;
+                        $res['sensorTitle'] = $row['sensorTitle'] .$k;
+                        $res['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
+                        $res['sensorValue'] = $v['sensorValue'];
+                        $res['sensorEinheit'] = $v['sensorEinheit'];
+                        $res['sensorLokalId'] = $k;
+                        //$res['sensorLokalId'] = $row['sensorLokalId'];
+                        //$res['outputMode'] = $row['outputMode'];
+                        $sensors[] = $res;
+                    }
+                } else {
+                    $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
+                    $sensors[] = $row;
+                }
             }
         }
         /*

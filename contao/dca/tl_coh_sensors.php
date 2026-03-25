@@ -151,11 +151,12 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'outputMode' => [
-            'label' => ['Ausgabemodus', 'Wie soll der Wert berechnet werden?'],
+            'label' => ['Ausgabemodus', 'Wie soll der Wert berechnet/ausgegeben werden? Bei json werte durch : getrennt'],
             'inputType' => 'select',
             'options' => [
-                'absolute' => 'Absolut (Rohwert)',
-                'daily'    => 'Tageswert (00:00 ? jetzt)'
+                'absolute'  => 'Absolut (Rohwert)',
+                'json'      => 'Json',
+                'daily'     => 'Tageswert (00:00 ? jetzt)'
             ],
             'eval' => [
                 'mandatory' => true,

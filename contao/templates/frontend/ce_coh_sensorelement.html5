@@ -56,13 +56,21 @@
                     <td><?php echo $sensor['sensorID']; ?></td>
                 </tr>
                 <tr>
-                    <td><b>Einheit</b></td>
-                    <td><?php echo $sensor['sensorEinheit']; ?></td>
+                    <td><b>Letzter Wert</b></td>
+                    <td> <?php echo $sensor['sensorValue']; ?> <?= htmlspecialchars($sensor['sensorEinheit'] ?? '-') ?>
+                    </td>
                 </tr>
                 <tr>
-                    <td><b>Letzter Wert</b></td>
-                    <td> <?php echo $sensor['sensorValue']; ?> <?php echo $sensor['sensorEinheit']; ?>
-                    </td>
+                    <td><b>Einheit</b></td>
+                    <td><?= htmlspecialchars($sensor['sensorEinheit'] ?? '-') ?></td>
+                </tr>
+                <tr>
+                    <td><b>outputMode</b></td>
+                    <td><?= htmlspecialchars($sensor['outputMode'] ?? '-') ?></td>
+                </tr>
+                <tr>
+                    <td><b>sensorLokalId</b></td>
+                    <td><?= htmlspecialchars($sensor['sensorLokalId'] ?? '-') ?></td>
                 </tr>
                 <tr>
                     <td><b>Zeit</b></td>

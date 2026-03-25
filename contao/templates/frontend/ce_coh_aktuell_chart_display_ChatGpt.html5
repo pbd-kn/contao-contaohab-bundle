@@ -1,98 +1,64 @@
 <div id="cohPanel_<?= $this->chartId ?>" class="coh-panel">
-
 <?php
-$d = $this->data ?? [];
-
-if (!function_exists('coh_v')) {
-    function coh_v(array $d, string $id, $default = '-')
-    { return $d[$id]['sensorValue'] ?? $default; }
-}
-
-if (!function_exists('coh_e')) {
-    function coh_e(array $d, string $id, string $default = '')
-    {
-        return $d[$id]['sensorEinheit'] ?? $default;
-    }
-}
-
-if (!function_exists('coh_title')) {
-    function coh_title(array $d, string $id, string $default = '')
-    {
-        return $d[$id]['sensorTitle'] ?? $default;
-    }
-}
-
-if (!function_exists('coh_num')) {
-    function coh_num($value, $default = 0.0): float
-    {
-        if ($value === null || $value === '' || $value === '-') {
-            return (float) $default;
+    $d = $this->data ?? [];
+    if (!function_exists('coh_v')) { function coh_v(array $d, string $id, $default = '-') { return $d[$id]['sensorValue'] ?? $default; } }
+    if (!function_exists('coh_e')) { function coh_e(array $d, string $id, string $default = '') { return $d[$id]['sensorEinheit'] ?? $default;} }
+    if (!function_exists('coh_title')) { function coh_title(array $d, string $id, string $default = '') { return $d[$id]['sensorTitle'] ?? $default; } }
+    if (!function_exists('coh_num')) {
+        function coh_num($value, $default = 0.0): float {
+            if ($value === null || $value === '' || $value === '-') { return (float) $default; }
+            return (float) str_replace(',', '.', (string) $value);
         }
-        return (float) str_replace(',', '.', (string) $value);
     }
-}
+    /*
+     * Abgeleitete Werte wie im alten Template
+     */
+    $zwzPower = '-';
+    $zwzPowerUnit = 'kW';
+    if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
+        $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
+        $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
+    }
+    $zwzTotal = '-';
+    $zwzTotalUnit = 'kWh';
+    if (isset($d['ZWZZaehlerTotalPVEnergieImport'], $d['ZWZZaehlerTotalPVEnergieExport'])) {  // prüfe auf beide sensorids
+        $imp = $d['ZWZZaehlerTotalPVEnergieImport']['sensorValue'] ?? '-';
+        $exp = $d['ZWZZaehlerTotalPVEnergieExport']['sensorValue'] ?? '-';
+        $zwzTotal = $imp.'/'.$exp;
+        $zwzTotalUnit = $d['ZWZZaehlerTotalPVEnergieImport']['sensorEinheit'] ?? 'kWh';
+    }
+    $batteryPercent = coh_num(coh_v($d, 'IQbattery_94_battery_stateOfCharge', 0), 0);
+    $batteryPower   = coh_num(coh_v($d, 'IQbattery_94_battery_power', 0), 0);
+    $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
+    $heizstabServerOk = coh_num(coh_v($d, 'RaspberryCheckHeizstabServer', -1), -1) >= 0;
+    $collectorServerVal = (string) coh_v($d, 'RaspberrycheckSensorCollectorServer', '-');
 
-/*
- * Abgeleitete Werte wie im alten Template
- */
-$zwzPower = '-';
-$zwzPowerUnit = 'kW';
-if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
-    $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
-    $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
-}
-
-$zwzTotal = '-';
-$zwzTotalUnit = 'kWh';
-if (isset($d['ZWZZaehlerTotalPVEnergieImport'], $d['ZWZZaehlerTotalPVEnergieExport'])) {
-    $imp = $d['ZWZZaehlerTotalPVEnergieImport']['sensorValue'] ?? '-';
-    $exp = $d['ZWZZaehlerTotalPVEnergieExport']['sensorValue'] ?? '-';
-    $zwzTotal = $imp.'/'.$exp;
-    $zwzTotalUnit = $d['ZWZZaehlerTotalPVEnergieImport']['sensorEinheit'] ?? 'kWh';
-}
-
-$batteryPercent = coh_num(coh_v($d, 'IQbattery_94_battery_stateOfCharge', 0), 0);
-$batteryPower   = coh_num(coh_v($d, 'IQbattery_94_battery_power', 0), 0);
-$boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
-
-$heizstabServerOk = coh_num(coh_v($d, 'RaspberryCheckHeizstabServer', -1), -1) >= 0;
-$collectorServerVal = (string) coh_v($d, 'RaspberrycheckSensorCollectorServer', '-');
-
-$plattenText = '';
-$plattenRaw = coh_v($d, 'RaspberrycheckPlattenbelegung', '');
-if ($plattenRaw && $plattenRaw !== '-') {
-    $parsed = json_decode((string) $plattenRaw, true);
-    if (is_array($parsed)) {
-        $lines = [];
-        foreach ($parsed as $item) {
-            if (is_array($item)) {
-                foreach ($item as $k => $v) {
-                    $lines[] = $k.': '.$v;
-                }
-            }
+    $plattenText = '';
+    $plattenRaw = coh_v($d, 'RaspberrycheckPlattenbelegung', '');
+    if ($plattenRaw && $plattenRaw !== '-') {
+        $parsed = json_decode((string) $plattenRaw, true);
+        if (is_array($parsed)) {
+            $lines = [];
+            foreach ($parsed as $item) { if (is_array($item)) { foreach ($item as $k => $v) { $lines[] = $k.': '.$v; } }}
+            $plattenText = implode(' | ', $lines);
+        } else {
+            $plattenText = (string) $plattenRaw;
         }
-        $plattenText = implode(' | ', $lines);
-    } else {
-        $plattenText = (string) $plattenRaw;
     }
-}
-
-$protokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
-$protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
-
-$akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
-
-$boostClass = 'is-gray';
-if ($boostValue < 0) { $boostClass = 'is-red';
-} elseif ($boostValue == 0) { $boostClass = 'is-gray';
-} elseif ($boostValue == 1 || $boostValue == 2) { $boostClass = 'is-green';
-} elseif ($boostValue > 2) { $boostClass = 'is-blue';
-}
+    $protokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
+    $protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
+    $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
+    $boostClass = 'is-gray';
+    if ($boostValue < 0) { $boostClass = 'is-red';
+    } elseif ($boostValue == 0) { $boostClass = 'is-gray';
+    } elseif ($boostValue == 1 || $boostValue == 2) { $boostClass = 'is-green';
+    } elseif ($boostValue > 2) { $boostClass = 'is-blue'; }
 ?>
 
 <style>
-#cohPanel_<?= $this->chartId ?> {
+.cohPanel {
     --coh-bg: #ffffff;
+    --coh-bg: yellow;
     --coh-border: #d9e3ec;
     --coh-soft: #eef4f8;
     --coh-text: #31475b;
@@ -326,32 +292,25 @@ if ($boostValue < 0) { $boostClass = 'is-red';
 </style>
 
 <div class="coh-stack">
-
     <div class="coh-meta">
         <div class="coh-meta-line">Push Tabellen: <?= $this->lastPullSync ?></div>
         <div class="coh-meta-line">Stand Sensoren: <?= $this->lastSensorChange ?></div>
-
         <?php if (($this->lastSensorChangeStatus ?? 'OK') !== 'OK'): ?>
             <div class="coh-error">Status: <?= $this->lastSensorChangeStatus ?></div>
         <?php endif; ?>
-
         <?php if (!empty($this->syncError)): ?>
             <div class="coh-error"><?= $this->syncError ?></div>
         <?php endif; ?>
     </div>
-
     <div class="coh-card">
         <div class="coh-card-title">Akku &amp; Solar</div>
-
         <div class="coh-hero">
             <div class="coh-gauge-wrap">
                 <canvas id="cohGauge_<?= $this->chartId ?>" width="90" height="90"></canvas>
             </div>
-
             <div class="coh-hero-text">
                 <div class="coh-hero-label">Füllstand Akku</div>
                 <div class="coh-hero-value"><?= coh_v($d, 'IQbattery_94_battery_stateOfCharge') ?> %</div>
-
                 <div class="coh-mini-grid">
                     <div class="coh-mini-box">
                         <div class="coh-mini-label">Leistung Solar</div>
@@ -364,44 +323,37 @@ if ($boostValue < 0) { $boostClass = 'is-red';
                 </div>
             </div>
         </div>
-
         <div class="coh-list">
             <div class="coh-row is-blue">
                 <div class="coh-icon">☀️</div>
                 <div class="coh-label">Solarzelle gesamt</div>
                 <div class="coh-value"><?= coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') ?> kWh</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">🏠</div>
                 <div class="coh-label">Eigenverbrauch</div>
                 <div class="coh-value"><?= coh_v($d, 'IQinverter_94_inverter_selfConsumptionPower') ?> kW</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">🌡️</div>
                 <div class="coh-label">Akku Temp</div>
                 <div class="coh-value"><?= coh_v($d, 'IQBatt_Temp') ?> °C</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">🔋</div>
                 <div class="coh-label">Akku Modus</div>
                 <div class="coh-value"><?= coh_v($d, 'IQbattery_94_battery_mode') ?><?= coh_e($d, 'IQbattery_94_battery_mode') ? ' '.coh_e($d, 'IQbattery_94_battery_mode') : '' ?></div>
             </div>
-
             <div class="coh-row <?= $akkuPowerClass ?>">
                 <div class="coh-icon">⚡</div>
                 <div class="coh-label">Akku Laden/Entladen</div>
                 <div class="coh-value"><?= coh_v($d, 'IQbattery_94_battery_power') ?> kW</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">🔀</div>
                 <div class="coh-label">SWR akt. Import/Export</div>
                 <div class="coh-value"><?= $zwzPower ?> <?= $zwzPowerUnit ?></div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">📊</div>
                 <div class="coh-label">Ges. Import/Export</div>
@@ -409,7 +361,6 @@ if ($boostValue < 0) { $boostClass = 'is-red';
             </div>
         </div>
     </div>
-
     <details class="coh-toggle">
         <summary>🔌 Tasmota SWR Zähler</summary>
         <div class="coh-toggle-body">
@@ -418,13 +369,11 @@ if ($boostValue < 0) { $boostClass = 'is-red';
                 <div class="coh-label">Power</div>
                 <div class="coh-value"><?= coh_v($d, 'TS_Power') ?> W</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">⬇️</div>
                 <div class="coh-label">Bezug</div>
                 <div class="coh-value"><?= coh_v($d, 'TS_E_in_108') ?> kWh</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">⬆️</div>
                 <div class="coh-label">Einspeisung</div>
@@ -432,7 +381,6 @@ if ($boostValue < 0) { $boostClass = 'is-red';
             </div>
         </div>
     </details>
-
     <details class="coh-toggle" open>
         <summary>🔥 Heizstab Daten</summary>
         <div class="coh-toggle-body">
@@ -441,19 +389,16 @@ if ($boostValue < 0) { $boostClass = 'is-red';
                 <div class="coh-label">Heizstab Temp1</div>
                 <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">🌡️</div>
                 <div class="coh-label">Heizstab Temp2</div>
                 <div class="coh-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
             </div>
-
             <div class="coh-row <?= $boostClass ?>">
                 <div class="coh-icon">🔥</div>
                 <div class="coh-label">BoostStatus</div>
                 <div class="coh-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">⚡</div>
                 <div class="coh-label">Heizstab Akt. Leistung</div>
@@ -461,7 +406,6 @@ if ($boostValue < 0) { $boostClass = 'is-red';
             </div>
         </div>
     </details>
-
     <details class="coh-toggle">
         <summary>📝 HeizstabServerProtokoll</summary>
         <div class="coh-toggle-body">
@@ -476,7 +420,6 @@ if ($boostValue < 0) { $boostClass = 'is-red';
                 <div class="coh-value"></div>
             </div>
             <pre class="coh-pre"><?= htmlspecialchars($protokollText) ?></pre>
-
             <div class="coh-row" style="margin-top:8px;">
                 <div class="coh-icon">🕒</div>
                 <div class="coh-label">Intervall</div>
@@ -484,7 +427,6 @@ if ($boostValue < 0) { $boostClass = 'is-red';
             </div>
         </div>
     </details>
-
     <details class="coh-toggle">
         <summary>🖥️ Raspberry Systemdaten</summary>
         <div class="coh-toggle-body">
@@ -493,13 +435,11 @@ if ($boostValue < 0) { $boostClass = 'is-red';
                 <div class="coh-label">Raspberry Check HeizstabServer</div>
                 <div class="coh-value"><?= coh_v($d, 'RaspberryCheckHeizstabServer') ?></div>
             </div>
-
             <div class="coh-row <?= preg_match('/error|fehler/i', $collectorServerVal) ? 'is-red' : '' ?>">
                 <div class="coh-icon">🧠</div>
                 <div class="coh-label">SensorCollectorServer</div>
                 <div class="coh-value"><?= $collectorServerVal ?></div>
             </div>
-
             <div class="coh-row">
                 <div class="coh-icon">💾</div>
                 <div class="coh-label">
@@ -512,9 +452,7 @@ if ($boostValue < 0) { $boostClass = 'is-red';
             </div>
         </div>
     </details>
-
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     function initGauge_<?= $this->chartId ?>(retry) {
