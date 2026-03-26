@@ -13,6 +13,7 @@ use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
+use PbdKn\ContaoContaohabBundle\Service\SyncService;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 
 #[AsContentElement(SensorElement::TYPE, category: 'COH', template: 'ce_coh_sensorelement')]
@@ -22,28 +23,23 @@ class SensorElement extends AbstractContentElementController
 
     public function __construct(
         private readonly Connection $connection,
+        private readonly SyncService $syncService,
         private readonly LoggerService $logger
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
     {
-
         $scope = System::getContainer()
             ->get('request_stack')
             ?->getCurrentRequest()
             ?->attributes
             ?->get('_scope');
-
-        /*
-        -----------------------------------------
-        Backend Wildcard
-        -----------------------------------------
+        /*-----------------------------------------
+         * Backend Wildcard
+         *-----------------------------------------
         */
-
         if ('backend' === $scope) {
-
             $wildcard = new BackendTemplate('be_wildcard');
-
             $headline = StringUtil::deserialize($model->headline);
             $wildcard->wildcard = '### COH SENSOR ELEMENT ###';
             $wildcard->title = $headline['value'] ?? 'COH Sensor Element';
@@ -52,37 +48,38 @@ class SensorElement extends AbstractContentElementController
             $wildcard->href = 'contao?do=themes&table=tl_content&id='.$model->id;
             return new Response($wildcard->parse());
         }
-        /*
-        -----------------------------------------
-        Template wählen
-        -----------------------------------------
+        /*-----------------------------------------
+         * Template wählen
+         * -----------------------------------------
         */
         $templateName = $model->coh_template ?: 'ce_coh_sensorelement';
         $template = $this->createTemplate($model, $templateName);
+        $error = $this->syncService->sync();
+        if ($error !== null) { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>$error"; }
         /*
-        -----------------------------------------
-        eindeutiger Formularparameter
-        -----------------------------------------
+         * -----------------------------------------
+         * eindeutiger Formularparameter
+         * -----------------------------------------
         */
         $field = 'sensor_'.$model->id;
         /*
-        -----------------------------------------
-        Frontend Auswahl
-        -----------------------------------------
+         * -----------------------------------------
+         * Frontend Auswahl
+         * -----------------------------------------
         */
         $selectedSensors = $request->query->all($field);
         /*
-        -----------------------------------------
-        Fallback auf DCA
-        -----------------------------------------
+         * -----------------------------------------
+         * Fallback auf DCA
+         * -----------------------------------------
         */
         if (empty($selectedSensors)) {
             $selectedSensors = StringUtil::deserialize($model->coh_selectedSensor, true);
         }
         /*
-        -----------------------------------------
-        Alle Sensoren laden (für Checkboxliste)
-        -----------------------------------------
+         * -----------------------------------------
+         * Alle Sensoren laden (für Checkboxliste)
+         * -----------------------------------------
         */
         $allSensors = $this->connection->fetchAllAssociative(
             "SELECT sensorID, sensorTitle, sensorEinheit, sensorLokalId, outputMode
@@ -90,65 +87,85 @@ class SensorElement extends AbstractContentElementController
              ORDER BY sensorTitle"
         );
         /*
-        -----------------------------------------
-        Gewählte Sensoren laden + letzter Wert
-        -----------------------------------------
+         * -----------------------------------------
+         * Gewählte Sensoren laden + letzter Wert
+         * -----------------------------------------
         */
         $sensors = [];
-        if (!empty($selectedSensors)) {
-            $rows = $this->connection->fetchAllAssociative(
-                "SELECT s.*,
-                        sv.sensorValue,
-                        sv.tstamp
-                 FROM tl_coh_sensors s
-                 LEFT JOIN (
-                        SELECT sensorID, sensorValue, tstamp
-                        FROM tl_coh_sensorvalue
-                        WHERE (sensorID, tstamp) IN (
-                            SELECT sensorID, MAX(tstamp)
-                            FROM tl_coh_sensorvalue
-                            GROUP BY sensorID
-                        )
-                 ) sv ON sv.sensorID = s.sensorID
-                 WHERE s.sensorID IN (?)
-                 ORDER BY s.sensorTitle",
-                [$selectedSensors],
-                [Connection::PARAM_STR_ARRAY]
-            );
-            foreach ($rows as $row) {
-                if (strtolower($row['outputMode']) == 'json') {
-                    $sensorArray = json_decode($row['sensorValue'], true);
-                    $str = nl2br(htmlspecialchars(print_r($sensorArray, true)));
-                    $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
-                    $row['sensorValue']=$str;
-                    $sensors[] = $row;
-                    foreach ($sensorArray as $k=>$v) {
-                        $res=[];
-                        $res['sensorID'] = $row['sensorTitle'] .$k;
-                        $res['sensorTitle'] = $row['sensorTitle'] .$k;
-                        $res['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
-                        $res['sensorValue'] = $v['sensorValue'];
-                        $res['sensorEinheit'] = $v['sensorEinheit'];
-                        $res['sensorLokalId'] = $k;
-                        //$res['sensorLokalId'] = $row['sensorLokalId'];
-                        //$res['outputMode'] = $row['outputMode'];
-                        $sensors[] = $res;
-                    }
-                } else {
-                    $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
-                    $sensors[] = $row;
-                }
-            }
+
+
+if (!empty($selectedSensors)) {
+
+    $rows = $this->connection->fetchAllAssociative(
+        "SELECT 
+            s.*,
+            sv.sensorValue,
+            sv.tstamp,
+            sv.sensorEinheit AS svsensorEinheit,
+            sv.sensorValueType AS svsensorValueType
+        FROM tl_coh_sensors s
+        LEFT JOIN (
+            SELECT v1.*
+            FROM tl_coh_sensorvalue v1
+            INNER JOIN (
+                SELECT sensorID, MAX(tstamp) AS max_tstamp
+                FROM tl_coh_sensorvalue
+                GROUP BY sensorID
+            ) v2 
+            ON v1.sensorID = v2.sensorID 
+            AND v1.tstamp = v2.max_tstamp
+        ) sv ON sv.sensorID = s.sensorID
+        WHERE s.sensorID IN (?)
+        ORDER BY s.sensorTitle",
+        [$selectedSensors],
+        [Connection::PARAM_STR_ARRAY]
+    );
+
+    foreach ($rows as $row) {
+
+        $row['date'] = !empty($row['tstamp'])
+            ? date('d.m.Y H:i:s', (int)$row['tstamp'])
+            : '';
+
+        if (!empty($row['svsensorEinheit'])) {
+            $row['sensorEinheit'] = $row['svsensorEinheit'];
         }
-        /*
-        -----------------------------------------
-        Template Variablen
-        -----------------------------------------
+
+        if (!empty($row['svsensorValueType'])) {
+            $row['sensorValueType'] = $row['svsensorValueType'];
+        }
+
+        $sensors[] = $row;
+    }
+}        /*
+         * -----------------------------------------
+         * Template Variablen
+         * -----------------------------------------
         */
         $template->allSensors = $allSensors;
         $template->sensors = $sensors;
         $template->selectedSensors = $selectedSensors;
         $template->fieldName = $field;
+        
+        // --- Sync Info ---
+        $result = $this->connection->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'sensorvalue_pull'")->fetchOne();
+
+        $template->lastPullSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
+
+        // --- Letzte Änderung Sensorwerte ---
+        $lastChange = $this->connection->executeQuery("SELECT MAX(tstamp) FROM tl_coh_sensorvalue")->fetchOne();
+        if ($lastChange) {
+            $template->lastSensorChange = date('d.m.Y H:i', (int)$lastChange);
+            $diff = time() - (int)$lastChange;
+            $template->lastSensorChangeStatus = ($diff > 900) ? 'Fehler: Letzter Eintrag älter als 15 Min' : 'OK';
+        } else {
+            $template->lastSensorChange = 'Keine Daten';
+            $template->lastSensorChangeStatus = 'Fehler';
+        }
+
+        // --- Push Sync ---
+        $result = $this->connection->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'config_push'")->fetchOne();
+        $template->lastPushSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
         return $template->getResponse();
     }
 }

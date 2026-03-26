@@ -18,14 +18,14 @@ class SyrAjaxController
         // ?? TOKEN CHECK
         // ---------------------------------------------------
         if ($request->get('token') !== 'COH_CODE') {
-            return new JsonResponse(['success'=>false], 403);
+            return new JsonResponse(['success'=>false, 'error'=>'unauthorized'], 403);
         }
 
         $action = $request->get('action');
 
-        // ---------------------------------------------------
-        // ?? VENTIL STEUERUNG MIT WARTEN
-        // ---------------------------------------------------
+        // ===================================================
+        // ?? VENTIL STEUERUNG (MIT WAIT)
+        // ===================================================
         if ($action === 'open' || $action === 'close') {
 
             $target = null;
@@ -64,13 +64,19 @@ class SyrAjaxController
             ]);
         }
 
-        // ---------------------------------------------------
-        // ?? PROFIL SETZEN
-        // ---------------------------------------------------
+        // ===================================================
+        // ?? PROFIL SETZEN (WICHTIG: PAx + PRF !!!)
+        // ===================================================
         if ($action === 'setProfile') {
+
             $profile = (int)$request->get('profile');
 
             if ($profile >= 1 && $profile <= 8) {
+
+                // zuerst aktivieren
+                @file_get_contents($this->baseSet . "pa" . $profile . "/true");
+
+                // dann setzen
                 @file_get_contents($this->baseSet . "prf/" . $profile);
 
                 return new JsonResponse([
@@ -78,24 +84,134 @@ class SyrAjaxController
                     'profile' => $profile
                 ]);
             }
+
+            return new JsonResponse(['success'=>false]);
         }
 
+        // ===================================================
+        // ?? GENERIC SET (pv, pt, pf, pm, drp, dtt, dex)
+        // ===================================================
+        if ($action === 'setValue') {
+
+            $type    = $request->get('type');
+            $value   = $request->get('value');
+            $profile = (int)$request->get('profile');
+
+            if ($profile < 1 || $profile > 8) {
+                return new JsonResponse(['success'=>false, 'error'=>'invalid profile']);
+            }
+
+            // -----------------------------------
+            // PROFILWERTE (pv, pt, pf)
+            // -----------------------------------
+            if (in_array($type, ['pv','pt','pf'], true)) {
+
+                $v = (int)$value;
+
+                @file_get_contents(
+                    $this->baseSet . $type . $profile . "/" . $v
+                );
+
+                return new JsonResponse(['success'=>true]);
+            }
+
+            // -----------------------------------
+            // MIKROLECKAGE AN/AUS
+            // -----------------------------------
+            if ($type === 'pm') {
+
+                $v = ((int)$value === 1) ? 'true' : 'false';
+
+                @file_get_contents(
+                    $this->baseSet . "pm" . $profile . "/" . $v
+                );
+
+                return new JsonResponse(['success'=>true]);
+            }
+
+            // -----------------------------------
+            // INTERVALL (1-3)
+            // -----------------------------------
+            if ($type === 'drp') {
+
+                $v = (int)$value;
+
+                if ($v >= 1 && $v <= 3) {
+                    @file_get_contents($this->baseSet . "drp/" . $v);
+                    usleep(300000);
+                }
+
+                return new JsonResponse(['success'=>true]);
+            }
+
+            // -----------------------------------
+            // UHRZEIT (HH:MM)
+            // -----------------------------------
+            if ($type === 'dtt') {
+
+                $v = trim((string)$value);
+
+                if (preg_match('/^\d{2}:\d{2}$/', $v)) {
+                    @file_get_contents($this->baseSet . "dtt/" . $v);
+                    usleep(300000);
+                }
+
+                return new JsonResponse(['success'=>true]);
+            }
+
+            // -----------------------------------
+            // TEST STARTEN
+            // -----------------------------------
+            if ($type === 'dex') {
+
+                @file_get_contents($this->baseSet . "dex/true");
+                usleep(300000);
+
+                return new JsonResponse(['success'=>true]);
+            }
+
+            return new JsonResponse([
+                'success'=>false,
+                'error'=>'unknown type'
+            ]);
+        }
+
+        // ===================================================
+        // ?? OPTIONAL: GET ALL (für späteres Auto-Refresh)
+        // ===================================================
+        if ($action === 'getAll') {
+
+            $data = $this->syrGetAll();
+
+            return new JsonResponse([
+                'success' => true,
+                'data'    => $data
+            ]);
+        }
+
+        // ===================================================
+        // ? DEFAULT
+        // ===================================================
         return new JsonResponse([
             'success' => false,
             'error'   => 'unknown action'
         ]);
     }
 
-    // ---------------------------------------------------
-    // ?? GET HELPER (deine Funktion sauber integriert)
-    // ---------------------------------------------------
+    // ===================================================
+    // ?? HELPER: GET EINZELWERT
+    // ===================================================
     private function syrGet(string $cmd)
     {
         $ctx = stream_context_create([
-            'http' => ['timeout' => 2]
+            'http' => ['timeout' => 3]
         ]);
 
-        $json = @file_get_contents($this->baseGet . strtolower($cmd), false, $ctx);
+        $json = @file_get_contents(
+            $this->baseGet . strtolower($cmd),
+            false,
+            $ctx
+        );
 
         if (!$json) return null;
 
@@ -104,5 +220,29 @@ class SyrAjaxController
         if (!is_array($data) || empty($data)) return null;
 
         return array_values($data)[0] ?? null;
+    }
+
+    // ===================================================
+    // ?? HELPER: GET ALL
+    // ===================================================
+    private function syrGetAll(): array
+    {
+        $ctx = stream_context_create([
+            'http' => ['timeout' => 10]
+        ]);
+
+        $json = @file_get_contents(
+            $this->baseGet . "all",
+            false,
+            $ctx
+        );
+
+        if (!$json) return [];
+
+        $data = json_decode($json, true);
+
+        if (!is_array($data)) return [];
+
+        return $data;
     }
 }

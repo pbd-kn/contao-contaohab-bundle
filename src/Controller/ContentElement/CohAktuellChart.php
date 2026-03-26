@@ -57,7 +57,7 @@ class CohAktuellChart extends AbstractContentElementController
         $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
         $template = $this->createTemplate($model, $templateName);
         $error = $this->syncService->sync();
-        if ($error !== null) { $template->syncError = "<br>Syncronisation mit rasperrry fehlgeschlagen.<br>$error"; }
+        if ($error !== null) { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>$error"; }
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
         if (!empty($selectedSensors)) {

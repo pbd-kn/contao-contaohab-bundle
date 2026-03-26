@@ -1,16 +1,4 @@
 <div class="coh-sensor-select">
-    <div class="coh-meta">
-        <div class="coh-meta-line">Push Tabellen: <?= $this->lastPullSync ?></div>
-        <div class="coh-meta-line">Stand Sensoren: <?= $this->lastSensorChange ?></div>
-
-        <?php if (($this->lastSensorChangeStatus ?? 'OK') !== 'OK'): ?>
-            <div class="coh-error">Status: <?= $this->lastSensorChangeStatus ?></div>
-        <?php endif; ?>
-
-        <?php if (!empty($this->syncError)): ?>
-            <div class="coh-error"><?= $this->syncError ?></div>
-        <?php endif; ?>
-    </div>
 
     <input type="text"
         id="sensorFilter"
@@ -18,13 +6,37 @@
         style="width:500px;margin-bottom:10px;">
     <form method="get">
         <div id="sensorList">
-            <?php foreach ($this->allSensors  as $sensor): ?>
-                <label class="sensorItem">
-                <input type="checkbox" name="<?php echo $this->fieldName; ?>[]" value="<?php echo $sensor['sensorID']; ?>"
-                    <?php if (in_array($sensor['sensorID'], $this->selectedSensors)): ?> checked <?php endif; ?> >
+            <?php $groups = []; ?>
+            <?php foreach ($this->allSensors as $sensor): ?>
+                <?php
+                    $id = $sensor['sensorID'];
+                    if (strpos($id,'IQbattery') === 0) $group = 'Batterie';
+                    elseif (strpos($id,'IQinverter') === 0) $group = 'Wechselrichter';
+                    elseif (strpos($id,'TS_') === 0) $group = 'Tasmota';
+                    elseif (strpos($id,'component') === 0) $group = 'Berechnete Sensoren';
+                    elseif (strpos($id,'Raspberry') === 0) $group = 'Raspberry';
+                    else $group = 'Sonstige';
+                    $groups[$group][] = $sensor;
+                ?>
+            <?php endforeach; ?>
+            <?php foreach ($groups as $groupName => $groupSensors): ?>
+                <div class="sensorGroup">
+                    <div class="groupHeader" onclick="toggleGroup(this)">
+                        <span class="arrow"></span>
+                        <?php echo $groupName; ?> (<?php echo count($groupSensors); ?>)
+                    </div>
+                    <div class="groupContent">
+                        <?php foreach ($groupSensors as $sensor): ?>
+                            <label class="sensorItem">
+                                <input type="checkbox" name="<?php echo $this->fieldName; ?>[]" value="<?php echo $sensor['sensorID']; ?>"
+                                    <?php if (in_array($sensor['sensorID'], $this->selectedSensors)): ?> checked <?php endif; ?>
+                                >
                                 <?php echo $sensor['sensorTitle']; ?>
                                 (<?php echo $sensor['sensorID']; ?>)
-                </label>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             <?php endforeach; ?>
         </div>
         <br>
@@ -45,23 +57,19 @@
                 </tr>
                 <tr>
                     <td><b>Letzter Wert</b></td>
-                    <td> <?= $sensor['sensorValue'] ?> <?= $sensor['sensorEinheit'] ?></td>
+                    <td> <?= $sensor['sensorValue'] ?> <?= htmlspecialchars($sensor['sensorEinheit'] ?? '-') ?></td>
                 </tr>
                 <tr>
                     <td><b>Einheit</b></td>
-                    <td><?= $sensor['sensorEinheit'] ?></td>
+                    <td><?= htmlspecialchars($sensor['sensorEinheit'] ?? '-') ?></td>
                 </tr>
                 <tr>
                     <td><b>outputMode</b></td>
-                    <td><?= $sensor['outputMode'] ?></td>
+                    <td><?= htmlspecialchars($sensor['outputMode'] ?? '-') ?></td>
                 </tr>
                 <tr>
                     <td><b>sensorLokalId</b></td>
-                    <td><?= $sensor['sensorLokalId'] ?></td>
-                </tr>
-                <tr>
-                    <td><b>sensorValueType</b></td>
-                    <td><?= $sensor['sensorValueType'] ?></td>
+                    <td><?= htmlspecialchars($sensor['sensorLokalId'] ?? '-') ?></td>
                 </tr>
                 <tr>
                     <td><b>Zeit</b></td>

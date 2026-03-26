@@ -155,8 +155,10 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'inputType' => 'select',
             'options' => [
                 'absolute'  => 'Absolut (Rohwert)',
-                'json'      => 'Json',
-                'daily'     => 'Tageswert (00:00 ? jetzt)'
+                'daily'     => 'heute (00:00)',
+                'woche'     => '7 Tage',
+                'monat'     => '30 Tage)',
+                'jahr'     => '365 Tage)',
             ],
             'eval' => [
                 'mandatory' => true,
