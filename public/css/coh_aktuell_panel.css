@@ -1,9 +1,5 @@
 /* CSS Document */
-/* diese styles beziehen sich auf die darstellung der einzeln attributliste  z.b. 
-   im Template ce_coh_aktuell....
-   dort witd die klasse coh-panel verwendet
-   das file files\themes\bootstrap\css\coh_aktuell_panel.css kopierern
-*/
+
 /* =========================================
    COH PANEL BASIS
    ========================================= */
@@ -30,160 +26,205 @@
     box-sizing: border-box;
 }
 
-/* Layout */
+/* =========================================
+   LAYOUT
+   ========================================= */
 
-.coh-panel .coh-stack {
+.coh-stack {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-/* Meta */
+/* =========================================
+   META / CARD
+   ========================================= */
 
-.coh-panel .coh-meta,
-.coh-panel .coh-card,
-.coh-panel .coh-toggle {
+.coh-meta,
+.coh-card,
+.coh-toggle {
     background: var(--coh-bg);
     border: 1px solid var(--coh-border);
     border-radius: 12px;
     box-shadow: var(--coh-shadow);
 }
 
-.coh-panel .coh-meta {
+.coh-meta {
     padding: 12px 14px;
 }
 
-.coh-panel .coh-meta-line {
+.coh-meta-line {
     margin: 0 0 4px 0;
 }
 
-.coh-panel .coh-error {
+.coh-error {
     margin-top: 8px;
     color: var(--coh-red);
     font-weight: 700;
 }
 
-/* Card */
+/* =========================================
+   CARD
+   ========================================= */
 
-.coh-panel .coh-card {
+.coh-card {
     padding: 14px;
 }
 
-.coh-panel .coh-card-title {
+.coh-card-title {
     font-size: 16px;
     font-weight: 700;
     margin-bottom: 12px;
     color: #284b63;
 }
 
-/* Hero */
+/* =========================================
+   HERO (Gauge + rechter Bereich)
+   ========================================= */
 
-.coh-panel .coh-hero {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+.coh-hero {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 15px;
+    align-items: start;
+}
+.coh-hero-text {
+    width: 100%;
 }
 
-.coh-panel .coh-gauge-wrap {
+.coh-gauge-wrap {
     width: 90px;
 }
 
-.coh-panel .coh-hero-label {
+.coh-hero-label {
     font-size: 13px;
     color: var(--coh-muted);
 }
 
-.coh-panel .coh-hero-value {
+.coh-hero-value {
     font-size: 24px;
     font-weight: 700;
     color: var(--coh-green);
 }
 
-/* Mini grid */
+/* =========================================
+   MINI GRID (JETZT FUNKTIONIERT ES)
+   ========================================= */
 
-.coh-panel .coh-mini-grid {
+.coh-mini-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 8px;
 }
 
-.coh-panel .coh-mini-box {
+.coh-mini-box {
     background: #f7fafc;
     border: 1px solid #e4edf3;
     border-radius: 10px;
     padding: 8px;
+    min-width: 0; /* WICHTIG */
 }
 
-.coh-panel .coh-mini-value {
+.coh-mini-value {
     font-weight: 700;
     color: var(--coh-blue);
 }
-
-/* Rows */
-
-.coh-panel .coh-row {
-    display: grid;
-    grid-template-columns: 22px 1fr auto;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid #edf2f7;
+.coh-mini-head {    /* sorgtz dafür dass icon und text nebeeinander stehn */
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.coh-panel .coh-row:last-child {
+.coh-mini-head .coh-icon {
+    flex: 0 0 auto;
+}
+
+.coh-mini-head .coh-mini-label {
+    flex: 1;
+}
+/* =========================================
+   ROWS
+   ========================================= */
+
+.coh-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.coh-row:last-child {
     border-bottom: none;
 }
 
-.coh-panel .coh-icon {
+.coh-icon {
+    flex: 0 0 30px;
     text-align: center;
 }
 
-.coh-panel .coh-value {
-    font-weight: 700;
+.coh-label {
+    flex: 1;
+    min-width: 0;
 }
 
-.coh-panel .coh-subtext {
+.coh-value {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.coh-subtext {
     font-size: 12px;
     color: var(--coh-muted);
 }
 
-/* Colors */
+/* =========================================
+   COLORS
+   ========================================= */
 
-.coh-panel .is-green { color: var(--coh-green); }
-.coh-panel .is-red { color: var(--coh-red); }
-.coh-panel .is-blue { color: var(--coh-blue); }
-.coh-panel .is-orange { color: var(--coh-orange); }
-.coh-panel .is-gray { color: var(--coh-gray); }
+.is-green { color: var(--coh-green); }
+.is-red { color: var(--coh-red); }
+.is-blue { color: var(--coh-blue); }
+.is-orange { color: var(--coh-orange); }
+.is-gray { color: var(--coh-gray); }
 
-/* Toggle */
+/* =========================================
+   TOGGLE
+   ========================================= */
 
-.coh-panel .coh-toggle summary {
+.coh-toggle summary {
     cursor: pointer;
     padding: 12px;
     font-weight: 700;
 }
 
-.coh-panel .coh-toggle-body {
+.coh-toggle-body {
     padding: 10px;
 }
 
-.coh-panel .coh-pre {
+.coh-pre {
     font-size: 13px;
     white-space: pre-wrap;
 }
 
-/* Responsive */
+/* =========================================
+   RESPONSIVE (FIX!)
+   ========================================= */
 
 @media (max-width: 700px) {
-    .coh-panel .coh-hero {
-        flex-direction: column;
+
+    .coh-hero {
+        grid-template-columns: 1fr;   /* FIX statt flex */
         text-align: center;
     }
 
-    .coh-panel .coh-mini-grid {
+    .coh-gauge-wrap {
+        margin: 0 auto;
+    }
+
+    .coh-mini-grid {
         grid-template-columns: 1fr;
     }
 
-    .coh-panel .coh-row {
-        grid-template-columns: 22px 1fr;
+    .coh-row {
+        display: flex;  /* FIX */
     }
 }

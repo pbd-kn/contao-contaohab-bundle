@@ -5,19 +5,15 @@ declare(strict_types=1);
 use Contao\DC_Table;
 use Contao\DataContainer;
 use Contao\Database;
-use Contao\CoreBundle\DataContainer\PaletteManipulator;
 
 $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
+    // ---------------------------------------------------
+    // CONFIG
+    // ---------------------------------------------------
     'config' => [
         'dataContainer'    => DC_Table::class,
         'enableVersioning' => false,
-
-        // Damit die Palette je nach Checkbox dynamisch erweitert werden kann
-        'onload_callback'  => [
-            ['tl_coh_sensors', 'toggleComponentFields'],
-        ],
-
         'sql' => [
             'keys' => [
                 'id' => 'primary',
@@ -25,6 +21,9 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
     ],
 
+    // ---------------------------------------------------
+    // LIST
+    // ---------------------------------------------------
     'list' => [
         'sorting' => [
             'mode'        => 2,
@@ -32,36 +31,48 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'flag'        => DataContainer::SORT_ASC,
             'panelLayout' => 'filter;sort,search,limit',
         ],
+
         'label' => [
-            'fields' => ['sensorID','sensorTitle','sensorLokalId','sensorEinheit','transFormProcedur'],
-            'format' => 'sensorID: %s | sensorTitle: %s | sensorLokalId: %s | sensorEinheit: %s | transFormProcedur: %s',
+            'fields' => ['sensorID','sensorTitle','sensorEinheit'],
+            'format' => '%s | %s (%s)',
         ],
+
         'operations' => [
-            'edit' => [
-                'href' => 'act=edit',
-                'icon' => 'edit.svg',
-            ],
-            'copy' => [
-                'href' => 'act=copy',
-                'icon' => 'copy.svg',
-            ],
-            'delete' => [
-                'href' => 'act=delete',
-                'icon' => 'delete.svg',
-            ],
-            'show' => [
-                'href' => 'act=show',
-                'icon' => 'show.svg',
-            ],
+            'edit'   => ['href' => 'act=edit',   'icon' => 'edit.svg'],
+            'copy'   => ['href' => 'act=copy',   'icon' => 'copy.svg'],
+            'delete' => ['href' => 'act=delete', 'icon' => 'delete.svg'],
+            'show'   => ['href' => 'act=show',   'icon' => 'show.svg'],
         ],
     ],
 
-    // Wichtig: Hier stehen NUR die Felder, die IMMER sichtbar sind.
-    // componentSensors + componentFormula werden per PaletteManipulator dynamisch ergänzt.
+    // ---------------------------------------------------
+    // PALETTES
+    // ---------------------------------------------------
     'palettes' => [
-        'default' => '{first_legend},sensorID,sensorTitle,sensorEinheit,sensorValueType,sensorSource,sensorLokalId,transFormProcedur,history,outputMode,isComponent',
+        '__selector__' => ['isComponent','isHistory'],
+
+        'default' => '
+            {base_legend},sensorID,sensorTitle,
+            sensorEinheit,sensorValueType,
+            sensorSource,sensorLokalId,
+            transFormProcedur,
+            outputMode,
+            {calc_legend},isComponent,
+            {history_legend},isHistory
+        ',
     ],
 
+    // ---------------------------------------------------
+    // SUBPALETTES (TOGGLES)
+    // ---------------------------------------------------
+    'subpalettes' => [
+        'isComponent' => 'componentSensors,componentFormula',
+        'isHistory'   => 'history',
+    ],
+
+    // ---------------------------------------------------
+    // FIELDS
+    // ---------------------------------------------------
     'fields' => [
 
         'id' => [
@@ -72,67 +83,59 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'sql' => "int(10) unsigned NOT NULL default '0'",
         ],
 
+        // ---------------- BASE ----------------
+
         'sensorID' => [
+            'label'     => ['Sensor-ID', 'Eindeutige technische ID'],
             'inputType' => 'text',
             'search'    => true,
-            'filter'    => true,
             'sorting'   => true,
             'eval'      => ['mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorTitle' => [
+            'label'     => ['Bezeichnung', 'Anzeige im Frontend'],
             'inputType' => 'text',
             'search'    => true,
-            'filter'    => true,
             'sorting'   => true,
             'eval'      => ['mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorEinheit' => [
+            'label'     => ['Einheit', 'Anzeigeeinheit'],
             'inputType' => 'select',
-            'options'   => ['kWh','W','kW','GradC','Datum','Zeit','DatumZeit','Text','OK'],
+            'options'   => ['kWh','W','kW','°C','Datum','Zeit','DatumZeit','Text','OK'],
             'eval'      => ['includeBlankOption'=>true, 'chosen'=>true, 'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorValueType' => [
+            'label'     => ['Wertetyp', 'Datentyp'],
             'inputType' => 'select',
-            'options'   => ['int','float','GradC','Datum','Zeit','DatumZeit','Text'],
+            'options'   => ['int','float','text'],
             'eval'      => ['tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorSource' => [
+            'label' => ['Quelle', 'Gerät'],
             'inputType' => 'select',
-            'search'    => true,
-            'filter'    => true,
-            'sorting'   => true,
             'options_callback' => ['tl_coh_sensors', 'getGeraeteIDs'],
-            'eval' => [
-                'mandatory'           => false,
-                'includeBlankOption'  => true,
-                'chosen'              => true,
-                'tl_class'            => 'w50',
-            ],
+            'eval' => ['includeBlankOption'=>true, 'chosen'=>true, 'tl_class'=>'w50'],
             'sql' => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorLokalId' => [
-            'label'     => &$GLOBALS['TL_LANG']['tl_coh_sensors']['sensorLokalId'],
+            'label'     => ['Lokale ID', 'z.B. API-Key'],
             'inputType' => 'text',
-            'search'    => true,
-            'filter'    => true,
-            'sorting'   => true,
-            'eval'      => [
-                'maxlength' => 255,
-                'tl_class'  => 'w50',
-            ],
-            'sql' => "varchar(255) NOT NULL DEFAULT ''",
+            'eval'      => ['maxlength'=>255, 'tl_class'=>'w50'],
+            'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
         'transFormProcedur' => [
+            'label' => ['Transform', 'Optionaler Umrechnungsprozess'],
             'inputType' => 'select',
             'options' => [
                 'elwaPwrkWh','elwaPwr','elwaTemp',
@@ -143,121 +146,87 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'sql'  => "varchar(255) NOT NULL default ''",
         ],
 
-        'history' => [
-            'inputType' => 'select',
-            'options'   => [0,1],
-            'eval'      => ['isBoolean'=>true, 'tl_class'=>'w50'],
-            'sql'       => "tinyint(1) NOT NULL default '0'",
-        ],
-
         'outputMode' => [
-            'label' => ['Ausgabemodus', 'Wie soll der Wert berechnet/ausgegeben werden? Bei json werte durch : getrennt'],
+            'label' => ['Ausgabe', 'Wie soll der Wert berechnet werden?'],
             'inputType' => 'select',
             'options' => [
-                'absolute'  => 'Absolut (Rohwert)',
-                'daily'     => 'heute (00:00)',
-                'woche'     => '7 Tage',
-                'monat'     => '30 Tage)',
-                'jahr'     => '365 Tage)',
+                'absolute' => 'Absolut',
+                'daily'    => 'Heute',
+                'woche'    => '7 Tage',
+                'monat'    => '30 Tage',
+                'jahr'     => '365 Tage',
             ],
-            'eval' => [
-                'mandatory' => true,
-                'chosen'    => true,
-                'tl_class'  => 'w50',
-            ],
+            'eval' => ['mandatory'=>true, 'chosen'=>true, 'tl_class'=>'w50'],
             'sql' => "varchar(20) NOT NULL default 'absolute'",
         ],
 
-        // === Schalter: Komponente ja/nein ===
+        // ---------------- COMPONENT ----------------
+
         'isComponent' => [
-            'label'     => ['Komponente', 'Dieser Sensor besteht aus mehreren anderen Sensoren'],
+            'label'     => ['Komponente', 'Besteht aus mehreren Sensoren'],
             'inputType' => 'checkbox',
-            'eval'      => [
-                'submitOnChange' => true,   // damit Reload passiert und PaletteManipulator greifen kann
-                'tl_class'       => 'w50',
-            ],
-            'sql' => "char(1) NOT NULL default ''",
+            'eval'      => ['submitOnChange'=>true, 'tl_class'=>'w50 clr'],
+            'sql'       => "char(1) NOT NULL default ''",
         ],
 
-        // === Nur sichtbar, wenn isComponent aktiv (wird per PaletteManipulator eingefügt) ===
         'componentSensors' => [
-            'label' => ['Komponenten-Sensoren', 'Reihenfolge per Drag & Drop festlegen (Aliase in der Formel verwenden)'],
+            'label' => ['Sensoren', 'Alias + Sensor wählen'],
             'inputType' => 'multiColumnWizard',
             'eval' => [
                 'columnFields' => [
                     'alias' => [
-                        'label' => ['Alias', 'in Formel verwenden z.B. a, pv1, haus_verbrauch (nur a-z0-9_- )'],
+                        'label' => ['Alias'],
                         'inputType' => 'text',
-                        'eval' => [
-                            'rgxp'      => 'alias',
-                            'maxlength' => 32,
-                            'style'     => 'width:160px',
-                        ],
+                        'eval' => ['maxlength'=>32],
                     ],
                     'sensor' => [
                         'label' => ['Sensor'],
                         'inputType' => 'select',
                         'options_callback' => ['tl_coh_sensors', 'getSensorIDs'],
-                        'eval' => [
-                            'chosen' => true,
-                            'includeBlankOption' => true,
-                            'style' => 'width:320px',
-                        ],
                     ],
                     'factor' => [
-                        'label' => ['Faktor', 'optional (z.B. -1, 0.5, 2)'],
+                        'label' => ['Faktor'],
                         'inputType' => 'text',
-                        'eval' => [
-                            'rgxp'  => 'numeric',
-                            'style' => 'width:120px',
-                        ],
                     ],
                 ],
-                'dragAndDrop' => true,
-                'tl_class'    => 'clr',
+                'tl_class' => 'clr',
             ],
             'sql' => "blob NULL",
         ],
 
-        // === Nur sichtbar, wenn isComponent aktiv (wird per PaletteManipulator eingefügt) ===
         'componentFormula' => [
-            'label' => ['Formel', 'Beispiel: a + b*0.95 - c (Aliase aus der Liste verwenden)'],
+            'label' => ['Formel', 'z.B. a + b'],
             'inputType' => 'text',
-            'eval' => [
-                'mandatory' => true,
-                'maxlength' => 255,
-                'tl_class'  => 'clr',
-            ],
+            'eval' => ['maxlength'=>255, 'tl_class'=>'clr'],
             'sql' => "varchar(255) NOT NULL default ''",
+        ],
+
+        // ---------------- HISTORY ----------------
+
+        'isHistory' => [
+            'label'     => ['History aktiv', 'Zeitreihe speichern abhängig von collectsensort bei daten sammeln'],
+            'inputType' => 'checkbox',
+            'eval'      => ['submitOnChange'=>true, 'tl_class'=>'w50 clr'],
+            'sql'       => "char(1) NOT NULL default ''",
+        ],
+
+        'history' => [
+            'label' => ['Speichern', '0 = nein, 1 = ja'],
+            'inputType' => 'select',
+            'options'   => [0,1],
+            'reference' => ['Nein','Ja'],
+            'eval'      => ['tl_class'=>'w50'],
+            'sql'       => "tinyint(1) NOT NULL default '0'",
         ],
     ],
 ];
 
 
+// ---------------------------------------------------
+// HELPER
+// ---------------------------------------------------
 class tl_coh_sensors
 {
-    /**
-     * Blendet componentSensors + componentFormula nur ein, wenn isComponent aktiv ist.
-     * Reihenfolge: isComponent -> componentSensors -> componentFormula
-     */
-    public function toggleComponentFields(DataContainer $dc = null): void
-    {
-        if (!$dc || !$dc->id) {
-            return;
-        }
-
-        $obj = Database::getInstance()
-            ->prepare("SELECT isComponent FROM tl_coh_sensors WHERE id=?")
-            ->execute($dc->id);
-
-        if ($obj->isComponent) {
-            PaletteManipulator::create()
-                ->addField('componentSensors', 'isComponent', PaletteManipulator::POSITION_AFTER)
-                ->addField('componentFormula', 'componentSensors', PaletteManipulator::POSITION_AFTER)
-                ->applyToPalette('default', 'tl_coh_sensors');
-        }
-    }
-
     public function getGeraeteIDs(): array
     {
         $options = [];

@@ -1,7 +1,5 @@
 <h1>?? SYR SafeTech Dashboard</h1>
-
 <div class="grid">
-
     <!-- VENTIL -->
     <div class="card">
         <div>Ventil</div>
@@ -12,57 +10,50 @@
             <button class="btn btn-open action-btn"
                 <?= $this->disableOpen ? 'disabled' : '' ?>
                 onclick="syrAction('open', this)">
-                ÷ffnen
+                √ñffnen
             </button>
 
             <button class="btn btn-close action-btn"
                 <?= $this->disableClose ? 'disabled' : '' ?>
                 onclick="syrAction('close', this)">
-                Schlieﬂen
+                Schlie√üen
             </button>
 
         </div>
 
         <div id="waitingNote_<?= $this->ceId ?>" class="waiting-note"></div>
     </div>
-
     <!-- STATUS -->
     <div class="card">
         <div>Status</div>
         <div class="big"><?= $this->status ?? '-' ?></div>
     </div>
-
     <!-- BATTERIE -->
     <div class="card">
         <div>Batterie</div>
         <div class="big"><?= $this->batPercent ?? '-' ?> %</div>
         <div><?= isset($this->batVolt) ? number_format($this->batVolt,2) : '-' ?> V</div>
     </div>
-
     <!-- FLOW -->
     <div class="card">
         <div>Durchfluss</div>
         <div class="big"><?= $this->flow ?? '-' ?> l/h</div>
     </div>
-
     <!-- VOLUMEN -->
     <div class="card">
         <div>Gesamtverbrauch</div>
         <div class="big"><?= $this->gesVol ?? '-' ?> l</div>
     </div>
-
     <!-- DRUCK -->
     <div class="card">
         <div>Druck</div>
         <div class="big"><?= isset($this->pressure) ? number_format($this->pressure,2) : '-' ?> bar</div>
     </div>
-
     <!-- TEMP -->
     <div class="card">
         <div>Temperatur</div>
-        <div class="big"><?= $this->temp ?? '-' ?> ∞C</div>
+        <div class="big"><?= $this->temp ?? '-' ?> ¬∞C</div>
     </div>
-
     <!-- PROFIL -->
     <div class="card">
         <div>Profil</div>
@@ -70,32 +61,27 @@
     </div>
 
 </div>
-
 <!-- EVENTS -->
 <details open>
     <summary>Alarme / Warnungen / Meldungen</summary>
-
     <div class="row">
         <span>Alarm</span>
         <span class="badge-<?= $this->alarm[1] ?? 'ok' ?>">
             <?= $this->alarm[0] ?? '-' ?>
         </span>
     </div>
-
     <div class="row">
         <span>Warnung</span>
         <span class="badge-<?= $this->warning[1] ?? 'ok' ?>">
             <?= $this->warning[0] ?? '-' ?>
         </span>
     </div>
-
     <div class="row">
         <span>Meldung</span>
         <span class="badge-<?= $this->notification[1] ?? 'ok' ?>">
             <?= $this->notification[0] ?? '-' ?>
         </span>
     </div>
-
 </details>
 
 <!-- DEBUG -->
@@ -131,42 +117,29 @@ summary{font-weight:bold;cursor:pointer;}
 <script>
 function syrAction(action, el)
 {
-    if (!confirm("Ventil wirklich " + (action === 'open' ? "ˆffnen?" : "schlieﬂen?")))
+    if (!confirm("Ventil wirklich " + (action === 'open' ? "√∂ffnen?" : "schlie√üen?")))
         return;
-
     const ceId = <?= $this->ceId ?>;
     const note = document.getElementById('waitingNote_' + ceId);
-
     document.body.style.cursor = "wait";
-
     document.querySelectorAll('.action-btn').forEach(btn => {
         btn.disabled = true;
     });
-
     el.innerText = "? bitte warten...";
     if (note) note.innerText = "? Ventil wird geschaltet...";
-
     fetch(window.location.pathname + "?syrAjax=1&syrAction=" + action + "&syrCe=" + ceId)
         .then(r => r.json())
         .then(data => {
-
             document.body.style.cursor = "default";
-
             if (data.success) {
-
                 if (note) note.innerText = "? Fertig";
-
                 updateValveUI(data.vlv, ceId);
-
             } else {
-
                 if (note) note.innerText = "? " + (data.message || "Fehler");
-
                 document.querySelectorAll('.action-btn').forEach(btn => {
                     btn.disabled = false;
                 });
             }
-
         })
         .catch(() => {
             document.body.style.cursor = "default";
@@ -177,22 +150,17 @@ function syrAction(action, el)
 function updateValveUI(vlv, ceId)
 {
     const container = document.getElementById('waitingNote_' + ceId).closest('.card');
-
     let text = "UNBEKANNT";
     if (vlv == 10) text = "ZU";
-    if (vlv == 11) text = "am Schlieﬂen";
+    if (vlv == 11) text = "am Schlie√üen";
     if (vlv == 20) text = "OFFEN";
-    if (vlv == 21) text = "am ÷ffnen";
-
+    if (vlv == 21) text = "am √ñffnen";
     container.querySelector('.big').innerText = text;
-
     const openBtn = container.querySelector('.btn-open');
     const closeBtn = container.querySelector('.btn-close');
-
     openBtn.disabled = (vlv == 20 || vlv == 21);
     closeBtn.disabled = (vlv == 10 || vlv == 11);
-
-    openBtn.innerText = "÷ffnen";
-    closeBtn.innerText = "Schlieﬂen";
+    openBtn.innerText = "√ñffnen";
+    closeBtn.innerText = "Schlie√üen";
 }
 </script>
