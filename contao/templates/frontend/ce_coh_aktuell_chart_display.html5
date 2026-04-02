@@ -90,7 +90,7 @@
     </div>
 
     <div class="coh-card">
-        <div class="coh-card-title">Akku &amp; Solar</div>
+        <div class="coh-card-title">🔋Akku &amp; 🌤️Solar</div>
         <div class="coh-hero">
             <div class="coh-gauge-wrap">
                 <canvas id="cohGauge_<?= $this->chartId ?>" width="90" height="90"></canvas>
@@ -166,6 +166,64 @@
             </div>
         </div>
     </div>
+    <div class="coh-card">
+        <div class="coh-card-title">🔥 Heizstab Daten</div>
+        <div class="coh-mini-grid">
+            <div class="coh-mini-box">
+                <div class="coh-mini-head">
+                    <div class="coh-icon">🌡️</div>
+                    <div class="coh-label">Heizstab Temp1</div>
+                </div>
+                <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
+            </div>
+            <div class="coh-mini-box">
+                <div class="coh-mini-head">
+                    <div class="coh-icon">🌡️</div>
+                    <div class="coh-label">Heizstab Temp2</div>
+                </div>
+                <div class="coh-mini-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
+            </div>
+            <div class="coh-mini-box">
+                <div class="coh-mini-head">
+                    <div class="coh-icon">⚡</div>
+                    <div class="coh-label">Heizstab Akt. Leistung</div>
+                </div>
+                <div class="coh-mini-value"><?= coh_v($d, 'ELaktPwr') ?> kW</div>
+            </div>
+            <div class="coh-mini-box <?= $boostClass ?>">
+                <div class="coh-mini-head">
+                    <div class="coh-icon">🔥</div>
+                    <div class="coh-label">BoostStatus</div>
+                </div>
+                <div class="coh-mini-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
+            </div>
+        </div>
+        <details class="coh-toggle">
+            <summary>🔥 Heizstab Daten</summary>
+            <div class="coh-toggle-body">
+                <div class="coh-row">
+                    <div class="coh-icon">🌡️</div>
+                    <div class="coh-label">Heizstab Temp1</div>
+                    <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
+                </div>
+                <div class="coh-row">
+                    <div class="coh-icon">🌡️</div>
+                    <div class="coh-label">Heizstab Temp2</div>
+                    <div class="coh-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
+                </div>
+                <div class="coh-row <?= $boostClass ?>">
+                    <div class="coh-icon">🔥</div>
+                    <div class="coh-label">BoostStatus</div>
+                    <div class="coh-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
+                </div>
+                <div class="coh-row">
+                    <div class="coh-icon">⚡</div>
+                    <div class="coh-label">Heizstab Akt. Leistung</div>
+                    <div class="coh-value"><?= coh_v($d, 'ELaktPwr') ?> kW</div>
+                </div>
+            </div>
+        </details>
+    </div>
     <details class="coh-toggle">
         <summary>🔌 Tasmota SWR Zähler</summary>
         <div class="coh-toggle-body">
@@ -183,31 +241,6 @@
                 <div class="coh-icon">⬆️</div>
                 <div class="coh-label">Einspeisung</div>
                 <div class="coh-value"><?= coh_v($d, 'TS_E_out_208') ?> kWh</div>
-            </div>
-        </div>
-    </details>
-    <details class="coh-toggle" open>
-        <summary>🔥 Heizstab Daten</summary>
-        <div class="coh-toggle-body">
-            <div class="coh-row">
-                <div class="coh-icon">🌡️</div>
-                <div class="coh-label">Heizstab Temp1</div>
-                <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
-            </div>
-            <div class="coh-row">
-                <div class="coh-icon">🌡️</div>
-                <div class="coh-label">Heizstab Temp2</div>
-                <div class="coh-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
-            </div>
-            <div class="coh-row <?= $boostClass ?>">
-                <div class="coh-icon">🔥</div>
-                <div class="coh-label">BoostStatus</div>
-                <div class="coh-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
-            </div>
-            <div class="coh-row">
-                <div class="coh-icon">⚡</div>
-                <div class="coh-label">Heizstab Akt. Leistung</div>
-                <div class="coh-value"><?= coh_v($d, 'ELaktPwr') ?> kW</div>
             </div>
         </div>
     </details>

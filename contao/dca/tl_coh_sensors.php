@@ -17,6 +17,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'sql' => [
             'keys' => [
                 'id' => 'primary',
+                'sensorID' => 'unique',
             ],
         ],
     ],
@@ -106,7 +107,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'sensorEinheit' => [
             'label'     => ['Einheit', 'Anzeigeeinheit'],
             'inputType' => 'select',
-            'options'   => ['kWh','W','kW','�C','Datum','Zeit','DatumZeit','Text','OK'],
+            'options'   => ['kWh','W','kW','°C','Datum','Zeit','DatumZeit','Text','OK'],
             'eval'      => ['includeBlankOption'=>true, 'chosen'=>true, 'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
@@ -120,7 +121,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'sensorSource' => [
-            'label' => ['Quelle', 'Ger�t'],
+            'label' => ['Quelle', 'Gerät'],
             'inputType' => 'select',
             'options_callback' => ['tl_coh_sensors', 'getGeraeteIDs'],
             'eval' => ['includeBlankOption'=>true, 'chosen'=>true, 'tl_class'=>'w50'],
@@ -170,7 +171,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'componentSensors' => [
-            'label' => ['Sensoren', 'Alias + Sensor w�hlen'],
+            'label' => ['Sensoren', 'Alias + Sensor wählen'],
             'inputType' => 'multiColumnWizard',
             'eval' => [
                 'columnFields' => [
@@ -203,20 +204,24 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
         // ---------------- HISTORY ----------------
 
-        'isHistory' => [
-            'label'     => ['History aktiv', 'Zeitreihe speichern abh�ngig von collectsensort bei daten sammeln'],
-            'inputType' => 'checkbox',
-            'eval'      => ['submitOnChange'=>true, 'tl_class'=>'w50 clr'],
-            'sql'       => "char(1) NOT NULL default ''",
-        ],
+'isHistory' => [
+    'label'     => ['History aktiv', '...'],
+    'inputType' => 'checkbox',
+    'eval'      => ['submitOnChange'=>true, 'tl_class'=>'w50 clr'],
+    'sql'       => "char(1) NOT NULL default '0'",
+],
 
         'history' => [
-            'label' => ['Speichern', '0 = nein, 1 = ja'],
+            'label' => ['Speichern', '0 = nein, 1 = polltime, 2 = stündlich, 3 = täglich, 4 = wöchentlich, 5 = monatlich'],
             'inputType' => 'select',
-            'options'   => [0,1],
-            'reference' => ['Nein','Ja'],
+            'options'   => [0,1,2,3,4,5],
+            'reference' => ['Nein','Polltime','Stündlich','Täglich','Wöchentlich','Monatlich'],
             'eval'      => ['tl_class'=>'w50'],
             'sql'       => "tinyint(1) NOT NULL default '0'",
+        ],
+        // historycountn wird im rasperry runtergezählt. wenn der wert  0 oder kelienr ist, wird gepollt und der Wert abhängig von history und pollteime neue gesetzt
+        'historycount' => [
+            'sql' => "int(10) unsigned NOT NULL default 0",
         ],
     ],
 ];

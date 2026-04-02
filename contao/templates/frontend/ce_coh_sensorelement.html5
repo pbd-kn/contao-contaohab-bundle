@@ -44,6 +44,10 @@
                     <td><?php echo $sensor['sensorID']; ?></td>
                 </tr>
                 <tr>
+                    <td><b>Sensortitel</b></td>
+                    <td><?php echo $sensor['sensorTitle']; ?></td>
+                </tr>
+                <tr>
                     <td><b>Letzter Wert</b></td>
                     <td> <?= $sensor['sensorValue'] ?> <?= $sensor['sensorEinheit'] ?></td>
                 </tr>
