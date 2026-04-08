@@ -1,353 +1,472 @@
 <div id="cohPanel_<?= $this->chartId ?>" class="coh-panel">
 
-<?php
-    $d = $this->data ?? [];
-
-    if (!function_exists('coh_v')) { function coh_v(array $d, string $id, $default = '-') { return $d[$id]['sensorValue'] ?? $default; } }
-
-    if (!function_exists('coh_e')) {
-        function coh_e(array $d, string $id, string $default = '') { return $d[$id]['sensorEinheit'] ?? $default;}
-    }
-
-    if (!function_exists('coh_title')) { function coh_title(array $d, string $id, string $default = '') { return $d[$id]['sensorTitle'] ?? $default; } }
-
-    if (!function_exists('coh_num')) {
-        function coh_num($value, $default = 0.0): float
-        {
-            if ($value === null || $value === '' || $value === '-') { return (float) $default; }
-            return (float) str_replace(',', '.', (string) $value);
+    <?php
+        $d = $this->data ?? [];
+        //liefert Wert
+        if (!function_exists('coh_v')) { function coh_v(array $d, string $id, $default = '-') { return $d[$id]['sensorValue'] ?? $default; } }
+        //liefert Wert + Einheit
+        if (!function_exists('coh_ve')) {
+            function coh_ve(array $d, string $id, $default = '-') {
+                $str = '';
+                if (!empty($d[$id]['sensorValue'])) { $str .= $d[$id]['sensorValue'];
+                } else { $str .= $default; }
+                $str .= ' ' . ($d[$id]['sensorEinheit'] ?? '');
+                return $str;
+            }
+        }    
+        // Liefert Einheit
+        if (!function_exists('coh_e')) {
+            function coh_e(array $d, string $id, string $default = '') { return $d[$id]['sensorEinheit'] ?? $default;}
         }
-    }
-    /*
-     * Abgeleitete Werte wie im alten Template
-     */
-    $zwzPower = '-';
-    $zwzPowerUnit = 'kW';
-    if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
-        $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
-        $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
-    }
 
-    $zwzTotal = '-';
-    $zwzTotalUnit = 'kWh';
-    if (isset($d['ZWZZaehlerTotalPVEnergieImport'], $d['ZWZZaehlerTotalPVEnergieExport'])) {
-        $imp = $d['ZWZZaehlerTotalPVEnergieImport']['sensorValue'] ?? '-';
-        $exp = $d['ZWZZaehlerTotalPVEnergieExport']['sensorValue'] ?? '-';
-        $zwzTotal = $imp.'/'.$exp;
-        $zwzTotalUnit = $d['ZWZZaehlerTotalPVEnergieImport']['sensorEinheit'] ?? 'kWh';
-    }
+        // Liefert Titel
+        if (!function_exists('coh_title')) { function coh_title(array $d, string $id, string $default = '') { return $d[$id]['sensorTitle'] ?? $default; } }
 
-    $batteryPercent = coh_num(coh_v($d, 'IQbattery_94_battery_stateOfCharge', 0), 0);
-    $batteryPower   = coh_num(coh_v($d, 'IQbattery_94_battery_power', 0), 0);
-    $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
-
-    $heizstabServerOk = coh_num(coh_v($d, 'RaspberryCheckHeizstabServer', -1), -1) >= 0;
-    $collectorServerVal = (string) coh_v($d, 'RaspberrycheckSensorCollectorServer', '-');
-
-    $plattenText = '';
-    $plattenRaw = coh_v($d, 'RaspberrycheckPlattenbelegung', '');
-    if ($plattenRaw && $plattenRaw !== '-') {
-        $parsed = json_decode((string) $plattenRaw, true);
-        if (is_array($parsed)) {
-            $lines = [];
-            foreach ($parsed as $item) {
-                if (is_array($item)) {
-                    foreach ($item as $k => $v) { $lines[] = $k.': '.$v; }
+        // macht aus value float
+        if (!function_exists('coh_num')) {
+            function coh_num($value, $default = 0.0): float
+            {
+                if ($value === null || $value === '' || $value === '-') { return (float) $default; }
+                return (float) str_replace(',', '.', (string) $value);
             }
         }
-            $plattenText = implode(' | ', $lines);
-        } else {
-            $plattenText = (string) $plattenRaw;
+    /*
+     * Funktionen zur Berechnung bei Wasser und Leckage
+     */
+
+        // leckage test 
+        function detectLeakType(array $d): array {
+        // Werte sauber holen (fallbacks)
+            $flow   = coh_v($d, 'SyrFlo',0);
+            $volume=coh_v($d, 'SyrLtv',0);    
+            $alarm  = coh_v($d, 'SyrAla',0);
+            $warn   = coh_v($d, 'SyrWan',0);
+            $valve  = coh_v($d, 'SyrVlv',0);
+            // kein Alarm → alles ok
+            if (($alarm === 0 || $alarm === 'ff') && ($warn === 0 || $warn === 'ff')) {
+                return [
+                    'type' => 'none',
+                    'text' => '✅ Kein Leck erkannt ',
+                    'severity' => 'ok'
+                ];
+            }
+            // 🔴 Rohrbruch / hoher Durchfluss
+            if ($flow > 1000) {
+                return [
+                    'type' => 'flow',
+                    'text' => '🔴 Hoher Durchfluss (Rohrbruch möglich)',
+                    'severity' => 'critical'
+                ];
+            }
+            // 🟠 Volumenleckage (viel Wasser aber kein hoher Flow)
+            if ($volume > 50 && $flow < 1000) {
+                return [
+                    'type' => 'volume',
+                    'text' => '🟠 Ungewöhnlich hoher Wasserverbrauch',
+                    'severity' => 'warning'
+                ];
+            }
+            // 🟡 Mikroleckage (kleiner Flow, aber Alarm/Warnung)
+            if ($flow > 0 && $flow < 50) {
+                return [
+                    'type' => 'micro',
+                    'text' => '🟡 Mikroleckage (kleiner Dauerfluss erkannt)',
+                    'severity' => 'warning'
+                ];
+            }
+            // 🟠 Ventil zu ohne klaren Grund → meist Mikroleckage oder Zeit
+            if ($valve === 10) {
+                return [
+                    'type' => 'auto_closed',
+                    'text' => '🟠 Ventil wurde automatisch geschlossen',
+                    'severity' => 'critical'
+                ];
+            }
+            // 🟣 Fallback
+            return [
+                'type' => 'unknown',
+                'text' => "🟣 Unklare Leckage $alarm $warn",
+                'severity' => 'warning'
+            ];
         }
-    }
+        // ---------------------------------------------------
+        // WASSERHÄRTE rendering PUNKTE
+        // ---------------------------------------------------
+        function hardnessDots($dH){
+            if($dH < 8) return "🟢⚪⚪";
+            if($dH < 14) return "🟢🟡⚪";
+            return "🟢🟡🔴";
+        }
+        // ---------------------------------------------------
+        // LISTEN werte extrahieren
+        // ---------------------------------------------------
+        function decodeList($str){
+            if(!$str) return [];
+            return array_filter(array_map('trim', explode(",", $str)));
+        }
+        // ---------------------------------------------------
+        // ALARM
+        // ---------------------------------------------------
+        function decodeAlarm($hex) {
+            if (!$hex || strtolower($hex) == "ff") return ["(FF) Kein aktueller Alarm","ok"];
+            $hex = strtoupper(trim((string)$hex));
+            if (strpos($hex, "0X") !== 0) $hex = "0x".$hex;
+            $map = [
+                "0xFF" => ["(FF) Kein Alarm","ok"],
+                "0xA1" => ["(A1) Endschalter Problem","alarm"],
+                "0xA2" => ["(A2) Motorstrom zu hoch","alarm"],
+                "0xA3" => ["(A3) Volumenleckage","alarm"],
+                "0xA4" => ["(A4) Zeitleckage","alarm"],
+                "0xA5" => ["(A5) Durchflussleckage","alarm"],
+                "0xA6" => ["(A6) Mikroleckage","warn"],
+                "0xA7" => ["(A7) Bodensensor-Leckage","alarm"],
+                "0xA8" => ["(A8) Durchflusssensor defekt","alarm"],
+                "0xA9" => ["(A9) Drucksensor defekt","alarm"],
+                "0xAA" => ["(AA) Temperatursensor defekt","alarm"],
+                "0xAB" => ["(AB) Leitwertsensor defekt","alarm"],
+                "0xAC" => ["(AC) Leitwertsensor Fehler","alarm"],
+                "0xAD" => ["(AD) Wasserhärte zu hoch","warn"],
+                "0x0D" => ["(0D) Salz leer","warn"],
+                "0x0E" => ["(0E) Ventilposition falsch","alarm"],
+            ];
+            return $map[$hex] ?? ["Unbekannt ($hex)","warn"];
+        }
+        // ---------------------------------------------------
+        // WARNUNG
+        // ---------------------------------------------------
+        function decodeWarning($hex) {
+            if (!$hex || strtolower($hex) == "ff") return ["(FF) Keine aktuelle Warnung","ok"];
+            $hex = strtoupper(trim((string)$hex));
+            if (strpos($hex, "0X") !== 0) $hex = "0x".$hex;
+            $map = [
+                "0x01" => ["(01) Stromunterbrechung","warn"],
+                "0x07" => ["(07) Leckagewarnung Volumen","warn"],
+                "0x08" => ["(08) Batterie leer","warn"],
+                "0x02" => ["(02) Salz niedrig","warn"],
+                "0x09" => ["(09) Erstbefüllung erforderlich","warn"],
+                "0x10" => ["(10) Volumenleck erkannt","warn"],
+                "0x11" => ["(11) Zeitleck erkannt","warn"],
+            ];
+            return $map[$hex] ?? ["Warnung ($hex)","warn"];
+        }
+        // ---------------------------------------------------
+        // NOTIFICATION
+        // ---------------------------------------------------
+        function decodeNotification($hex) {
+            if (!$hex || strtolower($hex) == "ff") return ["(FF) Keine aktuelle Meldung","ok"];
+            $hex = strtoupper(trim((string)$hex));
+            if (strpos($hex, "0X") !== 0) $hex = "0x".$hex;
+            $map = [
+                "0x01" => ["(01) Softwareupdate verfügbar","warn"],
+                "0x04" => ["(04) Softwareupdate installiert","ok"],
+                "0x02" => ["(02) Halbjährliche Wartung","warn"],
+                "0x03" => ["(03) Jährliche Wartung","warn"],
+            ];
+            return $map[$hex] ?? ["Info ($hex)","warn"];
+        }
+        function decodeMicroStatus($val) {
+            return match((int)$val) {
+                0 => ["Nicht aktiv", "secondary"],
+                1 => ["Test aktiv", "warning"],
+                2 => ["Abgebrochen (Druckabfall)", "danger"],
+                3 => ["Übersprungen", "info"],
+                default => ["Unbekannt", "dark"]
+            };
+        }
+        // ---------------------------------------------------
+        // WLAN Status
+        // ---------------------------------------------------
+        function decodeWifiStatus($wfs) {
+            switch ((string)$wfs) {
+                case '0': return "Nicht verbunden";
+                case '1': return "Verbinden...";
+                case '2': return "Verbunden";
+                default:  return "-";
+            }
+        }
+ 
 
-    $protokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
-    $protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
+        /*
+         * Abgeleitete Werte wie im alten Template
+         */
+        $zwzPower = '-';
+        $zwzPowerUnit = 'kW';
+        if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
+            $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
+            $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
+        }
+        $tasmotaPower = '-';
+        $tasmotaPowerUnit = 'kW';
+        if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
+            $tasmotaPower = round( coh_num($d['TS_E_out_208']['sensorValue']) - coh_num($d['TS_E_in_108']['sensorValue']),2);
+            $zwzPowerUnit = $d['TS_E_in_108']['sensorEinheit'] ?? 'kW';
+        }
+        $zwzTotal = '-';
+        $zwzTotalUnit = 'kWh';
+        if (isset($d['ZWZZaehlerTotalPVEnergieImport'], $d['ZWZZaehlerTotalPVEnergieExport'])) {
+            $imp = $d['ZWZZaehlerTotalPVEnergieImport']['sensorValue'] ?? '-';
+            $exp = $d['ZWZZaehlerTotalPVEnergieExport']['sensorValue'] ?? '-';
+            $zwzTotal = $imp.'/'.$exp;
+            $zwzTotalUnit = $d['ZWZZaehlerTotalPVEnergieImport']['sensorEinheit'] ?? 'kWh';
+        }
+        $batteryPercent = coh_num(coh_v($d, 'IQbattery_94_battery_stateOfCharge', 0), 0);
+        $batteryPower   = coh_num(coh_v($d, 'IQbattery_94_battery_power', 0), 0);
+        $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
+        $heizstabServerOk = coh_num(coh_v($d, 'RaspberryCheckHeizstabServer', -1), -1) >= 0;
+        $collectorServerVal = (string) coh_v($d, 'RaspberrycheckSensorCollectorServer', '-');
+        $plattenText = '';
+        $plattenRaw = coh_v($d, 'RaspberrycheckPlattenbelegung', '');
+        if ($plattenRaw && $plattenRaw !== '-') {
+            $parsed = json_decode((string) $plattenRaw, true);
+            if (is_array($parsed)) {
+                $lines = [];
+                foreach ($parsed as $item) {
+                    if (is_array($item)) {
+                        foreach ($item as $k => $v) { $lines[] = $k.': '.$v; }
+                    }
+                }
+                $plattenText = implode(' | ', $lines);
+            } else {
+                $plattenText = (string) $plattenRaw;
+            }
+        }
+        $protokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
+        $protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
+        $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
+        $boostClass = 'is-gray';
+        if ($boostValue < 0) { $boostClass = 'is-red';
+        } elseif ($boostValue == 0) { $boostClass = 'is-gray';
+        } elseif ($boostValue == 1 || $boostValue == 2) { $boostClass = 'is-green';
+        } elseif ($boostValue > 2) { $boostClass = 'is-blue';
+        }
+        // ---------------------------------------------------
+        // BERECHNUNG werte berechnung Wasser Leckage
+        // ---------------------------------------------------
+        // Ventil 
+        $SYR_vlv = coh_v($d, 'SyrVlv');
+        $SYR_valve = [  10 => "ZU", 11 => "am Schließen", 20 => "OFFEN", 21 => "am Öffnen"][$SYR_vlv] ?? "UNBEKANNT $SYR_vlv";
+        $SYR_cl = [  10 => "is-red", 11 => "is-orange", 20 => "is-green", 21 => "is-orange"][$SYR_vlv] ?? "is-blue";
+        // ---------------------------------------------------
+        // STATUS
+        // ---------------------------------------------------
+        $SYR_arr = decodeAlarm(coh_v($d, 'SyrAla') ?? null);
+        switch ($SYR_arr[1]) {
+            case 'ok':
+                $SYR_alarmStatus = 'OK';
+                $SYR_clalarmStatus = 'is-green';
+                $SYR_alarm_lamp = '🟢';
+                break;
+            case 'warn':
+                $SYR_alarmStatus = 'WARNUNG';
+                $SYR_clalarmStatus = 'is-orange';
+                $SYR_alarm_lamp = '🟡';
+                break;
+            case 'alarm':
+                $SYR_alarmStatus = 'ALARM';
+                $SYR_clalarmStatus = 'is-red';
+                $SYR_alarm_lamp = '🔴';
+                break;
+            default:
+                $SYR_alarmStatus = 'UNBEKANNT ' . $SYR_arr[0];
+                $SYR_clalarmStatus = 'is-red';
+                $SYR_alarm_lamp = '🔴';
+                break;
+        }
+        $leak = detectLeakType($d);
+        $leaktxt= '<br>'.$leak['text'];
+        $SYR_batVolt = coh_v($d, 'SyrBat'); 
+        $SYR_batPercent = max(0, min(100, round(($SYR_batVolt - 4.9) / (6.2 - 4.9) * 100)));   // 6.2 V voll 4.2V leer
+        $SYR_batPercenttxt="<div class='big'>$SYR_batPercent % </div>";
+        $SYR_leitWert = coh_v($d, 'SyrCnd',0);
+        $dh = round($SYR_leitWert/30,2);
+        /* noch offen
+            $temp = isset($data["CEL"]) ? ($data["CEL"] / 10) : 0;
+            // Button-Zustände
+            $disableOpen  = ($SYR_vlv == 20 || $SYR_vlv == 21);
+            $disableClose = ($SYR_vlv == 10 || $SYR_vlv == 11);
+        */
+        function renderMinibox ($cl,$label,$value) {
+            $str = "";
+            $str .= "<div class='coh-mini-box $cl'>";
+            $str .= "<div class='coh-mini-label'>$label</div>";
+            $str .= "<div class='coh-mini-value'>$value</div>";
+            $str .= "</div>";
+            return $str;
+        }
+    ?>
 
-    $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
+    <div class="coh-stack">
+        <div class="coh-meta">
+            <div class="coh-meta-line">Push Tabellen: <?= $this->lastPullSync ?></div>
+            <div class="coh-meta-line">Stand Sensoren: <?= $this->lastSensorChange ?></div>
+            <?php if (($this->lastSensorChangeStatus ?? 'OK') !== 'OK'): ?>
+                <div class="coh-error">Status: <?= $this->lastSensorChangeStatus ?></div>
+            <?php endif; ?>
 
-    $boostClass = 'is-gray';
-    if ($boostValue < 0) { $boostClass = 'is-red';
-    } elseif ($boostValue == 0) { $boostClass = 'is-gray';
-    } elseif ($boostValue == 1 || $boostValue == 2) { $boostClass = 'is-green';
-    } elseif ($boostValue > 2) { $boostClass = 'is-blue';
-    }
-?>
+            <?php if (!empty($this->syncError)): ?>
+                <div class="coh-error"><?= $this->syncError ?></div>
+            <?php endif; ?>
+        </div>
 
-
-<div class="coh-stack">
-    <div class="coh-meta">
-        <div class="coh-meta-line">Push Tabellen: <?= $this->lastPullSync ?></div>
-        <div class="coh-meta-line">Stand Sensoren: <?= $this->lastSensorChange ?></div>
-
-        <?php if (($this->lastSensorChangeStatus ?? 'OK') !== 'OK'): ?>
-            <div class="coh-error">Status: <?= $this->lastSensorChangeStatus ?></div>
-        <?php endif; ?>
-
-        <?php if (!empty($this->syncError)): ?>
-            <div class="coh-error"><?= $this->syncError ?></div>
-        <?php endif; ?>
-    </div>
-
-    <div class="coh-card">
-        <div class="coh-card-title">🔋Akku &amp; 🌤️Solar</div>
-        <div class="coh-hero">
-            <div class="coh-gauge-wrap">
-                <canvas id="cohGauge_<?= $this->chartId ?>" width="90" height="90"></canvas>
-            </div>
-            <div class="coh-hero-text">
-                <div class="coh-hero-label">Füllstand Akku</div>
-                <div class="coh-hero-value"><?= coh_v($d, 'IQbattery_94_battery_stateOfCharge') ?> %</div>
-                <div class="coh-mini-grid">
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">☀️</div>
-                            <div class="coh-mini-label">Leistung Solar</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQinverter_94_inverter_pvPower') ?> kW</div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">☀️</div>
-                            <div class="coh-mini-label">Solar heute</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQSolar_harmonized_work_Solar_Tag') ?> kWh</div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">☀️</div>
-                            <div class="coh-mini-label">Solarzelle gesamt</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') ?> kWh</div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">🏠</div>
-                            <div class="coh-mini-label">Eigenverbrauch</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQinverter_94_inverter_selfConsumptionPower') ?> kW</div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">🌡️</div>
-                            <div class="coh-mini-label">Akku Temp</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQBatt_Temp') ?> °C</div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">🔋</div>
-                            <div class="coh-mini-label">Akku Modus</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQbattery_94_battery_mode') ?><?= coh_e($d, 'IQbattery_94_battery_mode') ? ' '.coh_e($d, 'IQbattery_94_battery_mode') : '' ?></div>
-                    </div>
-                    <div class="coh-mini-box <?= $akkuPowerClass ?>">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">⚡</div>
-                            <div class="coh-mini-label">Akku Laden/Entladen</div>
-                        </div>
-                        <div class="coh-mini-value"><?= coh_v($d, 'IQbattery_94_battery_power') ?> kW</div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">🔀</div>
-                            <div class="coh-label">SWR akt. Import/Export</div>
-                        </div>
-                        <div class="coh-value"><?= $zwzPower ?> <?= $zwzPowerUnit ?></div>
-                    </div>
-                    <div class="coh-mini-box">
-                        <div class="coh-mini-head">
-                            <div class="coh-icon">📊</div>
-                            <div class="coh-mini-label">Ges. Import/Export</div>
-                        </div>
-                        <div class="coh-mini-value"><?= $zwzTotal ?> <?= $zwzTotalUnit ?></div>
+        <div class="coh-card">
+            <div class="coh-card-title">🔋Akku &amp; 🌤️Solar</div>
+            <div class="coh-hero">
+                <div class="coh-gauge-wrap">
+                    <canvas id="cohGauge_<?= $this->chartId ?>" width="90" height="90"></canvas>
+                </div>
+                <div class="coh-hero-text">
+                    <div class="coh-hero-label">Füllstand Akku</div>
+                    <div class="coh-hero-value"><?= coh_v($d, 'IQbattery_94_battery_stateOfCharge') ?> %</div>
+                    <div class="coh-mini-grid">
+                        <?= renderMinibox ('','☀️ Leistung Solar',coh_v($d, 'IQinverter_94_inverter_pvPower') .' kW') ?>
+                        <?= renderMinibox ('','☀️ Solar heute',coh_v($d, 'IQSolar_harmonized_work_Solar_Tag') .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Solarzelle gesamt',coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') .' kWh') ?>
+                        <?= renderMinibox ('','🏠 Eigenverbrauch',coh_v($d, 'IQinverter_94_inverter_selfConsumptionPower') .' kW') ?>
+                        <?= renderMinibox ('','🌡️Akku Temp',coh_v($d, 'IQBatt_Temp') .' °C') ?>
+                        <?php
+                            if (coh_e($d, 'IQbattery_94_battery_mode')) $txt = coh_e($d, 'IQbattery_94_battery_mode');
+                            else $txt = '';
+                        ?>
+                        <?php //echo renderMinibox ('','🔋 Akku Modus',coh_v($d, 'IQbattery_94_battery_mode') . " " . $txt) ?>
+                        <?= renderMinibox ($akkuPowerClass,'⚡ Akku Laden/Entladen',coh_v($d, 'IQbattery_94_battery_power') .' kW') ?>
+                        <?= renderMinibox ('','📊 Ges. Import/Export<br>Zwischenzähler',$zwzTotal . ' ' . $zwzTotalUnit) ?>
+                        <?php
+                            if ($zwzPower >= 0) $cl='is-green';
+                            else  $cl='is-red';
+                        ?>
+                        <?= renderMinibox ($cl,'🔀 SWR akt. Import/Export',$zwzPower . ' ' . $zwzPowerUnit) ?>
+                        <?= renderMinibox ('','⬇️Bezug TS_E_in_108',coh_v($d, 'TS_E_in_108') . ' kWh<br>'.'⬆️Einspeisung TS_E_out_208',coh_v($d, 'TS_E_out_208') . ' kWh') ?>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="coh-card">
-        <div class="coh-card-title">🔥 Heizstab Daten</div>
-        <div class="coh-mini-grid">
-            <div class="coh-mini-box">
-                <div class="coh-mini-head">
-                    <div class="coh-icon">🌡️</div>
-                    <div class="coh-label">Heizstab Temp1</div>
-                </div>
-                <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
+        <div class="coh-card">
+            <div class="coh-card-title">💧 SYR Leckage</div>
+            <div class="coh-mini-grid">
+                <?= renderMinibox ($SYR_cl,'🚰 Ventil',$SYR_valve) ?>
+                <?= renderMinibox ($SYR_clalarmStatus,'Alarmstatus',$SYR_alarm_lamp . ' ' .$SYR_alarmStatus . $leaktxt) ?>
+                <?= renderMinibox ('','📊 Verbrauch heute',coh_ve($d, 'SyrVolDaily')) ?>
+                <?= renderMinibox ('','📊 Ges. Verbrauch',coh_ve($d, 'SyrVol')) ?>
+                <?= renderMinibox ('','🔋 Batterie',$SYR_batVolt ." V " . $SYR_batPercenttxt) ?>
+                <?= renderMinibox ('','🧭 Druck',coh_ve($d, 'SyrBar')) ?>
+                <?= renderMinibox ('','⚙️Profil',coh_ve($d, 'SyrPrf')) ?>
+                <?= renderMinibox ('','☁️ Cloud',"Aktiv " . coh_v($d, 'SyrCen',0) . "<br>Übertragung alle " . coh_v($d, 'SyrWti',0) . " Sek") ?>
+                <?= renderMinibox ('','🧪 Wasserhärte',hardnessDots($dH) ."dH (berechnet aus)<br>Leitwert: $SYR_leitWert  µS/cm /30") ?>
             </div>
-            <div class="coh-mini-box">
-                <div class="coh-mini-head">
-                    <div class="coh-icon">🌡️</div>
-                    <div class="coh-label">Heizstab Temp2</div>
-                </div>
-                <div class="coh-mini-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
-            </div>
-            <div class="coh-mini-box">
-                <div class="coh-mini-head">
-                    <div class="coh-icon">⚡</div>
-                    <div class="coh-label">Heizstab Akt. Leistung</div>
-                </div>
-                <div class="coh-mini-value"><?= coh_v($d, 'ELaktPwr') ?> kW</div>
-            </div>
-            <div class="coh-mini-box <?= $boostClass ?>">
-                <div class="coh-mini-head">
-                    <div class="coh-icon">🔥</div>
-                    <div class="coh-label">BoostStatus</div>
-                </div>
-                <div class="coh-mini-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
+        </div>
+        <div class="coh-card">
+            <div class="coh-card-title">🔥 Heizstab</div>
+            <div class="coh-mini-grid">
+                <?= renderMinibox ('','🌡️ Heizstab Temp1',coh_v($d, 'ELaktTemp1') . ' °C') ?>
+                <?= renderMinibox ('','🌡️ Heizstab Temp2',coh_v($d, 'ELaktTemp2') . ' °C') ?>
+                <?= renderMinibox ('','⚡ Heizstab Akt. Leistung',coh_v($d, 'ELaktPwr') . ' kW') ?>
+                <?= renderMinibox ('','🔥 BoostStatus',coh_v($d, 'ELaktboostactive')) ?>
             </div>
         </div>
         <details class="coh-toggle">
-            <summary>🔥 Heizstab Daten</summary>
+            <summary>📝 HeizstabServerProtokoll</summary>
             <div class="coh-toggle-body">
-                <div class="coh-row">
-                    <div class="coh-icon">🌡️</div>
-                    <div class="coh-label">Heizstab Temp1</div>
-                    <div class="coh-value"><?= coh_v($d, 'ELaktTemp1') ?> °C</div>
+                <div class="coh-row <?= $protokollHasError ? 'is-red' : '' ?>">
+                    <div class="coh-icon">📄</div>
+                    <div class="coh-label">
+                        Protokoll
+                        <?php if ($protokollHasError): ?>
+                            <span class="coh-subtext is-red">Fehler im Protokoll erkannt</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="coh-value"></div>
                 </div>
-                <div class="coh-row">
-                    <div class="coh-icon">🌡️</div>
-                    <div class="coh-label">Heizstab Temp2</div>
-                    <div class="coh-value"><?= coh_v($d, 'ELaktTemp2') ?> °C</div>
-                </div>
-                <div class="coh-row <?= $boostClass ?>">
-                    <div class="coh-icon">🔥</div>
-                    <div class="coh-label">BoostStatus</div>
-                    <div class="coh-value"><?= coh_v($d, 'ELaktboostactive') ?></div>
-                </div>
-                <div class="coh-row">
-                    <div class="coh-icon">⚡</div>
-                    <div class="coh-label">Heizstab Akt. Leistung</div>
-                    <div class="coh-value"><?= coh_v($d, 'ELaktPwr') ?> kW</div>
+                <pre class="coh-pre"><?= htmlspecialchars($protokollText) ?></pre>
+                <div class="coh-row" style="margin-top:8px;">
+                    <div class="coh-icon">🕒</div>
+                    <div class="coh-label">Intervall</div>
+                    <div class="coh-value"><?= coh_v($d, 'RaspberryHeizstabServerIntervall') ?></div>
                 </div>
             </div>
         </details>
-    </div>
-    <details class="coh-toggle">
-        <summary>🔌 Tasmota SWR Zähler</summary>
-        <div class="coh-toggle-body">
-            <div class="coh-row">
-                <div class="coh-icon">⚡</div>
-                <div class="coh-label">Power</div>
-                <div class="coh-value"><?= coh_v($d, 'TS_Power') ?> W</div>
-            </div>
-            <div class="coh-row">
-                <div class="coh-icon">⬇️</div>
-                <div class="coh-label">Bezug</div>
-                <div class="coh-value"><?= coh_v($d, 'TS_E_in_108') ?> kWh</div>
-            </div>
-            <div class="coh-row">
-                <div class="coh-icon">⬆️</div>
-                <div class="coh-label">Einspeisung</div>
-                <div class="coh-value"><?= coh_v($d, 'TS_E_out_208') ?> kWh</div>
-            </div>
-        </div>
-    </details>
-    <details class="coh-toggle">
-        <summary>📝 HeizstabServerProtokoll</summary>
-        <div class="coh-toggle-body">
-            <div class="coh-row <?= $protokollHasError ? 'is-red' : '' ?>">
-                <div class="coh-icon">📄</div>
-                <div class="coh-label">
-                    Protokoll
-                    <?php if ($protokollHasError): ?>
-                        <span class="coh-subtext is-red">Fehler im Protokoll erkannt</span>
-                    <?php endif; ?>
+        <details class="coh-toggle">
+            <summary>🖥️ Raspberry Systemdaten</summary>
+            <div class="coh-toggle-body">
+                <div class="coh-row <?= $heizstabServerOk ? 'is-green' : 'is-red' ?>">
+                    <div class="coh-icon">🎯</div>
+                    <div class="coh-label">Raspberry Check HeizstabServer</div>
+                    <div class="coh-value"><?= coh_v($d, 'RaspberryCheckHeizstabServer') ?></div>
                 </div>
-                <div class="coh-value"></div>
-            </div>
-            <pre class="coh-pre"><?= htmlspecialchars($protokollText) ?></pre>
-            <div class="coh-row" style="margin-top:8px;">
-                <div class="coh-icon">🕒</div>
-                <div class="coh-label">Intervall</div>
-                <div class="coh-value"><?= coh_v($d, 'RaspberryHeizstabServerIntervall') ?></div>
-            </div>
-        </div>
-    </details>
-    <details class="coh-toggle">
-        <summary>🖥️ Raspberry Systemdaten</summary>
-        <div class="coh-toggle-body">
-            <div class="coh-row <?= $heizstabServerOk ? 'is-green' : 'is-red' ?>">
-                <div class="coh-icon">🎯</div>
-                <div class="coh-label">Raspberry Check HeizstabServer</div>
-                <div class="coh-value"><?= coh_v($d, 'RaspberryCheckHeizstabServer') ?></div>
-            </div>
-            <div class="coh-row <?= preg_match('/error|fehler/i', $collectorServerVal) ? 'is-red' : '' ?>">
-                <div class="coh-icon">🧠</div>
-                <div class="coh-label">SensorCollectorServer</div>
-                <div class="coh-value"><?= $collectorServerVal ?></div>
-            </div>
-            <div class="coh-row">
-                <div class="coh-icon">💾</div>
-                <div class="coh-label">
-                    Plattenbelegung
-                    <?php if ($plattenText): ?>
-                        <span class="coh-subtext"><?= htmlspecialchars($plattenText) ?></span>
-                    <?php endif; ?>
+                <div class="coh-row <?= preg_match('/error|fehler/i', $collectorServerVal) ? 'is-red' : '' ?>">
+                    <div class="coh-icon">🧠</div>
+                    <div class="coh-label">SensorCollectorServer</div>
+                    <div class="coh-value"><?= $collectorServerVal ?></div>
                 </div>
-                <div class="coh-value"><?= coh_v($d, 'RaspberrycheckPlattenbelegung') && !$plattenText ? coh_v($d, 'RaspberrycheckPlattenbelegung') : '' ?></div>
+                <div class="coh-row">
+                    <div class="coh-icon">💾</div>
+                    <div class="coh-label">
+                        Plattenbelegung
+                        <?php if ($plattenText): ?>
+                            <span class="coh-subtext"><?= htmlspecialchars($plattenText) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="coh-value"><?= coh_v($d, 'RaspberrycheckPlattenbelegung') && !$plattenText ? coh_v($d, 'RaspberrycheckPlattenbelegung') : '' ?></div>
+                </div>
             </div>
-        </div>
-    </details>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    function initGauge_<?= $this->chartId ?>(retry) {
-        retry = retry || 0;
-        if (typeof window.RadialGauge === 'undefined') {
-            if (retry < 30) {
-                setTimeout(function () {
-                    initGauge_<?= $this->chartId ?>(retry + 1);
-                }, 100);
+        </details>
+    </div>                <!-- ende stack -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function initGauge_<?= $this->chartId ?>(retry) {
+                retry = retry || 0;
+                if (typeof window.RadialGauge === 'undefined') {
+                    if (retry < 30) {
+                        setTimeout(function () {
+                            initGauge_<?= $this->chartId ?>(retry + 1);
+                        }, 100);
+                    }
+                    return;
+                }
+                var canvasId = 'cohGauge_<?= $this->chartId ?>';
+                var canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    return;
+                }
+                var gauge = new RadialGauge({
+                    renderTo: canvasId,
+                    width: 90,
+                    height: 90,
+                    value: <?= json_encode($batteryPercent) ?>,
+                    units: "%",
+                    startAngle: 180,
+                    ticksAngle: 360,
+                    minValue: 0,
+                    maxValue: 100,
+                    barWidth: 15,
+                    colorBarProgress: '#00cc00',
+                    colorBar: 'blue',
+                    needleType: 'arrow',
+                    needleWidth: 10,
+                    needleCircleSize: 1,
+                    needleCircleOuter: true,
+                    needleCircleInner: false,
+                    colorNeedle: 'red',
+                    colorNeedleEnd: 'red',
+                    valueBox: false,
+                    strokeTicks: false,
+                    colorNumbers: 'transparent',
+                    colorMajorTicks: 'transparent',
+                    colorMinorTicks: 'transparent',
+                    majorTicks: [],
+                    minorTicks: 0,
+                    colorPlate: 'transparent',
+                    borders: false,
+                    borderOuterWidth: 0,
+                    borderMiddleWidth: 0,
+                    borderInnerWidth: 0,
+                    borderShadowWidth: 0,
+                    highlights: [],
+                    animation: false,
+                    highDpiSupport: true        
+                });
+                gauge.draw();
             }
-            return;
-        }
-        var canvasId = 'cohGauge_<?= $this->chartId ?>';
-        var canvas = document.getElementById(canvasId);
-        if (!canvas) {
-            return;
-        }
-        var gauge = new RadialGauge({
-            renderTo: canvasId,
-            width: 90,
-            height: 90,
-            value: <?= json_encode($batteryPercent) ?>,
-            units: "%",
-            startAngle: 180,
-            ticksAngle: 360,
-            minValue: 0,
-            maxValue: 100,
-            barWidth: 15,
-            colorBarProgress: '#00cc00',
-            colorBar: 'blue',
-            needleType: 'arrow',
-            needleWidth: 10,
-            needleCircleSize: 1,
-            needleCircleOuter: true,
-            needleCircleInner: false,
-            colorNeedle: 'red',
-            colorNeedleEnd: 'red',
-            valueBox: false,
-            strokeTicks: false,
-            colorNumbers: 'transparent',
-            colorMajorTicks: 'transparent',
-            colorMinorTicks: 'transparent',
-            majorTicks: [],
-            minorTicks: 0,
-            colorPlate: 'transparent',
-            borders: false,
-            borderOuterWidth: 0,
-            borderMiddleWidth: 0,
-            borderInnerWidth: 0,
-            borderShadowWidth: 0,
-            highlights: [],
-            animation: false,
-            highDpiSupport: true        
+            initGauge_<?= $this->chartId ?>(0);
         });
-        gauge.draw();
-    }
-    initGauge_<?= $this->chartId ?>(0);
-});
-</script>
+    </script>
 </div>

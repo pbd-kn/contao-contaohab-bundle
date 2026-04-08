@@ -127,7 +127,7 @@
 
 .coh-mini-value {
     font-weight: 700;
-    color: var(--coh-blue);
+    //color: var(--coh-blue);
 }
 .coh-mini-head {    /* sorgtz dafür dass icon und text nebeeinander stehn */
     display: flex;

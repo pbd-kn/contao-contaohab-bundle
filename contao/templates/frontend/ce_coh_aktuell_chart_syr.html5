@@ -2,7 +2,7 @@
 <div class="grid">
     <!-- VENTIL -->
     <div class="card">
-        <div>Ventil</div>
+        <div>🚰 Ventil</div>
         <div class="big"><?= $this->valve ?></div>
 
         <div style="margin-top:10px; display:flex; gap:5px;">
