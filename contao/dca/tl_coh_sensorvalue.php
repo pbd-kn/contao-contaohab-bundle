@@ -26,11 +26,11 @@ $GLOBALS['TL_DCA'][$strDca] = array(
         'sql' => array(
             'keys' => array(
                'id' => 'primary',
-                // wichtig für dein ON DUPLICATE KEY
+                // wichtig fÃ¼r dein ON DUPLICATE KEY
                 'sensorID,tstamp' => 'unique',
                 // optional
                 'sensorID' => 'index',
-                // ?? PERFORMANCE INDEX (OHNE NAME!)
+                // ðŸ”¥ PERFORMANCE INDEX (OHNE NAME!)
                 'tstamp,sensorID' => 'index',
             )
         ),
@@ -111,7 +111,7 @@ $GLOBALS['TL_DCA'][$strDca] = array(
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'], // Sprachreferenz für die Labels
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'], // Sprachreferenz fÃ¼r die Labels
             'options'   => [
                               'kwh' => 'kwh',
                               'W' => 'W',
@@ -150,7 +150,7 @@ $GLOBALS['TL_DCA'][$strDca] = array(
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'], // Sprachreferenz für die Labels
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'], // Sprachreferenz fÃ¼r die Labels
             'options'   => [
                               0 => 'Heizstab',
                               1 => 'IQbox',
