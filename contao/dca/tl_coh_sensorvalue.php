@@ -25,13 +25,13 @@ $GLOBALS['TL_DCA'][$strDca] = array(
         'enableVersioning' => true,
         'sql' => array(
             'keys' => array(
-                'id' => 'primary',
+               'id' => 'primary',
                 // wichtig für dein ON DUPLICATE KEY
                 'sensorID,tstamp' => 'unique',
-                // optional (für andere Abfragen)
+                // optional
                 'sensorID' => 'index',
-                // ?? DEIN PERFORMANCE INDEX (WICHTIG!)
-                'idx_tstamp_cover' => 'index(tstamp,sensorID)',
+                // ?? PERFORMANCE INDEX (OHNE NAME!)
+                'tstamp,sensorID' => 'index',
             )
         ),
         'onsubmit_callback' => array ($strDca, 'onSubmitRecord'),
