@@ -37,10 +37,10 @@
         // leckage test 
         function detectLeakType(array $d): array {
         // Werte sauber holen (fallbacks)
-            $flow   = coh_v($d, 'SyrFlo',0);
-            $volume=coh_v($d, 'SyrLtv',0);    
-            $alarm  = coh_v($d, 'SyrAla',0);
-            $warn   = coh_v($d, 'SyrWan',0);
+            $flow   = coh_num(coh_v($d, 'SyrFlo', 0), 0);
+            $volume = coh_num(coh_v($d, 'SyrLtv', 0), 0);
+            $alarm  = coh_v($d, 'SyrAla','ff');
+            $warn   = coh_v($d, 'SyrWan','ff');
             $valve  = coh_v($d, 'SyrVlv',0);
             // kein Alarm → alles ok
             if (($alarm === 0 || $alarm === 'ff') && ($warn === 0 || $warn === 'ff')) {
@@ -189,17 +189,17 @@
         /*
          * Abgeleitete Werte wie im alten Template
          */
-        $zwzPower = '-';
+        $zwzPower = '0';
         $zwzPowerUnit = 'kW';
         if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
             $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
             $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
         }
-        $tasmotaPower = '-';
+        $tasmotaPower = '0';
         $tasmotaPowerUnit = 'kW';
         if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
             $tasmotaPower = round( coh_num($d['TS_E_out_208']['sensorValue']) - coh_num($d['TS_E_in_108']['sensorValue']),2);
-            $zwzPowerUnit = $d['TS_E_in_108']['sensorEinheit'] ?? 'kW';
+            $tasmotaPowerUnit = $d['TS_E_in_108']['sensorEinheit'] ?? 'kW';
         }
         $zwzTotal = '-';
         $zwzTotalUnit = 'kWh';
@@ -274,11 +274,11 @@
         }
         $leak = detectLeakType($d);
         $leaktxt= '<br>'.$leak['text'];
-        $SYR_batVolt = coh_v($d, 'SyrBat'); 
+        $SYR_batVolt = coh_num(coh_v($d, 'SyrBat'), 0);
         $SYR_batPercent = max(0, min(100, round(($SYR_batVolt - 4.9) / (6.2 - 4.9) * 100)));   // 6.2 V voll 4.2V leer
         $SYR_batPercenttxt="<div class='big'>$SYR_batPercent % </div>";
-        $SYR_leitWert = coh_v($d, 'SyrCnd',0);
-        $dh = round($SYR_leitWert/30,2);
+        $SYR_leitWert = coh_num(coh_v($d, 'SyrCnd',0));
+        $dH = round($SYR_leitWert/30,2);
         /* noch offen
             $temp = isset($data["CEL"]) ? ($data["CEL"] / 10) : 0;
             // Button-Zustände
@@ -351,7 +351,7 @@
                 <?= renderMinibox ('','🧭 Druck',coh_ve($d, 'SyrBar')) ?>
                 <?= renderMinibox ('','⚙️Profil',coh_ve($d, 'SyrPrf')) ?>
                 <?= renderMinibox ('','☁️ Cloud',"Aktiv " . coh_v($d, 'SyrCen',0) . "<br>Übertragung alle " . coh_v($d, 'SyrWti',0) . " Sek") ?>
-                <?= renderMinibox ('','🧪 Wasserhärte',hardnessDots($dH) ."dH (berechnet aus)<br>Leitwert: $SYR_leitWert  µS/cm /30") ?>
+                <?= renderMinibox ('','🧪 Wasserhärte',hardnessDots($dH) ." $dH (berechnet aus)<br>Leitwert: $SYR_leitWert  µS/cm /30") ?>
             </div>
         </div>
         <div class="coh-card">
