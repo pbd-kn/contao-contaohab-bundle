@@ -19,15 +19,19 @@ use Contao\Input;
 
 $strDca='tl_coh_sensorvalue';
 
-
 $GLOBALS['TL_DCA'][$strDca] = array(
     'config' => array(
         'dataContainer'    => DC_Table::class,
         'enableVersioning' => true,
-        'sql'              => array(
+        'sql' => array(
             'keys' => array(
                 'id' => 'primary',
-                'sensorID,tstamp' => 'unique'
+                // wichtig für dein ON DUPLICATE KEY
+                'sensorID,tstamp' => 'unique',
+                // optional (für andere Abfragen)
+                'sensorID' => 'index',
+                // ?? DEIN PERFORMANCE INDEX (WICHTIG!)
+                'idx_tstamp_cover' => 'index(tstamp,sensorID)',
             )
         ),
         'onsubmit_callback' => array ($strDca, 'onSubmitRecord'),
