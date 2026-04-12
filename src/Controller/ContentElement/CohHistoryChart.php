@@ -24,179 +24,197 @@ class CohHistoryChart extends AbstractContentElementController
         private readonly SyncService $syncService,
         private readonly LoggerService $logger
     ) {}
-protected function getResponse($template, ContentModel $model, Request $request): Response
-{
-    $scope = System::getContainer()->get('request_stack')?->getCurrentRequest()?->attributes?->get('_scope');
 
-    if ('backend' === $scope) {
-        $templateName = $model->coh_history_template ?: 'coh_history_template';
+    protected function getResponse($template, ContentModel $model, Request $request): Response
+    {
+        $scope = System::getContainer()->get('request_stack')?->getCurrentRequest()?->attributes?->get('_scope');
 
-        $wildcard = new BackendTemplate('be_wildcard_coh');
-        $wildcard->title = StringUtil::deserialize($model->headline)['value'] ?? 'Kein Titel';
-        $wildcard->id = $model->id;
-        $wildcard->href = 'contao?do=themes&table=tl_content&id=' . $model->id;
+        if ('backend' === $scope) {
+            $templateName = $model->coh_history_template ?: 'coh_history_template';
 
-        $wildcardtxt = "### COH HISTORY ###<br>Template: $templateName<br>";
-        $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
-        foreach ($selectedSensors as $s) {
-            $wildcardtxt .= "$s ";
-        }
+            $wildcard = new BackendTemplate('be_wildcard_coh');
+            $wildcard->title = StringUtil::deserialize($model->headline)['value'] ?? 'Kein Titel';
+            $wildcard->id = $model->id;
+            $wildcard->href = 'contao?do=themes&table=tl_content&id=' . $model->id;
 
-        $wildcard->wildcard = '<div class="text-truncate" title="'.$wildcardtxt.'">'.$wildcardtxt.'</div>';
-        return new Response($wildcard->parse());
-    }
-
-    // Template wählen
-    $templateName = $model->coh_history_template ?: 'coh_history_template';
-    $template = $this->createTemplate($model, $templateName);
-    $this->logger->debugMe("getResponse: sensorwerte liefern template $templateName");
-
-    $this->syncService->sync();
-
-    // Range-Parameter
-    $unitField  = 'unit_chart_' . $model->id;
-    $valueField = 'value_chart_' . $model->id;
-
-    $allowedUnits = ['day', 'week', 'month', 'year'];
-
-    // Unit lesen + absichern
-    $unit = (string) $request->query->get($unitField, 'day');
-    if (!in_array($unit, $allowedUnits, true)) {
-        $unit = 'day';
-    }
-
-    // Datum lesen + absichern (nur Y-m-d akzeptieren)
-    $currentValue = (string) $request->query->get($valueField, '');
-    $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $currentValue);
-
-    // Wenn kein/ungültiges Datum übergeben wurde => heute
-    if (!$dt || $dt->format('Y-m-d') !== $currentValue) {
-        $dt = new \DateTimeImmutable('today');
-        $currentValue = $dt->format('Y-m-d');
-    }
-
-    $date = $dt;
-    $start = match ($unit) {
-        'day'   => $date->setTime(0, 0),
-        'week'  => $date->modify('monday this week')->setTime(0, 0),
-        'month' => $date->modify('first day of this month')->setTime(0, 0),
-        'year'  => $date->setDate((int)$date->format('Y'), 1, 1)->setTime(0, 0),
-        default => $date->setTime(0, 0),
-    };
-
-    $end = match ($unit) {
-        'day'   => $start->modify('+1 day'),
-        'week'  => $start->modify('+1 week'),
-        'month' => $start->modify('+1 month'),
-        'year'  => $start->modify('+1 year'),
-        default => $start->modify('+1 day'),
-    };
-
-    $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
-
-    $datasets = [];
-    $axes = [];
-    $timestamps = [];
-
-    if (!empty($selectedSensors)) {
-
-        $rows = $this->connection->fetchAllAssociative(
-            'SELECT sv.tstamp, sv.sensorID, sv.sensorValue, sv.sensorEinheit,
-                    s.sensorTitle, s.outputMode
-             FROM tl_coh_sensorvalue sv
-             LEFT JOIN tl_coh_sensors s ON sv.sensorID = s.sensorID
-             WHERE sv.tstamp >= ? AND sv.tstamp < ?
-             AND sv.sensorID IN (?)
-             ORDER BY sv.sensorID ASC, sv.tstamp ASC',
-            [$start->getTimestamp(), $end->getTimestamp(), $selectedSensors],
-            [\PDO::PARAM_INT, \PDO::PARAM_INT, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-        );
-
-        // Nach Sensor gruppieren
-        $grouped = [];
-        foreach ($rows as $row) {
-            $grouped[$row['sensorID']][] = $row;
-        }
-        foreach ($grouped as $sensorID => $sensorRows) {
-            $firstRow = reset($sensorRows);
-            $mode = $firstRow['outputMode'] ?? 'absolute';
-            $sensorTitle = $firstRow['sensorTitle'] ?: $sensorID;
-            $unitLabel = $firstRow['sensorEinheit'] ?: '';
-            $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', $unitLabel);
-            $color = $this->getSensorColor($sensorTitle);
-            $this->logger->debugMe("getResponse: sensorwerte liefern mode $mode");
-            if ($mode === 'daily') {
-                $rowsArray = array_values($sensorRows);
-                // kein Wert oder erster Wert nicht numerisch ? abbrechen
-                if (empty($rowsArray) || !is_numeric($rowsArray[0]['sensorValue'])) { continue; }
-                // erster Zählerstand des Zeitraums
-                $firstValue = (float) $rowsArray[0]['sensorValue'];
-                foreach ($rowsArray as $row) {
-                    $ts = date('c', (int) $row['tstamp']);
-                    if (!is_numeric($row['sensorValue'])) { continue;  } // daily nur für numerische Sensoren 
-                    $currentSensorValue = (float) $row['sensorValue'];
-                    // Reset-Schutz
-                    $val = $currentSensorValue >= $firstValue ? $currentSensorValue - $firstValue : $currentSensorValue;
-                    $val = round($val, 2);
-                    $timestamps[] = $ts;
-                    $this->logger->debugMe("getResponse: sensorwerte liefern mode $mode val $val");
-                    // exakt gleiche Struktur wie im ALL-Block
-                    $datasets[$sensorTitle]['label'] ??= $sensorTitle;
-                    $datasets[$sensorTitle]['data'][] = [
-                        'x' => $ts,
-                        'y' => $val
-                    ];
-                    $datasets[$sensorTitle]['borderColor'] ??= $color;
-                    $datasets[$sensorTitle]['fill'] = false;
-                    $datasets[$sensorTitle]['tension'] = 0.1;
-                    $datasets[$sensorTitle]['yAxisID'] = $axisId;
-                }
-            } else {
-                foreach ($sensorRows as $row) {
-                    $ts = date('c', $row['tstamp']);
-                    if (is_numeric($row['sensorValue'])) { $val = round((float)$row['sensorValue'], 2);
-                    } else { $val = $row['sensorValue']; }
-                    $timestamps[] = $ts;
-                    $datasets[$sensorTitle]['label'] ??= $sensorTitle;
-                    $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
-                    $datasets[$sensorTitle]['borderColor'] ??= $color;
-                    $datasets[$sensorTitle]['fill'] = false;
-                    $datasets[$sensorTitle]['tension'] = 0.1;
-                    $datasets[$sensorTitle]['yAxisID'] = $axisId;
-                    $this->logger->debugMe("getResponse: sensorwerte liefern mode $mode val $val");
-                }
+            $wildcardtxt = "### COH HISTORY ###<br>Template: $templateName<br>";
+            $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
+            foreach ($selectedSensors as $s) {
+                $wildcardtxt .= "$s ";
             }
-            $axes[$axisId] ??= [
-                'unit' => $unitLabel,
-                'color' => $color
-            ];
+
+            $wildcard->wildcard = '<div class="text-truncate" title="'.$wildcardtxt.'">'.$wildcardtxt.'</div>';
+            return new Response($wildcard->parse());
         }
+
+        $templateName = $model->coh_history_template ?: 'coh_history_template';
+        $template = $this->createTemplate($model, $templateName);
+
+        $this->syncService->sync();
+
+        $unitField  = 'unit_chart_' . $model->id;
+        $valueField = 'value_chart_' . $model->id;
+
+        $allowedUnits = ['day', 'week', 'month', 'year'];
+
+        $unit = (string) $request->query->get($unitField, 'day');
+        if (!in_array($unit, $allowedUnits, true)) {
+            $unit = 'day';
+        }
+
+        $currentValue = (string) $request->query->get($valueField, '');
+        $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $currentValue);
+
+        if (!$dt || $dt->format('Y-m-d') !== $currentValue) {
+            $dt = new \DateTimeImmutable('today');
+            $currentValue = $dt->format('Y-m-d');
+        }
+
+        $date = $dt;
+
+        $start = match ($unit) {
+            'day'   => $date->setTime(0, 0),
+            'week'  => $date->modify('monday this week')->setTime(0, 0),
+            'month' => $date->modify('first day of this month')->setTime(0, 0),
+            'year'  => $date->setDate((int)$date->format('Y'), 1, 1)->setTime(0, 0),
+            default => $date->setTime(0, 0),
+        };
+
+        $end = match ($unit) {
+            'day'   => $start->modify('+1 day'),
+            'week'  => $start->modify('+1 week'),
+            'month' => $start->modify('+1 month'),
+            'year'  => $start->modify('+1 year'),
+            default => $start->modify('+1 day'),
+        };
+
+        $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
+
+        $datasets = [];
+        $axes = [];
+        $timestamps = [];
+
+        if (!empty($selectedSensors)) {
+
+            $rows = $this->connection->fetchAllAssociative(
+                'SELECT sv.tstamp, sv.sensorID, sv.sensorValue, sv.sensorEinheit,
+                        s.sensorTitle, s.outputMode
+                 FROM tl_coh_sensorvalue sv
+                 LEFT JOIN tl_coh_sensors s ON sv.sensorID = s.sensorID
+                 WHERE sv.tstamp >= ? AND sv.tstamp < ?
+                 AND sv.sensorID IN (?)
+                 ORDER BY sv.sensorID ASC, sv.tstamp ASC',
+                [$start->getTimestamp(), $end->getTimestamp(), $selectedSensors],
+                [\PDO::PARAM_INT, \PDO::PARAM_INT, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
+            );
+
+            // gruppieren
+            $grouped = [];
+            foreach ($rows as $row) {
+                $grouped[$row['sensorID']][] = $row;
+            }
+
+            foreach ($grouped as $sensorID => $sensorRows) {
+
+                $firstRow = reset($sensorRows);
+
+                $mode = $firstRow['outputMode'] ?? 'absolute';
+                $sensorTitle = !empty($firstRow['sensorTitle']) ? $firstRow['sensorTitle'] : $sensorID;
+
+                // ? EINHEIT AUS ZEITRAUM (von hinten suchen)
+                $unitLabel = '';
+                for ($i = count($sensorRows) - 1; $i >= 0; $i--) {
+                    $u = trim((string)($sensorRows[$i]['sensorEinheit'] ?? ''));
+                    if ($u !== '') {
+                        $unitLabel = $u;
+                        break;
+                    }
+                }                
+                $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', $unitLabel ?: $sensorID);
+
+                $color = $this->getSensorColor($sensorTitle);
+
+                if ($mode === 'daily') {
+
+                    $rowsArray = array_values($sensorRows);
+
+                    if (empty($rowsArray) || !is_numeric($rowsArray[0]['sensorValue'])) continue;
+
+                    $firstValue = (float) $rowsArray[0]['sensorValue'];
+
+                    foreach ($rowsArray as $row) {
+
+                        if (!is_numeric($row['sensorValue'])) continue;
+
+                        $ts = date('c', (int) $row['tstamp']);
+                        $current = (float) $row['sensorValue'];
+
+                        $val = $current >= $firstValue ? $current - $firstValue : $current;
+                        $val = round($val, 2);
+
+                        $timestamps[] = $ts;
+
+                        $datasets[$sensorTitle]['label'] ??= $sensorTitle;
+                        $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
+                        $datasets[$sensorTitle]['borderColor'] ??= $color;
+                        $datasets[$sensorTitle]['fill'] = false;
+                        $datasets[$sensorTitle]['tension'] = 0.1;
+                        $datasets[$sensorTitle]['yAxisID'] = $axisId;
+                    }
+
+                } else {
+
+                    foreach ($sensorRows as $row) {
+
+                        $ts = date('c', (int) $row['tstamp']);
+
+                        $val = is_numeric($row['sensorValue'])
+                            ? round((float)$row['sensorValue'], 2)
+                            : $row['sensorValue'];
+
+                        $timestamps[] = $ts;
+
+                        $datasets[$sensorTitle]['label'] ??= $sensorTitle;
+                        $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
+                        $datasets[$sensorTitle]['borderColor'] ??= $color;
+                        $datasets[$sensorTitle]['fill'] = false;
+                        $datasets[$sensorTitle]['tension'] = 0.1;
+                        $datasets[$sensorTitle]['yAxisID'] = $axisId;
+                    }
+                }
+
+                $axes[$axisId] ??= [
+                    'unit' => $unitLabel,
+                    'color' => $color
+                ];
+            }
+        }
+
+        $template->chartdata = (!empty($datasets) && !empty($timestamps))
+            ? json_encode([
+                'labels' => array_values(array_unique($timestamps)),
+                'datasets' => array_values($datasets),
+                'axes' => $axes,
+                'xUnit' => $unit,
+            ], JSON_THROW_ON_ERROR)
+            : null;
+
+        $template->chartId = 'chart_' . $model->id;
+        $template->unitField = $unitField;
+        $template->valueField = $valueField;
+        $template->currentUnit = $unit;
+        $template->currentValue = $currentValue;
+
+        $template->rangeLabel = match ($unit) {
+            'day'   => $date->format('d.m.Y'),
+            'week'  => 'KW ' . $date->format('W') . ' ' . $date->format('Y'),
+            'month' => $date->format('F Y'),
+            'year'  => $date->format('Y'),
+            default => $date->format('d.m.Y'),
+        };
+
+        return $template->getResponse();
     }
-    $template->chartdata = (!empty($datasets) && !empty($timestamps))
-        ? json_encode([
-            'labels' => array_values(array_unique($timestamps)),
-            'datasets' => array_values($datasets),
-            'axes' => $axes,
-            'xUnit' => $unit,
-        ], JSON_THROW_ON_ERROR)
-        : null;
-
-    $template->chartId = 'chart_' . $model->id;
-    $template->unitField = $unitField;
-    $template->valueField = $valueField;
-    $template->currentUnit = $unit;
-    $template->currentValue = $currentValue;
-
-    $template->rangeLabel = match ($unit) {
-        'day'   => $date->format('d.m.Y'),
-        'week'  => 'KW ' . $date->format('W') . ' ' . $date->format('Y'),
-        'month' => $date->format('F Y'),
-        'year'  => $date->format('Y'),
-        default => $date->format('d.m.Y'),
-    };
-
-    return $template->getResponse();
-}
 
     private function getSensorColor(int|string $id): string
     {

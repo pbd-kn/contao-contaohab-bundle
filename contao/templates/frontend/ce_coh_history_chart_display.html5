@@ -1,5 +1,14 @@
 <?php use Contao\StringUtil; ?>
 <div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper actuell-history-container">
+
+<style>
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: clamp(300px, 50vh, 600px);
+}
+</style>
+
 <?php
 $headline = StringUtil::deserialize($this->headline);
 $chartTitle = 'Sensorwerte über Zeit';
@@ -50,7 +59,6 @@ if (is_string($headline)) {
   <canvas id="<?= $this->chartId ?>"></canvas>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', () => {
 
   luxon.Settings.defaultLocale = 'de';
@@ -59,37 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
 
   function getTimeConfig(unit) {
-
     switch (unit) {
-
       case 'day':
-        return {
-          unit: 'hour',
-          displayFormats: { hour: 'HH:mm' },
-          tooltipFormat: 'HH:mm'
-        };
-
+        return { unit: 'hour', displayFormats: { hour: 'HH:mm' }, tooltipFormat: 'HH:mm' };
       case 'week':
-        return {
-          unit: 'day',
-          displayFormats: { day: 'ccc dd.MM' },
-          tooltipFormat: 'cccc dd.MM.yyyy'
-        };
-
+        return { unit: 'day', displayFormats: { day: 'ccc dd.MM' }, tooltipFormat: 'cccc dd.MM.yyyy' };
       case 'month':
-        return {
-          unit: 'day',
-          displayFormats: { day: 'dd.MM' },
-          tooltipFormat: 'dd.MM.yyyy'
-        };
-
+        return { unit: 'day', displayFormats: { day: 'dd.MM' }, tooltipFormat: 'dd.MM.yyyy' };
       case 'year':
-        return {
-          unit: 'month',
-          displayFormats: { month: 'MM.yyyy' },
-          tooltipFormat: 'LLLL yyyy'
-        };
-
+        return { unit: 'month', displayFormats: { month: 'MM.yyyy' }, tooltipFormat: 'LLLL yyyy' };
       default:
         return { unit: 'day' };
     }
@@ -108,62 +94,70 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
 
     const color = info.color || '#000';
+    const unit = info.unit || ''; // 🔥 FIX
 
     scales[axisId] = {
+      type: 'linear',
       position: useLeft ? 'left' : 'right',
-      title: { display: true, text: info.unit, color },
+
       ticks: {
-        color,
-        callback: value => Math.round(value * 100) / 100
+        color: color,
+        padding: 5,
+        callback: function(value) {
+          const v = Math.round(value * 100) / 100;
+          return unit ? v + ' ' + unit : v;
+        }
       },
-      grid: { drawOnChartArea: useLeft }
+
+      grid: {
+        drawOnChartArea: useLeft,
+        color: 'rgba(0,0,0,0.05)'
+      },
+
+      offset: true
     };
 
     useLeft = !useLeft;
   }
-const resetPlugin = {
-  id: 'resetPlugin',
-  afterDraw(chart, args, options) {
-    const {ctx, chartArea: {top, right}} = chart;
 
-    ctx.save();
-    ctx.font = '12px Arial';
-    ctx.fillStyle = '#666';
-    ctx.textAlign = 'right';
-    ctx.fillText('⟲ Reset Zoom', right - 10, top + 15);
-    ctx.restore();
-  },
+  const resetPlugin = {
+    id: 'resetPlugin',
+    afterDraw(chart) {
+      const {ctx, chartArea: {top, right}} = chart;
+      ctx.save();
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#666';
+      ctx.textAlign = 'right';
+      ctx.fillText('⟲ Reset Zoom', right - 10, top + 15);
+      ctx.restore();
+    },
+    afterEvent(chart, args) {
+      const {event} = args;
+      if (event.type !== 'click') return;
 
-  afterEvent(chart, args) {
-    const {event} = args;
-    if (event.type !== 'click') return;
+      const {chartArea: {top, right}} = chart;
 
-    const {chartArea: {top, right}} = chart;
-
-    if (
-      event.x > right - 100 &&
-      event.x < right &&
-      event.y > top &&
-      event.y < top + 25
-    ) {
-      chart.resetZoom();
+      if (event.x > right - 100 && event.x < right && event.y > top && event.y < top + 25) {
+        chart.resetZoom();
+      }
     }
-  }
-};
-Chart.register(resetPlugin);
+  };
 
-  chart = new Chart(ctx, {
+  Chart.register(resetPlugin);
+
+  new Chart(ctx, {
     type: 'line',
     data: {
       datasets: chartData.datasets
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 1.4,   // seitenverhaeltnis brieite zu höhe
+      responsive: true,
+      maintainAspectRatio: false,
+
       interaction: { mode: 'nearest', intersect: false },
-      resizeDelay: 0,   // 🔥 wichtig bei Flexbox
+
       scales,
+
       elements: {
         line: { borderWidth: 1 },
         point: {
@@ -174,78 +168,39 @@ Chart.register(resetPlugin);
           borderWidth: 2
         }
       },
+
       plugins: {
-    zoom: {
+        zoom: {
+          pan: { enabled: true, mode: 'x' },
+          zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            drag: { enabled: true },
+            mode: 'x'
+          }
+        },
 
-    // 🔹 Verschieben (Desktop + Touch)
-    pan: {
-      enabled: true,
-      mode: 'x'
-    },
-
-    // 🔹 Zoomen
-    zoom: {
-      wheel: {
-        enabled: true     // Mausrad Desktop
-      },
-      pinch: {
-        enabled: true     // Zwei Finger Smartphone
-      },
-      drag: {
-        enabled: true     // Mit Maus Bereich markieren
-      },
-      mode: 'x'
-    }
-  },      
-         legend: {
+        legend: {
           display: true,
           position: 'top',
-          align: 'start',
-          labels: {
-            boxWidth: 10,
-            boxHeight: 10,
-            usePointStyle: true,
-            pointStyle: 'circle',
-            padding: 8,
-            font: {
-              size: 11,
-              weight: 'normal'
-            }
-          }
+          align: 'start'
         },
+
         title: {
           display: true,
-          text: <?= json_encode($chartTitle) ?>,
-          font: {
-            size: 20,
-            weight: 'bold'
-          }
+          text: <?= json_encode($chartTitle) ?>
         },
+
         tooltip: {
-            backgroundColor: '#222',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            borderColor: '#666',
-            borderWidth: 1,
-            padding: 5,
-            cornerRadius: 6,
-            displayColors: false,
-            titleFont: {
-                size: 8,
-                weight: 'bold'
-            },
-            bodyFont: {
-                size: 8
-            },
-            callbacks: {
-                label: ctx => {
-                    const label = ctx.dataset.label || '';
-                    const value = ctx.parsed.y;
-                    const axisId = ctx.dataset.yAxisID;
-                    const unit = chartData.axes?.[axisId]?.unit || '';
-                    return `${label}: ${value}${unit ? ' ' + unit : ''}`;
-                }
+          callbacks: {
+            label: ctx => {
+              const label = ctx.dataset.label || '';
+              const value = ctx.parsed.y;
+              const axisId = ctx.dataset.yAxisID;
+              const unit = chartData.axes?.[axisId]?.unit || '';
+              return `${label}: ${value}${unit ? ' ' + unit : ''}`;
             }
+          }
         }
       }
     }
@@ -255,11 +210,6 @@ Chart.register(resetPlugin);
 </script>
 
 <?php else: ?>
-  <p>
-    <em>Keine Sensordaten für Chart 
-      <?= '<strong>' . htmlspecialchars(is_array($headline) ? ($headline['value'] ?? '') : $headline) . '</strong>' ?>
-      im gewählten Zeitraum gefunden.
-    </em>
-  </p>
+  <p><em>Keine Daten vorhanden</em></p>
 <?php endif; ?>
 </div>
