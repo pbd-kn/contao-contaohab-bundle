@@ -68,16 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getTimeConfig(unit) {
     switch (unit) {
-      case 'day':
-        return { unit: 'hour', displayFormats: { hour: 'HH:mm' }, tooltipFormat: 'HH:mm' };
-      case 'week':
-        return { unit: 'day', displayFormats: { day: 'ccc dd.MM' }, tooltipFormat: 'cccc dd.MM.yyyy' };
-      case 'month':
-        return { unit: 'day', displayFormats: { day: 'dd.MM' }, tooltipFormat: 'dd.MM.yyyy' };
-      case 'year':
-        return { unit: 'month', displayFormats: { month: 'MM.yyyy' }, tooltipFormat: 'LLLL yyyy' };
-      default:
-        return { unit: 'day' };
+      case 'day':   return { unit: 'hour', displayFormats: { hour: 'HH:mm' } };
+      case 'week':  return { unit: 'day',  displayFormats: { day: 'dd.MM' } };
+      case 'month': return { unit: 'day',  displayFormats: { day: 'dd.MM' } };
+      case 'year':  return { unit: 'month',displayFormats: { month: 'MM.yyyy' } };
+      default: return { unit: 'day' };
     }
   }
 
@@ -93,20 +88,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
 
-    const color = info.color || '#000';
-    const unit = info.unit || ''; // 🔥 FIX
+    const color = info.color || '#333';
+    const unit  = info.unit || '';
 
     scales[axisId] = {
       type: 'linear',
+      display: true,
       position: useLeft ? 'left' : 'right',
 
-      ticks: {
-        color: color,
-        padding: 5,
-        callback: function(value) {
-          const v = Math.round(value * 100) / 100;
-          return unit ? v + ' ' + unit : v;
-        }
+      border: {
+        color: color
       },
 
       grid: {
@@ -114,36 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
         color: 'rgba(0,0,0,0.05)'
       },
 
-      offset: true
+      beginAtZero: true
     };
 
     useLeft = !useLeft;
   }
-
-  const resetPlugin = {
-    id: 'resetPlugin',
-    afterDraw(chart) {
-      const {ctx, chartArea: {top, right}} = chart;
-      ctx.save();
-      ctx.font = '12px Arial';
-      ctx.fillStyle = '#666';
-      ctx.textAlign = 'right';
-      ctx.fillText('⟲ Reset Zoom', right - 10, top + 15);
-      ctx.restore();
-    },
-    afterEvent(chart, args) {
-      const {event} = args;
-      if (event.type !== 'click') return;
-
-      const {chartArea: {top, right}} = chart;
-
-      if (event.x > right - 100 && event.x < right && event.y > top && event.y < top + 25) {
-        chart.resetZoom();
-      }
-    }
-  };
-
-  Chart.register(resetPlugin);
 
   new Chart(ctx, {
     type: 'line',
@@ -159,31 +125,17 @@ document.addEventListener('DOMContentLoaded', () => {
       scales,
 
       elements: {
-        line: { borderWidth: 1 },
+        line: { borderWidth: 2 },   // 🔥 dünne Linien
         point: {
           radius: 1,
-          pointStyle: 'circle',
-          backgroundColor: '#fff',
-          borderColor: '#333',
-          borderWidth: 2
+          borderWidth: 1
         }
       },
 
       plugins: {
-        zoom: {
-          pan: { enabled: true, mode: 'x' },
-          zoom: {
-            wheel: { enabled: true },
-            pinch: { enabled: true },
-            drag: { enabled: true },
-            mode: 'x'
-          }
-        },
-
         legend: {
           display: true,
-          position: 'top',
-          align: 'start'
+          position: 'top'
         },
 
         title: {
