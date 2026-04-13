@@ -12,38 +12,37 @@ declare(strict_types=1);
  * @link https://github.com/pbd-kn/contao-contaohab-bundle
  */
 
-use Contao\Backend;
 use Contao\DataContainer;
 use Contao\DC_Table;
-use Contao\Input;
 
-$strDca='tl_coh_sensorvalue';
+$strDca = 'tl_coh_sensorvalue';
 
 $GLOBALS['TL_DCA'][$strDca] = array(
+
     'config' => array(
         'dataContainer'    => DC_Table::class,
         'enableVersioning' => true,
         'sql' => array(
             'keys' => array(
-               'id' => 'primary',
-                // wichtig für dein ON DUPLICATE KEY
-                'sensorID,tstamp' => 'unique',
-                // optional
-                'sensorID' => 'index',
-                // 🔥 PERFORMANCE INDEX (OHNE NAME!)
-                'tstamp,sensorID' => 'index',
-            )
+                'id'              => 'primary',
+                'sensorID'        => 'index',
+                'tstamp'          => 'index',
+                'sensorID,tstamp' => 'index',
+            ),
         ),
-        'onsubmit_callback' => array ($strDca, 'onSubmitRecord'),
+        'onsubmit_callback' => array(
+            array($strDca, 'onSubmitRecord'),
+        ),
     ),
-    'list'        => array(
-        'sorting'           => array(
-            'mode'        => 2, 
+
+    'list' => array(
+        'sorting' => array(
+            'mode'        => 2,
             'fields'      => array('sensorID'),
             'flag'        => DataContainer::SORT_ASC,
-            'panelLayout' => 'filter;sort,search,limit'
+            'panelLayout' => 'filter;sort,search,limit',
         ),
-        'label'             => array(
+        'label' => array(
             'fields' => array('sensorID'),
             'format' => '%s',
         ),
@@ -51,119 +50,140 @@ $GLOBALS['TL_DCA'][$strDca] = array(
             'all' => array(
                 'href'       => 'act=select',
                 'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"'
-            )
-        ),
-        'operations'        => array(
-            'edit'   => array(
-                'href'  => 'act=edit',
-                'icon'  => 'edit.svg'
+                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
             ),
-            'copy'   => array(
-                'href'  => 'act=copy',
-                'icon'  => 'copy.svg'
+        ),
+        'operations' => array(
+            'edit' => array(
+                'href' => 'act=edit',
+                'icon' => 'edit.svg',
+            ),
+            'copy' => array(
+                'href' => 'act=copy',
+                'icon' => 'copy.svg',
             ),
             'delete' => array(
                 'href'       => 'act=delete',
                 'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null) . '\'))return false;Backend.getScrollOffset()"'
+                'attributes' => 'onclick="if(!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '') . '\'))return false;Backend.getScrollOffset()"',
             ),
-            'show'   => array(
+            'show' => array(
                 'href'       => 'act=show',
                 'icon'       => 'show.svg',
-                'attributes' => 'style="margin-right:3px"'
+                'attributes' => 'style="margin-right:3px"',
             ),
-        )
-    ),
-    'palettes'    => array(
-        'default'      => 'sensorID,sensorEinheit,sensorValueType,sensorSource,sensorValue'
-    ),
-    'fields'      => array(
-        'id'             => array(
-            'sql' => "int(10) unsigned NOT NULL auto_increment"
         ),
-        'tstamp'         => array(
-            'sql' => "int(10) unsigned NOT NULL default '0'"
+    ),
+
+    'palettes' => array(
+        'default' => 'sensorID,sensorEinheit,sensorValueType,sensorSource,sensorValue',
+    ),
+
+    'fields' => array(
+
+        'id' => array(
+            'sql' => "int(10) unsigned NOT NULL auto_increment",
         ),
-        'sensorID'          => array(
+
+        'tstamp' => array(
+            'sql' => "int(10) unsigned NOT NULL default '0'",
+        ),
+
+        'sensorID' => array(
             'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'),
-            'sql'       => "varchar(255) NOT NULL default ''"
+            'eval'      => array(
+                'mandatory' => true,
+                'maxlength' => 255,
+                'tl_class'  => 'w50',
+            ),
+            'sql'       => "varchar(255) NOT NULL default ''",
         ),
-        'sensorValue' => [
+
+        'sensorValue' => array(
             'inputType' => 'textarea',
             'exclude'   => true,
             'search'    => false,
             'filter'    => false,
             'sorting'   => false,
-            'eval'      => [
+            'eval'      => array(
                 'tl_class' => 'clr',
-            ],
-            'sql'       => "longtext NULL"
-        ],
-        'sensorEinheit'  => array(
+            ),
+            'sql'       => "longtext NULL",
+        ),
+
+        'sensorEinheit' => array(
             'inputType' => 'select',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'], // Sprachreferenz für die Labels
-            'options'   => [
-                              'kwh' => 'kwh',
-                              'W' => 'W',
-                              'GradC' => 'GradC',
-                              'Datum' => 'Datum',
-                              'Zeit' => 'Zeit',
-                              'DatumZeit' => 'DatumZeit',
-                              'Text' => 'Text'
-                           ],
-            'eval'      => array('includeBlankOption' => false, 'chosen' => true, 'tl_class' => 'w50'),
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'],
+            'options'   => array(
+                'kwh',
+                'W',
+                'GradC',
+                'Datum',
+                'Zeit',
+                'DatumZeit',
+                'Text',
+            ),
+            'eval'      => array(
+                'includeBlankOption' => false,
+                'chosen'             => true,
+                'tl_class'           => 'w50',
+            ),
             'sql'       => "varchar(255) NOT NULL default ''",
             'default'   => 'Text',
         ),
-        'sensorValueType'          => array(
+
+        'sensorValueType' => array(
             'inputType' => 'select',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'options'   => [
-                              'int' => 'int',
-                              'float' => 'float',
-                              'GradC' => 'GradC',
-                              'Datum' => 'Datum',
-                              'Zeit' => 'Zeit',
-                              'DatumZeit' => 'DatumZeit',
-                              'Text' => 'Text'
-                           ],
-            'eval'      => array( 'maxlength' => 255, 'tl_class' => 'w50'),
+            'options'   => array(
+                'int',
+                'float',
+                'GradC',
+                'Datum',
+                'Zeit',
+                'DatumZeit',
+                'Text',
+            ),
+            'eval'      => array(
+                'maxlength' => 255,
+                'tl_class'  => 'w50',
+            ),
             'sql'       => "varchar(255) NOT NULL default ''",
             'default'   => 'Text',
         ),
-        'sensorSource'  => array(
+
+        'sensorSource' => array(
             'inputType' => 'select',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'], // Sprachreferenz für die Labels
-            'options'   => [
-                              0 => 'Heizstab',
-                              1 => 'IQbox',
-                              2 => 'Tasmota',
-                              3 => 'PHP-Script',
-                              4 => 'sonst'
-                           ],
-            'eval'      => array('includeBlankOption' => false, 'chosen' => true, 'tl_class' => 'w50'),
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'],
+            'options'   => array(
+                0 => 'Heizstab',
+                1 => 'IQbox',
+                2 => 'Tasmota',
+                3 => 'PHP-Script',
+                4 => 'sonst',
+            ),
+            'eval'      => array(
+                'includeBlankOption' => false,
+                'chosen'             => true,
+                'tl_class'           => 'w50',
+            ),
             'sql'       => "varchar(255) NOT NULL default ''",
             'default'   => 0,
         ),
-    )
+    ),
 );
-
-
-
