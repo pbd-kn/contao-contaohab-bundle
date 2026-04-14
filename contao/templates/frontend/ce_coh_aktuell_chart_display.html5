@@ -329,13 +329,13 @@
                         ?>
                         <?php //echo renderMinibox ('','🔋 Akku Modus',coh_v($d, 'IQbattery_94_battery_mode') . " " . $txt) ?>
                         <?= renderMinibox ($akkuPowerClass,'⚡ Akku Laden/Entladen',coh_v($d, 'IQbattery_94_battery_power') .' kW') ?>
-                        <?= renderMinibox ('','📊 Ges. Import/Export<br>Zwischenzähler',$zwzTotal . ' ' . $zwzTotalUnit) ?>
+                        <?= renderMinibox ('','📊 Ges. Import/Export ZWZ  ',$zwzTotal . ' ' . $zwzTotalUnit) ?>
                         <?php
                             if ($zwzPower >= 0) $cl='is-green';
                             else  $cl='is-red';
                         ?>
-                        <?= renderMinibox ($cl,'🔀 SWR akt. Import/Export',$zwzPower . ' ' . $zwzPowerUnit) ?>
-                        <?= renderMinibox ('','⬇️Bezug TS_E_in_108',coh_v($d, 'TS_E_in_108') . ' kWh<br>'.'⬆️Einspeisung TS_E_out_208',coh_v($d, 'TS_E_out_208') . ' kWh') ?>
+                        <?= renderMinibox ($cl,'🔀 ZWZ akt. Import/Export',$zwzPower . ' ' . $zwzPowerUnit) ?>
+                        <?= renderMinibox ('','📊 Ges. Import/Export SWR(TS) ',coh_v($d, 'TS_E_in_108') . ' kWh' . '<br>' . coh_v($d, 'TS_E_out_208') . ' kWh') ?>
                     </div>
                 </div>
             </div>

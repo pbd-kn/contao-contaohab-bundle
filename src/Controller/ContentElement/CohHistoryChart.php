@@ -115,13 +115,11 @@ class CohHistoryChart extends AbstractContentElementController
             }
 
             foreach ($grouped as $sensorID => $sensorRows) {
-
                 $firstRow = reset($sensorRows);
-
                 $mode = $firstRow['outputMode'] ?? 'absolute';
                 $sensorTitle = !empty($firstRow['sensorTitle']) ? $firstRow['sensorTitle'] : $sensorID;
-
                 // ? EINHEIT AUS ZEITRAUM (von hinten suchen)
+                // Einheit suchen (von hinten)
                 $unitLabel = '';
                 for ($i = count($sensorRows) - 1; $i >= 0; $i--) {
                     $u = trim((string)($sensorRows[$i]['sensorEinheit'] ?? ''));
@@ -129,31 +127,23 @@ class CohHistoryChart extends AbstractContentElementController
                         $unitLabel = $u;
                         break;
                     }
-                }                
-                $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', $unitLabel ?: $sensorID);
-
+                }
+                // ?? DEFAULT wenn nichts gefunden wurde
+                //if ($unitLabel === '') { $unitLabel = 'raw'; }
+                // ?? IMMER eindeutige Achse pro Sensor
+                $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', strtolower($sensorID));
                 $color = $this->getSensorColor($sensorTitle);
-
                 if ($mode === 'daily') {
-
                     $rowsArray = array_values($sensorRows);
-
                     if (empty($rowsArray) || !is_numeric($rowsArray[0]['sensorValue'])) continue;
-
                     $firstValue = (float) $rowsArray[0]['sensorValue'];
-
                     foreach ($rowsArray as $row) {
-
                         if (!is_numeric($row['sensorValue'])) continue;
-
                         $ts = date('c', (int) $row['tstamp']);
                         $current = (float) $row['sensorValue'];
-
                         $val = $current >= $firstValue ? $current - $firstValue : $current;
                         $val = round($val, 2);
-
                         $timestamps[] = $ts;
-
                         $datasets[$sensorTitle]['label'] ??= $sensorTitle;
                         $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
                         $datasets[$sensorTitle]['borderColor'] ??= $color;
@@ -161,9 +151,7 @@ class CohHistoryChart extends AbstractContentElementController
                         $datasets[$sensorTitle]['tension'] = 0.1;
                         $datasets[$sensorTitle]['yAxisID'] = $axisId;
                     }
-
                 } else {
-
                     foreach ($sensorRows as $row) {
 
                         $ts = date('c', (int) $row['tstamp']);

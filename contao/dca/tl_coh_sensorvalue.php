@@ -2,188 +2,132 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of ContaoHab.
- *
- * (c) Peter Broghammer 2025 <pb-contao@gmx.de>
- * @license GPL-3.0-or-later
- * For the full copyright and license information,
- * please view the LICENSE file that was distributed with this source code.
- * @link https://github.com/pbd-kn/contao-contaohab-bundle
- */
-
 use Contao\DataContainer;
 use Contao\DC_Table;
 
-$strDca = 'tl_coh_sensorvalue';
+$GLOBALS['TL_DCA']['tl_coh_sensorvalue'] = [
 
-$GLOBALS['TL_DCA'][$strDca] = array(
-
-    'config' => array(
+    // ---------------------------------------------------
+    // CONFIG
+    // ---------------------------------------------------
+    'config' => [
         'dataContainer'    => DC_Table::class,
-        'enableVersioning' => true,
-        'sql' => array(
-            'keys' => array(
+        'enableVersioning' => false,
+
+        'sql' => [
+            'keys' => [
                 'id'              => 'primary',
+
+                // ?? WICHTIG: Composite UNIQUE (für Sync!)
+                'sensorID,tstamp' => 'unique',
+
+                // Performance-Indizes
                 'sensorID'        => 'index',
                 'tstamp'          => 'index',
-                'sensorID,tstamp' => 'index',
-            ),
-        ),
-        'onsubmit_callback' => array(
-            array($strDca, 'onSubmitRecord'),
-        ),
-    ),
+            ],
+        ],
+    ],
 
-    'list' => array(
-        'sorting' => array(
+    // ---------------------------------------------------
+    // LIST
+    // ---------------------------------------------------
+    'list' => [
+        'sorting' => [
             'mode'        => 2,
-            'fields'      => array('sensorID'),
+            'fields'      => ['sensorID'],
             'flag'        => DataContainer::SORT_ASC,
             'panelLayout' => 'filter;sort,search,limit',
-        ),
-        'label' => array(
-            'fields' => array('sensorID'),
-            'format' => '%s',
-        ),
-        'global_operations' => array(
-            'all' => array(
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ),
-        ),
-        'operations' => array(
-            'edit' => array(
+        ],
+
+        'label' => [
+            'fields' => ['sensorID', 'tstamp'],
+            'format' => '%s [%s]',
+        ],
+
+        'operations' => [
+            'edit' => [
                 'href' => 'act=edit',
                 'icon' => 'edit.svg',
-            ),
-            'copy' => array(
-                'href' => 'act=copy',
-                'icon' => 'copy.svg',
-            ),
-            'delete' => array(
+            ],
+            'delete' => [
                 'href'       => 'act=delete',
                 'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '') . '\'))return false;Backend.getScrollOffset()"',
-            ),
-            'show' => array(
-                'href'       => 'act=show',
-                'icon'       => 'show.svg',
-                'attributes' => 'style="margin-right:3px"',
-            ),
-        ),
-    ),
+                'attributes' => 'onclick="if(!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '') . '\'))return false;"',
+            ],
+            'show' => [
+                'href' => 'act=show',
+                'icon' => 'show.svg',
+            ],
+        ],
+    ],
 
-    'palettes' => array(
-        'default' => 'sensorID,sensorEinheit,sensorValueType,sensorSource,sensorValue',
-    ),
+    // ---------------------------------------------------
+    // PALETTES
+    // ---------------------------------------------------
+    'palettes' => [
+        'default' => 'sensorID,tstamp,sensorEinheit,sensorValueType,sensorSource,sensorValue',
+    ],
 
-    'fields' => array(
+    // ---------------------------------------------------
+    // FIELDS
+    // ---------------------------------------------------
+    'fields' => [
 
-        'id' => array(
+        'id' => [
             'sql' => "int(10) unsigned NOT NULL auto_increment",
-        ),
+        ],
 
-        'tstamp' => array(
-            'sql' => "int(10) unsigned NOT NULL default '0'",
-        ),
+        'tstamp' => [
+            'sorting' => true,
+            'flag'    => DataContainer::SORT_DESC,
+            'sql'     => "int(10) unsigned NOT NULL default 0",
+        ],
 
-        'sensorID' => array(
+        'sensorID' => [
             'inputType' => 'text',
-            'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'eval'      => array(
+            'eval'      => [
                 'mandatory' => true,
                 'maxlength' => 255,
                 'tl_class'  => 'w50',
-            ),
-            'sql'       => "varchar(255) NOT NULL default ''",
-        ),
+            ],
+            'sql' => "varchar(255) NOT NULL default ''",
+        ],
 
-        'sensorValue' => array(
-            'inputType' => 'textarea',
-            'exclude'   => true,
-            'search'    => false,
-            'filter'    => false,
-            'sorting'   => false,
-            'eval'      => array(
-                'tl_class' => 'clr',
-            ),
-            'sql'       => "longtext NULL",
-        ),
-
-        'sensorEinheit' => array(
-            'inputType' => 'select',
-            'exclude'   => true,
-            'search'    => true,
-            'filter'    => true,
-            'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'],
-            'options'   => array(
-                'kwh',
-                'W',
-                'GradC',
-                'Datum',
-                'Zeit',
-                'DatumZeit',
-                'Text',
-            ),
-            'eval'      => array(
-                'includeBlankOption' => false,
-                'chosen'             => true,
-                'tl_class'           => 'w50',
-            ),
-            'sql'       => "varchar(255) NOT NULL default ''",
-            'default'   => 'Text',
-        ),
-
-        'sensorValueType' => array(
-            'inputType' => 'select',
-            'exclude'   => true,
-            'search'    => true,
-            'filter'    => true,
-            'sorting'   => true,
-            'options'   => array(
-                'int',
-                'float',
-                'GradC',
-                'Datum',
-                'Zeit',
-                'DatumZeit',
-                'Text',
-            ),
-            'eval'      => array(
-                'maxlength' => 255,
+        // ?? WICHTIG: TEXT statt SELECT ? sonst gehen Einheiten verloren
+        'sensorEinheit' => [
+            'inputType' => 'text',
+            'eval'      => [
+                'maxlength' => 50,
                 'tl_class'  => 'w50',
-            ),
-            'sql'       => "varchar(255) NOT NULL default ''",
-            'default'   => 'Text',
-        ),
+            ],
+            'sql' => "varchar(50) NOT NULL default ''",
+        ],
 
-        'sensorSource' => array(
-            'inputType' => 'select',
-            'exclude'   => true,
-            'search'    => true,
-            'filter'    => true,
-            'sorting'   => true,
-            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorvalue'],
-            'options'   => array(
-                0 => 'Heizstab',
-                1 => 'IQbox',
-                2 => 'Tasmota',
-                3 => 'PHP-Script',
-                4 => 'sonst',
-            ),
-            'eval'      => array(
-                'includeBlankOption' => false,
-                'chosen'             => true,
-                'tl_class'           => 'w50',
-            ),
-            'sql'       => "varchar(255) NOT NULL default ''",
-            'default'   => 0,
-        ),
-    ),
-);
+        'sensorValueType' => [
+            'inputType' => 'text',
+            'eval'      => [
+                'maxlength' => 50,
+                'tl_class'  => 'w50',
+            ],
+            'sql' => "varchar(50) NOT NULL default ''",
+        ],
+
+        'sensorSource' => [
+            'inputType' => 'text',
+            'eval'      => [
+                'maxlength' => 50,
+                'tl_class'  => 'w50',
+            ],
+            'sql' => "varchar(50) NOT NULL default ''",
+        ],
+
+        'sensorValue' => [
+            'inputType' => 'textarea',
+            'eval'      => ['tl_class' => 'clr'],
+            'sql'       => "longtext NULL",
+        ],
+    ],
+];

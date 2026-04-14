@@ -94,6 +94,7 @@ class SyncService
             }
 
             $rows = $api['rows'] ?? [];
+//$this->logger->debugMe(print_r($rows, true));
             $i = 0;
 
             // ===================== BULK INSERT ======================
@@ -101,7 +102,6 @@ class SyncService
 
             $batchSize = 1000;
             $batch = [];
-
             foreach ($rows as $r) {
 
                 $tstamp          = (int)($r['tstamp'] ?? 0);

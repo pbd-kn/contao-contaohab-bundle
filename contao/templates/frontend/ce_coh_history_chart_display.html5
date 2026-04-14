@@ -1,4 +1,5 @@
 <?php use Contao\StringUtil; ?>
+
 <div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper actuell-history-container">
 
 <style>
@@ -68,11 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getTimeConfig(unit) {
     switch (unit) {
-      case 'day':   return { unit: 'hour', displayFormats: { hour: 'HH:mm' } };
-      case 'week':  return { unit: 'day',  displayFormats: { day: 'dd.MM' } };
-      case 'month': return { unit: 'day',  displayFormats: { day: 'dd.MM' } };
-      case 'year':  return { unit: 'month',displayFormats: { month: 'MM.yyyy' } };
-      default: return { unit: 'day' };
+      case 'day':
+        return { unit: 'hour', displayFormats: { hour: 'HH:mm' }, tooltipFormat: 'HH:mm' };
+      case 'week':
+        return { unit: 'day', displayFormats: { day: 'ccc dd.MM' }, tooltipFormat: 'cccc dd.MM.yyyy' };
+      case 'month':
+        return { unit: 'day', displayFormats: { day: 'dd.MM' }, tooltipFormat: 'dd.MM.yyyy' };
+      case 'year':
+        return { unit: 'month', displayFormats: { month: 'MM.yyyy' }, tooltipFormat: 'LLLL yyyy' };
+      default:
+        return { unit: 'day' };
     }
   }
 
@@ -84,31 +90,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  let useLeft = true;
+  let axisIndex = 0;
 
   for (const [axisId, info] of Object.entries(chartData.axes ?? {})) {
 
-    const color = info.color || '#333';
+    const color = info.color || '#000';
     const unit  = info.unit || '';
+
+    const position = axisIndex % 2 === 0 ? 'left' : 'right';
 
     scales[axisId] = {
       type: 'linear',
+      position: position,
       display: true,
-      position: useLeft ? 'left' : 'right',
 
-      border: {
-        color: color
+      ticks: {
+        color: color,
+        padding: 5,
+        callback: function(value) {
+          const v = Math.round(value * 100) / 100;
+          return unit ? v + ' ' + unit : v;
+        }
       },
 
       grid: {
-        drawOnChartArea: useLeft,
+        drawOnChartArea: axisIndex === 0,
         color: 'rgba(0,0,0,0.05)'
       },
 
-      beginAtZero: true
+      offset: true
     };
 
-    useLeft = !useLeft;
+    axisIndex++;
   }
 
   new Chart(ctx, {
@@ -125,17 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
       scales,
 
       elements: {
-        line: { borderWidth: 2 },   // 🔥 dünne Linien
+        line: { borderWidth: 1 },
         point: {
           radius: 1,
-          borderWidth: 1
+          pointStyle: 'circle',
+          backgroundColor: '#fff',
+          borderColor: '#333',
+          borderWidth: 2
         }
       },
 
       plugins: {
         legend: {
           display: true,
-          position: 'top'
+          position: 'top',
+          align: 'start'
         },
 
         title: {
