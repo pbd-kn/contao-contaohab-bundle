@@ -50,6 +50,7 @@ class SyncService
             ['name' => 'LIMA',  'cfg' => $this->lima],
             ['name' => 'LOCAL', 'cfg' => $this->local],
         ], $output);
+        $this->logger->debugMe("connectFirstAvailable fertig");
 
         $masterDb  = $result[0];
         $env       = $result[1];
@@ -61,8 +62,10 @@ class SyncService
             $this->logger->Error($msg);
             return $msg;
         }
+        $this->logger->debugMe("MasterDB ok, Env: " . (string)$env);
 
         $raspiBase = $this->getRaspiBaseUrl($env);
+        $this->logger->debugMe("RaspiBase: " . $raspiBase);
 
         foreach (['sensorvalue_pull', 'config_push'] as $type) {
             $res = $masterDb->query("SELECT COUNT(*) FROM tl_coh_sync_log WHERE sync_type='$type'");
@@ -73,17 +76,25 @@ class SyncService
                 ");
             }
         }
+        $this->logger->debugMe("Sync-Log geprüft");
 
         // ===================== PULL ======================
         $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='sensorvalue_pull'");
         $row = $res?->fetch_assoc();
-        $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+
+    // 🔥 WICHTIG: alten Wert merken (für Cleanup!)
+        $lastSyncBeforeUpdate = $row['last_sync'] ?? '1970-01-01 00:00:00';
+        $lastSync = $lastSyncBeforeUpdate;
+        
+        //$lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+        $this->logger->debugMe("lastSync sensorvalue_pull = " . $lastSync);
 
         if (strtotime($lastSync) < time() - 5 * 60) {
 
             $sinceTs = strtotime($lastSync);
 
             $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $sinceTs;
+            $this->logger->debugMe("Pull startet: " . $pullUrl);
 
             try {
                 $api = $this->apiGetJson($pullUrl);
@@ -94,7 +105,7 @@ class SyncService
             }
 
             $rows = $api['rows'] ?? [];
-//$this->logger->debugMe(print_r($rows, true));
+            $this->logger->debugMe("Pull startet: " . $pullUrl);
             $i = 0;
 
             // ===================== BULK INSERT ======================
@@ -102,6 +113,7 @@ class SyncService
 
             $batchSize = 1000;
             $batch = [];
+
             foreach ($rows as $r) {
 
                 $tstamp          = (int)($r['tstamp'] ?? 0);
@@ -169,12 +181,44 @@ class SyncService
             ");
 
             $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
+            if ($this->logger->isDebug()) {             // statistik ausgeben
+                $this->logger->debugMe("Statistik\n");            
+                $resTotal = $masterDb->query("SELECT COUNT(*) AS cnt FROM tl_coh_sensorvalue");
+                $rowTotal = $resTotal->fetch_assoc();
+                $this->logger->debugMe("Anzahl Sätze in DB: " . $rowTotal['cnt']."\n");            
+                $this->logger->debugMe("die 50 meisten Sensoren\n");
+                $res = $masterDb->query("
+                    SELECT sensorID, DATE(FROM_UNIXTIME(tstamp)) AS day, COUNT(*) AS cnt
+                    FROM tl_coh_sensorvalue
+                    GROUP BY sensorID, day
+                    ORDER BY day DESC, cnt DESC
+                    LIMIT 50
+                ");
+                while ($row = $res->fetch_assoc()) {
+                    $this->logger->debugMe("{$row['day']} SensorId {$row['sensorID']}: {$row['cnt']}");
+                }            
+            }
 
+        } else {
+            $this->logger->debugMe("Pull nicht fällig");
         }
-
+        // ===================== CLEANUP ======================
+        if (strtotime($lastSyncBeforeUpdate) < time() - 1 * 60) {    // im 1 Minuten rythmus auf alle Fääle cleaning
+            $this->runCleanup($masterDb);
+        }
         return null;
     }
-
+    private function runCleanup(\mysqli $masterDb): void
+    {
+        $cleanupSql = " DELETE FROM tl_coh_sensorvalue WHERE tstamp < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 YEAR)) ORDER BY tstamp ASC LIMIT 1000 ";
+        if (!$masterDb->query($cleanupSql)) {
+            $this->logger->Error("Cleanup Fehler: " . $masterDb->error);
+        } else {
+            //$this->logger->debugMe("Cleanup ausgeführt (max 1000)");
+            $deleted = $masterDb->affected_rows;
+            $this->logger->debugMe("Cleanup gelöscht: $deleted Datensätze");
+        }
+    }
     private function getRaspiBaseUrl(string $env): string
     {
         return ($env === 'LIMA') ? $this->raspiApi['wanBase'] : $this->raspiApi['lanBase'];
