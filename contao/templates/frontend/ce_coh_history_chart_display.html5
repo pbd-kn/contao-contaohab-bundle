@@ -1,13 +1,19 @@
 <?php use Contao\StringUtil; ?>
 
-<div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper actuell-history-container">
 
+<div class="chart-wrapper actuell-history-container">
 <style>
 .chart-wrapper {
+  width: 100%;
+}
+
+/* 🔥 DAS IST DER FIX */
+.chart-container {
   position: relative;
   width: 100%;
   height: clamp(300px, 50vh, 600px);
 }
+
 </style>
 
 <?php
@@ -57,8 +63,10 @@ if (is_string($headline)) {
 </form>
 
 <?php if ($chartdataRaw = $this->chartdata): ?>
-  <canvas id="<?= $this->chartId ?>"></canvas>
-
+  <!-- 🔥 NEU: eigener Chart-Container -->
+  <div class="chart-container">
+    <canvas id="<?= $this->chartId ?>"></canvas>
+  </div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
