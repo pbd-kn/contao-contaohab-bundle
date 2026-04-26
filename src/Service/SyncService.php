@@ -25,9 +25,9 @@ class SyncService
     ];
 
     private array $raspiApi = [
-        'lanBase' => 'http://192.168.178.49',
-        'wanBase' => 'http://p1pu92iv4i9yh2m2.myfritz.net',
-        'token'   => 'COH_CODE',
+        'lanBase'  => 'http://192.168.178.49',
+        'wanBase'  => 'http://p1pu92iv4i9yh2m2.myfritz.net',
+        'token'    => 'COH_CODE',
         'pullPath' => '/api/coh/sensorvalues.php',
         'pushPath' => '/api/coh/config_push.php',
     ];
@@ -50,183 +50,328 @@ class SyncService
             ['name' => 'LIMA',  'cfg' => $this->lima],
             ['name' => 'LOCAL', 'cfg' => $this->local],
         ], $output);
-        $this->logger->debugMe("connectFirstAvailable fertig");
 
-        $masterDb  = $result[0];
-        $env       = $result[1];
-        $masterCfg = $result[2];
-        
+        $masterDb = $result[0];
+        $env      = $result[1];
+        $cfg      = $result[2];
+
         if (!$masterDb) {
             $msg = 'Keine Master-DB Verbindung möglich.';
-            $output?->writeln("<error>$msg</error>");
             $this->logger->Error($msg);
+            $output?->writeln("<error>$msg</error>");
             return $msg;
         }
-        $this->logger->debugMe("MasterDB ok, Env: " . (string)$env);
 
-        $raspiBase = $this->getRaspiBaseUrl($env);
-        $this->logger->debugMe("RaspiBase: " . $raspiBase);
+        $this->logger->debugMe("MasterDB ok, Env=$env");
 
-        foreach (['sensorvalue_pull', 'config_push'] as $type) {
-            $res = $masterDb->query("SELECT COUNT(*) FROM tl_coh_sync_log WHERE sync_type='$type'");
-            if ($res && ($res->fetch_row()[0] == 0)) {
-                $masterDb->query("
-                    INSERT INTO tl_coh_sync_log (sync_type, last_sync, tstamp)
-                    VALUES ('$type', '1970-01-01 00:00:00', UNIX_TIMESTAMP())
+        $raspiBase = $this->getRaspiBaseUrl((string)$env);
+        $this->logger->debugMe("RaspiBase=$raspiBase");
+
+        // ==================================================
+        // 1. Sync-Log sicherstellen
+        // ==================================================
+        $this->ensureSyncLogRows($masterDb);
+
+        // ==================================================
+        // 2. Pull Sensorwerte
+        // ==================================================
+        $this->runPull($masterDb, $raspiBase);
+
+        // ==================================================
+        // 3. Push nur LOCAL
+        // ==================================================
+        if ($env === 'LOCAL') {
+            $this->runConfigPush($masterDb, $raspiBase);
+        } else {
+            $this->logger->debugMe("Config Push übersprungen (Env=$env)");
+        }
+
+        // ==================================================
+        // 4. Cleanup
+        // ==================================================
+        $this->runCleanupIfDue($masterDb);
+
+        return null;
+    }
+
+    // ======================================================
+    // Sync-Log Initialisierung
+    // ======================================================
+    private function ensureSyncLogRows(mysqli $db): void
+    {
+        foreach (['sensorvalue_pull', 'config_push', 'cleanup'] as $type) {
+            $typeEsc = $db->real_escape_string($type);
+
+            $res = $db->query("
+                SELECT COUNT(*) AS cnt
+                FROM tl_coh_sync_log
+                WHERE sync_type='$typeEsc'
+            ");
+
+            $row = $res?->fetch_assoc();
+            $cnt = (int)($row['cnt'] ?? 0);
+
+            if ($cnt === 0) {
+                $db->query("
+                    INSERT INTO tl_coh_sync_log
+                    (sync_type, last_sync, tstamp)
+                    VALUES
+                    ('$typeEsc', '1970-01-01 00:00:00', UNIX_TIMESTAMP())
                 ");
             }
         }
+
         $this->logger->debugMe("Sync-Log geprüft");
+    }
 
-        // ===================== PULL ======================
-        $res = $masterDb->query("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type='sensorvalue_pull'");
+    // ======================================================
+    // PULL
+    // ======================================================
+    private function runPull(mysqli $db, string $raspiBase): void
+    {
+        $res = $db->query("
+            SELECT last_sync
+            FROM tl_coh_sync_log
+            WHERE sync_type='sensorvalue_pull'
+            LIMIT 1
+        ");
+
         $row = $res?->fetch_assoc();
+        $lastSync = trim((string)($row['last_sync'] ?? ''));
 
-    // 🔥 WICHTIG: alten Wert merken (für Cleanup!)
-        $lastSyncBeforeUpdate = $row['last_sync'] ?? '1970-01-01 00:00:00';
-        $lastSync = $lastSyncBeforeUpdate;
-        
-        //$lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
-        $this->logger->debugMe("lastSync sensorvalue_pull = " . $lastSync);
+        $ts = strtotime($lastSync);
+        if ($ts === false) {
+            $this->logger->debugMe("WARNUNG last_sync ungültig [$lastSync]");
+            $ts = 0;
+        }
 
-        if (strtotime($lastSync) < time() - 5 * 60) {
+        if ($ts >= time() - 300) {
+            $this->logger->debugMe("Pull nicht fällig");
+            return;
+        }
 
-            $sinceTs = strtotime($lastSync);
+        $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $ts;
+        $this->logger->debugMe("Pull startet: $pullUrl");
 
-            $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $sinceTs;
-            $this->logger->debugMe("Pull startet: " . $pullUrl);
+        try {
+            $api = $this->apiGetJson($pullUrl);
+        } catch (\Throwable $e) {
+            $this->logger->Error("Pull Fehler: " . $e->getMessage());
+            return;
+        }
 
-            try {
-                $api = $this->apiGetJson($pullUrl);
-            } catch (\Throwable $e) {
-                $msg = "API Pull fehlgeschlagen: " . $e->getMessage();
-                $this->logger->Error($msg);
-                return $msg;
-            }
+        $rows = $api['rows'] ?? [];
+        $count = 0;
 
-            $rows = $api['rows'] ?? [];
-            $this->logger->debugMe("Pull startet: " . $pullUrl);
-            $i = 0;
+        $db->begin_transaction();
 
-            // ===================== BULK INSERT ======================
-            $masterDb->begin_transaction();
-
-            $batchSize = 1000;
+        try {
             $batch = [];
+            $batchSize = 1000;
 
             foreach ($rows as $r) {
-
                 $tstamp          = (int)($r['tstamp'] ?? 0);
-                $sensorID        = $masterDb->real_escape_string((string)($r['sensorID'] ?? ''));
-                $sensorValue     = $masterDb->real_escape_string((string)($r['sensorValue'] ?? ''));
-                $sensorEinheit   = $masterDb->real_escape_string((string)($r['sensorEinheit'] ?? ''));
-                $sensorValueType = $masterDb->real_escape_string((string)($r['sensorValueType'] ?? ''));
-                $sensorSource    = $masterDb->real_escape_string((string)($r['sensorSource'] ?? ''));
+                $sensorID        = $db->real_escape_string((string)($r['sensorID'] ?? ''));
+                $sensorValue     = $db->real_escape_string((string)($r['sensorValue'] ?? ''));
+                $sensorEinheit   = $db->real_escape_string((string)($r['sensorEinheit'] ?? ''));
+                $sensorValueType = $db->real_escape_string((string)($r['sensorValueType'] ?? ''));
+                $sensorSource    = $db->real_escape_string((string)($r['sensorSource'] ?? ''));
 
                 if ($tstamp <= 0 || $sensorID === '') {
                     continue;
                 }
 
-                $batch[] = "($tstamp,'$sensorID','$sensorValue','$sensorEinheit','$sensorValueType','$sensorSource')";
+                $batch[] = "(
+                    $tstamp,
+                    '$sensorID',
+                    '$sensorValue',
+                    '$sensorEinheit',
+                    '$sensorValueType',
+                    '$sensorSource'
+                )";
 
                 if (count($batch) >= $batchSize) {
-
-                    $sql = "
-                        INSERT INTO tl_coh_sensorvalue 
-                        (tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource)
-                        VALUES " . implode(',', $batch) . "
-                        ON DUPLICATE KEY UPDATE
-                            sensorValue = VALUES(sensorValue),
-                            sensorEinheit = VALUES(sensorEinheit),
-                            sensorValueType = VALUES(sensorValueType),
-                            sensorSource = VALUES(sensorSource)
-                    ";
-
-                    if (!$masterDb->query($sql)) {
-                        $this->logger->Error("Bulk Insert Fehler: " . $masterDb->error);
-                    } else {
-                        $i += count($batch);
-                    }
-
+                    $count += $this->insertBatch($db, $batch);
                     $batch = [];
                 }
             }
 
             if (!empty($batch)) {
-                $sql = "
-                    INSERT INTO tl_coh_sensorvalue 
-                    (tstamp, sensorID, sensorValue, sensorEinheit, sensorValueType, sensorSource)
-                    VALUES " . implode(',', $batch) . "
-                    ON DUPLICATE KEY UPDATE
-                        sensorValue = VALUES(sensorValue),
-                        sensorEinheit = VALUES(sensorEinheit),
-                        sensorValueType = VALUES(sensorValueType),
-                        sensorSource = VALUES(sensorSource)
-                ";
-
-                if (!$masterDb->query($sql)) {
-                    $this->logger->Error("Bulk Insert Fehler (Rest): " . $masterDb->error);
-                } else {
-                    $i += count($batch);
-                }
+                $count += $this->insertBatch($db, $batch);
             }
 
-            $masterDb->commit();
-
-            // Sync Log
-            $masterDb->query("
+            $db->query("
                 UPDATE tl_coh_sync_log
-                SET last_sync = NOW(), tstamp = UNIX_TIMESTAMP()
-                WHERE sync_type = 'sensorvalue_pull'
+                SET last_sync = NOW(),
+                    tstamp = UNIX_TIMESTAMP()
+                WHERE sync_type='sensorvalue_pull'
             ");
 
-            $this->logger->debugMe("Pull fertig: $i Sensorwerte übernommen.");
-            if ($this->logger->isDebug()) {             // statistik ausgeben
-                $this->logger->debugMe("Statistik\n");            
-                $resTotal = $masterDb->query("SELECT COUNT(*) AS cnt FROM tl_coh_sensorvalue");
-                $rowTotal = $resTotal->fetch_assoc();
-                $this->logger->debugMe("Anzahl Sätze in DB: " . $rowTotal['cnt']."\n");            
-                $this->logger->debugMe("die 50 meisten Sensoren\n");
-                $res = $masterDb->query("
-                    SELECT sensorID, DATE(FROM_UNIXTIME(tstamp)) AS day, COUNT(*) AS cnt
-                    FROM tl_coh_sensorvalue
-                    GROUP BY sensorID, day
-                    ORDER BY day DESC, cnt DESC
-                    LIMIT 50
-                ");
-                while ($row = $res->fetch_assoc()) {
-                    $this->logger->debugMe("{$row['day']} SensorId {$row['sensorID']}: {$row['cnt']}");
-                }            
-            }
+            $db->commit();
 
-        } else {
-            $this->logger->debugMe("Pull nicht fällig");
+        } catch (\Throwable $e) {
+            $db->rollback();
+            $this->logger->Error("Pull Rollback: " . $e->getMessage());
+            return;
         }
-        // ===================== CLEANUP ======================
-        if (strtotime($lastSyncBeforeUpdate) < time() - 1 * 60) {    // im 1 Minuten rythmus auf alle Fääle cleaning
-            $this->runCleanup($masterDb);
+
+        $this->logger->debugMe("Pull fertig: $count Datensätze");
+
+        if ($this->logger->isDebug()) {
+            $this->debugStats($db);
         }
-        return null;
     }
-    private function runCleanup(\mysqli $masterDb): void
+
+    private function insertBatch(mysqli $db, array $batch): int
     {
-        $cleanupSql = " DELETE FROM tl_coh_sensorvalue WHERE tstamp < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 YEAR)) ORDER BY tstamp ASC LIMIT 1000 ";
-        if (!$masterDb->query($cleanupSql)) {
-            $this->logger->Error("Cleanup Fehler: " . $masterDb->error);
-        } else {
-            //$this->logger->debugMe("Cleanup ausgeführt (max 1000)");
-            $deleted = $masterDb->affected_rows;
-            $this->logger->debugMe("Cleanup gelöscht: $deleted Datensätze");
+        $sql = "
+            INSERT INTO tl_coh_sensorvalue
+            (
+                tstamp,
+                sensorID,
+                sensorValue,
+                sensorEinheit,
+                sensorValueType,
+                sensorSource
+            )
+            VALUES " . implode(',', $batch) . "
+            ON DUPLICATE KEY UPDATE
+                sensorValue = VALUES(sensorValue),
+                sensorEinheit = VALUES(sensorEinheit),
+                sensorValueType = VALUES(sensorValueType),
+                sensorSource = VALUES(sensorSource)
+        ";
+
+        if (!$db->query($sql)) {
+            throw new \RuntimeException($db->error);
+        }
+
+        return count($batch);
+    }
+
+    // ======================================================
+    // CONFIG PUSH (nur LOCAL)
+    // ======================================================
+    private function runConfigPush(mysqli $db, string $raspiBase): void
+    {
+        $res = $db->query("
+            SELECT last_sync
+            FROM tl_coh_sync_log
+            WHERE sync_type='config_push'
+            LIMIT 1
+        ");
+
+        $row = $res?->fetch_assoc();
+        $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+
+        $ts = strtotime((string)$lastSync);
+        if ($ts === false) {
+            $ts = 0;
+        }
+
+        if ($ts >= time() - 300) {
+            $this->logger->debugMe("Config Push nicht fällig");
+            return;
+        }
+
+        // Hier später echte Sensor-Konfiguration pushen
+        $this->logger->debugMe("Config Push ausgeführt (Platzhalter)");
+
+        $db->query("
+            UPDATE tl_coh_sync_log
+            SET last_sync = NOW(),
+                tstamp = UNIX_TIMESTAMP()
+            WHERE sync_type='config_push'
+        ");
+    }
+
+    // ======================================================
+    // CLEANUP
+    // ======================================================
+    private function runCleanupIfDue(mysqli $db): void
+    {
+        $res = $db->query("
+            SELECT last_sync
+            FROM tl_coh_sync_log
+            WHERE sync_type='cleanup'
+            LIMIT 1
+        ");
+
+        $row = $res?->fetch_assoc();
+        $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+
+        $ts = strtotime((string)$lastSync);
+        if ($ts === false) {
+            $ts = 0;
+        }
+
+        if ($ts >= time() - 600) {
+            return;
+        }
+
+        $sql = "
+            DELETE FROM tl_coh_sensorvalue
+            WHERE tstamp < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 1 YEAR))
+            ORDER BY tstamp ASC
+            LIMIT 1000
+        ";
+
+        if (!$db->query($sql)) {
+            $this->logger->Error("Cleanup Fehler: " . $db->error);
+            return;
+        }
+
+        $deleted = $db->affected_rows;
+
+        $db->query("
+            UPDATE tl_coh_sync_log
+            SET last_sync = NOW(),
+                tstamp = UNIX_TIMESTAMP()
+            WHERE sync_type='cleanup'
+        ");
+
+        $this->logger->debugMe("Cleanup gelöscht: $deleted");
+    }
+
+    // ======================================================
+    // Statistik
+    // ======================================================
+    private function debugStats(mysqli $db): void
+    {
+        $res = $db->query("SELECT COUNT(*) AS cnt FROM tl_coh_sensorvalue");
+        $row = $res?->fetch_assoc();
+
+        $this->logger->debugMe("Anzahl Sätze: " . ($row['cnt'] ?? 0));
+
+        $res = $db->query("
+            SELECT sensorID, DATE(FROM_UNIXTIME(tstamp)) AS day, COUNT(*) AS cnt
+            FROM tl_coh_sensorvalue
+            GROUP BY sensorID, day
+            ORDER BY day DESC, cnt DESC
+            LIMIT 50
+        ");
+
+        while ($r = $res?->fetch_assoc()) {
+            $this->logger->debugMe(
+                "{$r['day']} {$r['sensorID']} = {$r['cnt']}"
+            );
         }
     }
+
+    // ======================================================
+    // Helper
+    // ======================================================
     private function getRaspiBaseUrl(string $env): string
     {
-        return ($env === 'LIMA') ? $this->raspiApi['wanBase'] : $this->raspiApi['lanBase'];
+        return ($env === 'LIMA')
+            ? $this->raspiApi['wanBase']
+            : $this->raspiApi['lanBase'];
     }
 
     private function apiGetJson(string $url): array
     {
         $ch = curl_init($url);
+
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 5,
@@ -240,15 +385,17 @@ class SyncService
         $body = curl_exec($ch);
         $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err  = curl_error($ch);
+
         curl_close($ch);
 
         if ($body === false || $http !== 200) {
-            throw new \RuntimeException("API GET failed HTTP=$http err=$err");
+            throw new \RuntimeException("HTTP=$http ERR=$err");
         }
 
         $json = json_decode((string)$body, true);
+
         if (!is_array($json) || empty($json['ok'])) {
-            throw new \RuntimeException("API GET invalid JSON");
+            throw new \RuntimeException("Ungültige JSON Antwort");
         }
 
         return $json;
@@ -258,13 +405,21 @@ class SyncService
     {
         foreach ($candidates as $c) {
             $cfg = $c['cfg'];
+
             $db = mysqli_init();
             $db->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
 
-            if (@$db->real_connect($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['db'], $cfg['port'])) {
+            if (@$db->real_connect(
+                $cfg['host'],
+                $cfg['user'],
+                $cfg['pass'],
+                $cfg['db'],
+                $cfg['port']
+            )) {
                 return [$db, $c['name'], $cfg];
             }
         }
+
         return [null, null, null];
     }
 }

@@ -322,7 +322,7 @@
                         <?= renderMinibox ('','☀️ Solar heute',coh_v($d, 'IQSolar_harmonized_work_Solar_Tag') .' kWh') ?>
                         <?= renderMinibox ('','☀️ Solarzelle gesamt',coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') .' kWh') ?>
                         <?= renderMinibox ('','🏠 Eigenverbrauch',coh_v($d, 'IQinverter_94_inverter_selfConsumptionPower') .' kW') ?>
-                        <?= renderMinibox ('','🌡️Akku Temp',coh_v($d, 'IQBatt_Temp') .' °C') ?>
+                        <?= renderMinibox ('','🌡️Akku Temp',coh_v($d, 'IQbattery_94_battery_temperature') .' °C') ?>
                         <?php
                             if (coh_e($d, 'IQbattery_94_battery_mode')) $txt = coh_e($d, 'IQbattery_94_battery_mode');
                             else $txt = '';

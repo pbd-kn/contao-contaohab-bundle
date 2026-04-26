@@ -74,7 +74,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         // ---------------- BASIS ----------------
 
         'sensorID' => [
-            'label'     => ['Sensor-ID', 'Eindeutige technische ID'],
+            'label'     => ['Sensor-ID', 'Eindeutige technische ID, wenn sensorLokalId nicht gesetzt ist verwender der Controller auf dem Raspberry diese Id zum Zugriff auf den Sensorwert'],
             'inputType' => 'text',
             'search'    => true,
             'sorting'   => true,
@@ -109,16 +109,18 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'sensorSource' => [
-            'label' => ['Quelle'],
+            'label' => ['Quelle', 'Auch Verweis auf Service beim Raspberry'],
             'inputType' => 'select',
+            'search'    => true,
             'options_callback' => ['tl_coh_sensors','getGeraeteIDs'],
             'eval' => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql' => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorLokalId' => [
-            'label' => ['Lokale ID'],
+            'label' => ['Lokale ID', 'diese Referenz steht dem Service auf dem Raspberry zur Verfügung'],
             'inputType' => 'text',
+            'search'    => true,
             'eval'      => ['maxlength'=>255,'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
