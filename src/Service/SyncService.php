@@ -249,42 +249,72 @@ class SyncService
         return count($batch);
     }
 
-    // ======================================================
-    // CONFIG PUSH (nur LOCAL)
-    // ======================================================
-    private function runConfigPush(mysqli $db, string $raspiBase): void
-    {
-        $res = $db->query("
-            SELECT last_sync
-            FROM tl_coh_sync_log
-            WHERE sync_type='config_push'
-            LIMIT 1
-        ");
-
-        $row = $res?->fetch_assoc();
-        $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
-
-        $ts = strtotime((string)$lastSync);
-        if ($ts === false) {
-            $ts = 0;
+// ======================================================
+// CONFIG PUSH (nur LOCAL aufgerufen)
+// ======================================================
+private function runConfigPush(mysqli $db, string $raspiBase): void
+{
+    $res = $db->query("
+        SELECT last_sync
+        FROM tl_coh_sync_log
+        WHERE sync_type='config_push'
+        LIMIT 1
+    ");
+    $row = $res?->fetch_assoc();
+    $lastSync = $row['last_sync'] ?? '1970-01-01 00:00:00';
+    $ts = strtotime((string)$lastSync);
+    if ($ts === false) {
+        $ts = 0;
+    }
+    // nur alle 10 Minuten pushen
+    if ($ts >= time() - 600) {
+        $this->logger->debugMe("Push wegen Zeit nicht nötig. Last Sync $lastSync");
+        return;
+    }
+    $tables = [
+        'tl_coh_sensors',
+        'tl_coh_cfgcollect',
+        'tl_coh_geraete',
+    ];
+    foreach ($tables as $table) {
+        $this->logger->debugMe("Push Tabelle: $table");
+        $rs = $db->query("SELECT * FROM $table");
+        if (!$rs) {
+            $this->logger->Error("Push SELECT Fehler $table: " . $db->error);
+            continue;
         }
-
-        if ($ts >= time() - 300) {
-            $this->logger->debugMe("Config Push nicht fällig");
+        $rows = [];
+        while ($r = $rs->fetch_assoc()) {
+            $rows[] = $r;
+        }
+        $pushUrl = $raspiBase . $this->raspiApi['pushPath'];
+        $this->logger->debugMe(
+            "API PUSH URL: $pushUrl (table=$table rows=" . count($rows) . ")"
+        );
+        try {
+            $resp = $this->apiPostJson($pushUrl, [
+                'table' => $table,
+                'rows'  => $rows,
+            ]);
+            $this->logger->debugMe(
+                "Push OK $table: " . json_encode($resp, JSON_UNESCAPED_UNICODE)
+            );
+        } catch (\Throwable $e) {
+            $this->logger->Error(
+                "API Push fehlgeschlagen ($table): " . $e->getMessage()
+            );
             return;
         }
-
-        // Hier später echte Sensor-Konfiguration pushen
-        $this->logger->debugMe("Config Push ausgeführt (Platzhalter)");
-
-        $db->query("
-            UPDATE tl_coh_sync_log
-            SET last_sync = NOW(),
-                tstamp = UNIX_TIMESTAMP()
-            WHERE sync_type='config_push'
-        ");
     }
-
+    // nur wenn alle Tabellen erfolgreich übertragen wurden
+    $db->query("
+        UPDATE tl_coh_sync_log
+        SET last_sync = NOW(),
+            tstamp = UNIX_TIMESTAMP()
+        WHERE sync_type='config_push'
+    ");
+    $this->logger->debugMe("Push fertig");
+}
     // ======================================================
     // CLEANUP
     // ======================================================
@@ -400,6 +430,49 @@ class SyncService
 
         return $json;
     }
+private function apiPostJson(string $url, array $payload): array
+{
+    $ch = curl_init($url);
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT        => 25,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER     => [
+            'X-COH-TOKEN: ' . $this->raspiApi['token'],
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ],
+    ]);
+
+    $body = curl_exec($ch);
+    $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err  = curl_error($ch);
+
+    curl_close($ch);
+
+    if ($body === false) {
+        throw new \RuntimeException("API CURL ERROR: $err url=$url");
+    }
+
+    if ($http !== 200) {
+        throw new \RuntimeException("API HTTP ERROR: HTTP=$http body=$body");
+    }
+
+    $json = json_decode($body, true);
+
+    if (!is_array($json)) {
+        throw new \RuntimeException("API INVALID JSON: $body");
+    }
+
+    if (empty($json['ok'])) {
+        throw new \RuntimeException("API ERROR: " . json_encode($json));
+    }
+
+    return $json;
+}
 
     private function connectFirstAvailable(array $candidates, ?OutputInterface $output): array
     {
