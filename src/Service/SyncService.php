@@ -99,7 +99,7 @@ class SyncService
     // ======================================================
     private function ensureSyncLogRows(mysqli $db): void
     {
-        foreach (['sensorvalue_pull', 'config_push', 'cleanup'] as $type) {
+        foreach (['sensorvalue_pull', 'config_push'] as $type) {
             $typeEsc = $db->real_escape_string($type);
 
             $res = $db->query("
