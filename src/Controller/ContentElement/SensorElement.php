@@ -54,8 +54,9 @@ class SensorElement extends AbstractContentElementController
         */
         $templateName = $model->coh_template ?: 'ce_coh_sensorelement';
         $template = $this->createTemplate($model, $templateName);
-        $error = $this->syncService->sync();
-        if ($error !== null) { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>$error"; }
+        $resSync = $this->syncService->sync();
+        if ($resSync['status'] !== 'OK') { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>".$resSync['status']; }
+        $template->syncResult = $resSync;
         /*
          * -----------------------------------------
          * eindeutiger Formularparameter

@@ -293,6 +293,18 @@
             $str .= "</div>";
             return $str;
         }
+        function renderArray($arr) {
+            foreach ($arr as $key => $value) {
+            if (is_array($value)) {
+                echo "<div><strong>$key:</strong></div>";
+                echo "<div style='margin-left:15px'>";
+                renderArray($value);
+                echo "</div>";
+            } else {
+                echo "<div>$key: $value</div>";
+            }
+        }
+    }        
     ?>
 
     <div class="coh-stack">
@@ -305,6 +317,9 @@
 
             <?php if (!empty($this->syncError)): ?>
                 <div class="coh-error"><?= $this->syncError ?></div>
+            <?php endif; ?>
+            <?php if (!empty($this->syncResult)): ?>
+                <?php renderArray($this->syncResult); ?>
             <?php endif; ?>
         </div>
 

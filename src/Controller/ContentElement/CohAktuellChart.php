@@ -56,8 +56,9 @@ class CohAktuellChart extends AbstractContentElementController
         $this->addCssOnce('bundles/pbdkncontaocontaohab/css/coh_aktuell_panel.css');
         $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
         $template = $this->createTemplate($model, $templateName);
-        $error = $this->syncService->sync();
-        if ($error !== null) { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>$error"; }
+        $resSync = $this->syncService->sync();
+        if ($resSync['status'] !== 'OK') { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>".$resSync['status']; }
+        $template->syncResult = $resSync;
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
         if (!empty($selectedSensors)) {
@@ -110,7 +111,7 @@ class CohAktuellChart extends AbstractContentElementController
         if ($lastChange) {
             $template->lastSensorChange = date('d.m.Y H:i', (int)$lastChange);
             $diff = time() - (int)$lastChange;
-            $template->lastSensorChangeStatus = ($diff > 900) ? 'Fehler: Letzter Eintrag älter als 15 Min' : 'OK';
+            $template->lastSensorChangeStatus = ($diff > 1800) ? 'Fehler: Letzter Wert aus dB älter als 30 Min' : 'OK';
         } else {
             $template->lastSensorChange = 'Keine Daten';
             $template->lastSensorChangeStatus = 'Fehler';
