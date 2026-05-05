@@ -141,7 +141,7 @@ class SyncService
             $ts = 0;
         }
         if ($ts >= time() - 300) {
-            $this->logger->debugMe("Pull nicht fällig");
+            $this->logger->debugMe("Pull nicht fällig lastSync $lastSync");
             $resarr['status'] = 'OK';
             $resarr['msg'] = "Pull nicht fällig";
             return $resarr;
@@ -255,7 +255,7 @@ class SyncService
         if ($ts >= time() - 600) {
             $this->logger->debugMe("Push wegen Zeit nicht nötig. Last Sync $lastSync");
             $resarr['status'] = 'OK';
-            $resarr['msg'] = "Push nicht fällig";
+            $resarr['msg'] = "Push nicht fällig lastSync $lastSync";
             return $resarr;
         }
         $tables = [
