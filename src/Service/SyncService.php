@@ -143,7 +143,7 @@ class SyncService
         if ($ts >= time() - 300) {
             $this->logger->debugMe("Pull nicht fällig lastSync $lastSync");
             $resarr['status'] = 'OK';
-            $resarr['msg'] = "Pull nicht fällig";
+            $resarr['msg'] = "Pull nicht fällig lastSync $lastSync";
             return $resarr;
         }
         $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $ts;
