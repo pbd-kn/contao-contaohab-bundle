@@ -208,7 +208,7 @@ class SyncService
         }
         $resarr['status'] = 'OK';
         $msg = "Pull $count Datensätze";
-        if ($count > 4990) $msg .= " sync in pulltime wiederholen evtl. zusätzliche vorhanden."
+        if ($count > 4990) $msg .= " sync in pulltime wiederholen evtl. zusätzliche vorhanden.";
         $resarr['msg'] = $msg;
         return $resarr;
         
