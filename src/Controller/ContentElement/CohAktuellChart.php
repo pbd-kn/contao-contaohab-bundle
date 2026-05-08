@@ -88,11 +88,13 @@ class CohAktuellChart extends AbstractContentElementController
             );
             foreach ($rows as $row) {
                 $sensorID = $row['sensorID'];   // ✅ DAS ist dein Key
+                $ts = date('d.m.Y H:i', (int) $row['tstamp']);
                 $val = is_numeric($row['sensorValue']) ? round((float)$row['sensorValue'], 2) : $row['sensorValue'];
                 $data[$sensorID]['sensorValue']   = $val;
                 $data[$sensorID]['sensorID']      = $row['sensorID'];
                 $data[$sensorID]['sensorTitle']   = $row['sensorTitle'];
                 $data[$sensorID]['sensorEinheit'] = $row['sensorEinheit'];
+                $data[$sensorID]['sensorDatum'] = $ts;
                 $this->logger->debugMe("Aktuell {$sensorID} = {$val}");
             }        
         }

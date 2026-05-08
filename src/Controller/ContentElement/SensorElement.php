@@ -95,50 +95,39 @@ class SensorElement extends AbstractContentElementController
         $sensors = [];
 
 
-if (!empty($selectedSensors)) {
-
-    $rows = $this->connection->fetchAllAssociative(
-        "SELECT 
-            s.*,
-            sv.sensorValue,
-            sv.tstamp,
-            sv.sensorEinheit AS svsensorEinheit,
-            sv.sensorValueType AS svsensorValueType
-        FROM tl_coh_sensors s
-        LEFT JOIN (
-            SELECT v1.*
-            FROM tl_coh_sensorvalue v1
-            INNER JOIN (
-                SELECT sensorID, MAX(tstamp) AS max_tstamp
-                FROM tl_coh_sensorvalue
-                GROUP BY sensorID
-            ) v2 
-            ON v1.sensorID = v2.sensorID 
-            AND v1.tstamp = v2.max_tstamp
-        ) sv ON sv.sensorID = s.sensorID
-        WHERE s.sensorID IN (?)
-        ORDER BY s.sensorTitle",
-        [$selectedSensors],
-        [Connection::PARAM_STR_ARRAY]
-    );
-
-    foreach ($rows as $row) {
-
-        $row['date'] = !empty($row['tstamp'])
-            ? date('d.m.Y H:i:s', (int)$row['tstamp'])
-            : '';
-
-        if (!empty($row['svsensorEinheit'])) {
-            $row['sensorEinheit'] = $row['svsensorEinheit'];
-        }
-
-        if (!empty($row['svsensorValueType'])) {
-            $row['sensorValueType'] = $row['svsensorValueType'];
-        }
-
-        $sensors[] = $row;
-    }
-}        /*
+        if (!empty($selectedSensors)) {
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT 
+                    s.*,
+                    sv.sensorValue,
+                    sv.tstamp,
+                    sv.sensorEinheit AS svsensorEinheit,
+                    sv.sensorValueType AS svsensorValueType
+                FROM tl_coh_sensors s
+                LEFT JOIN (
+                    SELECT v1.*
+                    FROM tl_coh_sensorvalue v1
+                    INNER JOIN (
+                        SELECT sensorID, MAX(tstamp) AS max_tstamp
+                        FROM tl_coh_sensorvalue
+                        GROUP BY sensorID
+                    ) v2 
+                    ON v1.sensorID = v2.sensorID 
+                    AND v1.tstamp = v2.max_tstamp
+                ) sv ON sv.sensorID = s.sensorID
+                WHERE s.sensorID IN (?)
+                ORDER BY s.sensorTitle",
+                [$selectedSensors],
+                [Connection::PARAM_STR_ARRAY]
+            );
+            foreach ($rows as $row) {
+                $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
+                if (!empty($row['svsensorEinheit'])) { $row['sensorEinheit'] = $row['svsensorEinheit']; }
+                if (!empty($row['svsensorValueType'])) { $row['sensorValueType'] = $row['svsensorValueType']; }
+                $sensors[] = $row;
+            }
+        }        
+        /*
          * -----------------------------------------
          * Template Variablen
          * -----------------------------------------

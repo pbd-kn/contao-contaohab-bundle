@@ -4,6 +4,8 @@
         $d = $this->data ?? [];
         //liefert Wert
         if (!function_exists('coh_v')) { function coh_v(array $d, string $id, $default = '-') { return $d[$id]['sensorValue'] ?? $default; } }
+        //liefert Datum
+        if (!function_exists('coh_d')) { function coh_d(array $d, string $id, $default = '-') { return $d[$id]['sensorDatum'] ?? $default; } }
         //liefert Wert + Einheit
         if (!function_exists('coh_ve')) {
             function coh_ve(array $d, string $id, $default = '-') {
@@ -333,7 +335,7 @@
                     <div class="coh-hero-label">Füllstand Akku</div>
                     <div class="coh-hero-value"><?= coh_v($d, 'IQbattery_94_battery_stateOfCharge') ?> %</div>
                     <div class="coh-mini-grid">
-                        <?= renderMinibox ('','☀️ Leistung Solar',coh_v($d, 'IQinverter_94_inverter_pvPower') .' kW') ?>
+                        <?= renderMinibox ('','☀️ Leistung Solar',coh_d($d, 'IQinverter_94_inverter_pvPower').' '.coh_v($d, 'IQinverter_94_inverter_pvPower') .' kW ') ?>
                         <?= renderMinibox ('','☀️ Solar heute',coh_v($d, 'IQSolar_harmonized_work_Solar_Tag') .' kWh') ?>
                         <?= renderMinibox ('','☀️ Solarzelle gesamt',coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') .' kWh') ?>
                         <?= renderMinibox ('','🏠 Eigenverbrauch',coh_v($d, 'IQinverter_94_inverter_selfConsumptionPower') .' kW') ?>

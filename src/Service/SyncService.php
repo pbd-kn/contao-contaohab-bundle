@@ -207,7 +207,9 @@ class SyncService
             $this->debugStats($db);
         }
         $resarr['status'] = 'OK';
-        $resarr['msg'] = "Pull $count Datensätze";
+        $msg = "Pull $count Datensätze";
+        if ($count > 4990) $msg .= " sync in pulltime wiederholen evtl. zusätzliche vorhanden."
+        $resarr['msg'] = $msg;
         return $resarr;
         
     }

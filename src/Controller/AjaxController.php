@@ -15,7 +15,8 @@ class AjaxController extends AbstractController
     public function __construct(
         private readonly ScopeMatcher $scopeMatcher,
         private readonly CsrfTokenManagerInterface $csrfTokenManager
-    ) {}
+    ) {
+    }
 
     #[Route('/_ajax/contaohab/custom-action', name: 'contaohab_ajax_custom_action', methods: ['POST'])]
     public function customAction(Request $request): JsonResponse
@@ -67,4 +68,3 @@ fetch('/_ajax/contaohab/custom-action', {
     console.log(data);
 });
 */
-
