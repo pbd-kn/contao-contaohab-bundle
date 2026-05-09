@@ -188,12 +188,14 @@ class SyncService
             if (!empty($batch)) {
                 $count += $this->insertBatch($db, $batch);
             }
-            $db->query("
-                UPDATE tl_coh_sync_log
-                SET last_sync = NOW(),
-                    tstamp = UNIX_TIMESTAMP()
-                WHERE sync_type='sensorvalue_pull'
-            ");
+            if ($count < 4990) {  // überprüfgen ob evtl. nochmals einm sync gemacht werden soll
+                $db->query("
+                    UPDATE tl_coh_sync_log
+                    SET last_sync = NOW(),
+                        tstamp = UNIX_TIMESTAMP()
+                    WHERE sync_type='sensorvalue_pull'
+                ");
+            }
             $db->commit();
         } catch (\Throwable $e) {
             $db->rollback();
