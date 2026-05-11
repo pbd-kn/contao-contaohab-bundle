@@ -232,8 +232,8 @@
                 $plattenText = (string) $plattenRaw;
             }
         }
-        $protokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
-        $protokollHasError = preg_match('/error|fehler/i', $protokollText) === 1;
+        $HZprotokollText = (string) coh_v($d, 'RaspberryHeizstabServerProtokoll', '-');
+        $HZprotokollHasError = preg_match('/error|fehler/i', $HZprotokollText) === 1;
         $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
         $boostClass = 'is-gray';
         if ($boostValue < 0) { $boostClass = 'is-red';
@@ -368,7 +368,7 @@
                 <?= renderMinibox ('','🧭 Druck',coh_ve($d, 'SyrBar')) ?>
                 <?= renderMinibox ('','⚙️Profil',coh_ve($d, 'SyrPrf')) ?>
                 <?= renderMinibox ('','☁️ Cloud',"Aktiv " . coh_v($d, 'SyrCen',0) . "<br>Übertragung alle " . coh_v($d, 'SyrWti',0) . " Sek") ?>
-                <?= renderMinibox ('','🧪 Wasserhärte',hardnessDots($dH) ." $dH (berechnet aus)<br>Leitwert: $SYR_leitWert  µS/cm /30") ?>
+                <?= renderMinibox ('','🧪 Wasserhärte',hardnessDots($dH) ."<br>$dH ⌀ Leitwert: $SYR_leitWert  µS/cm /30") ?>
             </div>
         </div>
         <div class="coh-card">
@@ -381,19 +381,19 @@
             </div>
         </div>
         <details class="coh-toggle">
-            <summary>📝 HeizstabServerProtokoll</summary>
+            <summary class="coh-row <?= $HZprotokollHasError ? 'is-red' : '' ?>">📝 HeizstabServerProtokoll</summary>
             <div class="coh-toggle-body">
-                <div class="coh-row <?= $protokollHasError ? 'is-red' : '' ?>">
+                <div class="coh-row <?= $HZprotokollHasError ? 'is-red' : '' ?>">
                     <div class="coh-icon">📄</div>
                     <div class="coh-label">
                         Protokoll
-                        <?php if ($protokollHasError): ?>
+                        <?php if ($HZprotokollHasError): ?>
                             <span class="coh-subtext is-red">Fehler im Protokoll erkannt</span>
                         <?php endif; ?>
                     </div>
                     <div class="coh-value"></div>
                 </div>
-                <pre class="coh-pre"><?= htmlspecialchars($protokollText) ?></pre>
+                <pre class="coh-pre"><?= htmlspecialchars($HZprotokollText) ?></pre>
                 <div class="coh-row" style="margin-top:8px;">
                     <div class="coh-icon">🕒</div>
                     <div class="coh-label">Intervall</div>
