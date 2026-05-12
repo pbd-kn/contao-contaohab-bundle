@@ -63,38 +63,64 @@ class CohAktuellChart extends AbstractContentElementController
         $data = [];
         if (!empty($selectedSensors)) {
             // s1 sensorValue s3 sensor
-            $rows = $this->connection->fetchAllAssociative(
-                'SELECT 
-                    id, tstamp,sensorID,sensorValue,sensorEinheit,sensorValueType,sensorSource,
-                    s3_id,sensor_tstamp,sensorTitle,config_sensorEinheit,outputMode,sensorlokalid
-                    FROM (
-                        SELECT
-                        s1.id,s1.tstamp,s1.sensorID,s1.sensorValue,s1.sensorEinheit,s1.sensorValueType,s1.sensorSource,
-                        s3.id AS s3_id,s3.tstamp AS sensor_tstamp,s3.sensorTitle,s3.sensorEinheit AS config_sensorEinheit,s3.outputMode,s3.sensorlokalid,
+        $rows = $this->connection->fetchAllAssociative(
+            '
+                SELECT 
+                sensorvalue_id,
+                sensorvalue_tstamp,
+                sensorID,
+                sensorValue,
+                sensorEinheit,
+                sensorValueType,
+                sensorSource,
+                sensor_config_id,
+                sensor_config_tstamp,
+                sensorTitle,
+                config_sensorEinheit,
+                outputMode,
+                sensorlokalid
+                FROM (
+                    SELECT
+                        s1.id AS sensorvalue_id,
+                        s1.tstamp AS sensorvalue_tstamp,
+                        s1.sensorID,
+                        s1.sensorValue,
+                        s1.sensorEinheit,
+                        s1.sensorValueType,
+                        s1.sensorSource,
+                        s3.id AS sensor_config_id,
+                        s3.tstamp AS sensor_config_tstamp,
+                        s3.sensorTitle,
+                        s3.sensorEinheit AS config_sensorEinheit,
+                        s3.outputMode,
+                        s3.sensorlokalid,
                         ROW_NUMBER() OVER (
                             PARTITION BY s1.sensorID
                             ORDER BY s1.tstamp DESC, s1.id DESC
-                    ) rn
+                ) rn
                 FROM tl_coh_sensorvalue s1
-                LEFT JOIN tl_coh_sensors s3 ON s1.sensorID = s3.sensorID
+                LEFT JOIN tl_coh_sensors s3
+                ON s1.sensorID = s3.sensorID
                 WHERE s1.sensorID IN (?)
-                    AND s1.sensorValue IS NOT NULL
-                    AND s1.sensorValue <> \'\'
-                ) x
-                WHERE rn = 1
-                ORDER BY sensorID',
-                [$selectedSensors],
-                [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-            );
+                  AND s1.sensorValue IS NOT NULL
+                  AND s1.sensorValue <> \'\'
+        ) x
+        WHERE rn = 1
+        ORDER BY sensorID
+        ',
+        [$selectedSensors],
+        [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
+    );
             foreach ($rows as $row) {
                 $sensorID = $row['sensorID'];   // ✅ DAS ist dein Key
-                $ts = date('d.m.Y H:i', (int) $row['tstamp']);
+                //$ts = date('d.m.Y H:i', (int) $row['sensorvalue_tstamp']);
                 $val = is_numeric($row['sensorValue']) ? round((float)$row['sensorValue'], 2) : $row['sensorValue'];
                 $data[$sensorID]['sensorValue']   = $val;
                 $data[$sensorID]['sensorID']      = $row['sensorID'];
                 $data[$sensorID]['sensorTitle']   = $row['sensorTitle'];
                 $data[$sensorID]['sensorEinheit'] = $row['sensorEinheit'];
-                $data[$sensorID]['sensorDatum'] = $ts;
+                $data[$sensorID]['sensorDatum'] = !empty($row['sensorvalue_tstamp']) ? date('d.m.Y H:i', (int)$row['sensorvalue_tstamp']) : '';
+                $data[$sensorID]['sensorConfigDatum'] = !empty($row['sensor_config_tstamp']) ? date('d.m.Y H:i', (int)$row['sensor_config_tstamp']) : '';
                 $this->logger->debugMe("Aktuell {$sensorID} = {$val}");
             }        
         }

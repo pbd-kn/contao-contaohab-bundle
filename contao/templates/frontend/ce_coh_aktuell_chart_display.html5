@@ -360,7 +360,7 @@
         <div class="coh-card">
             <div class="coh-card-title">💧 SYR Leckage</div>
             <div class="coh-mini-grid">
-                <?= renderMinibox ($SYR_cl,'🚰 Ventil',$SYR_valve) ?>
+                <?= renderMinibox ($SYR_cl,'🚰 Ventil',coh_d($d, 'SyrVlv').'<br>'.$SYR_valve) ?>
                 <?= renderMinibox ($SYR_clalarmStatus,'Alarmstatus',$SYR_alarm_lamp . ' ' .$SYR_alarmStatus . $leaktxt) ?>
                 <?= renderMinibox ('','📊 Verbrauch heute',coh_ve($d, 'SyrVolDaily')) ?>
                 <?= renderMinibox ('','📊 Ges. Verbrauch',coh_ve($d, 'SyrVol')) ?>
@@ -374,7 +374,7 @@
         <div class="coh-card">
             <div class="coh-card-title">🔥 Heizstab</div>
             <div class="coh-mini-grid">
-                <?= renderMinibox ('','🌡️ Heizstab Temp1',coh_v($d, 'ELaktTemp1') . ' °C') ?>
+                <?= renderMinibox ('','🌡️ Heizstab Temp1',coh_d($d, 'ELaktTemp1').'<br>'.coh_v($d, 'ELaktTemp1') . ' °C') ?>
                 <?= renderMinibox ('','🌡️ Heizstab Temp2',coh_v($d, 'ELaktTemp2') . ' °C') ?>
                 <?= renderMinibox ('','⚡ Heizstab Akt. Leistung',coh_v($d, 'ELaktPwr') . ' kW') ?>
                 <?= renderMinibox ('','🔥 BoostStatus',coh_v($d, 'ELaktboostactive')) ?>
