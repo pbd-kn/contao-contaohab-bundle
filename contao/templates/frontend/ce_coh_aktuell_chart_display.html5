@@ -358,7 +358,7 @@
             </div>
         </div>
         <div class="coh-card">
-            <div class="coh-card-title">💧 SYR Leckage</div>
+            <div class="coh-card-title">💧 SYR Leckage aktuell außer Betrieb</div>
             <div class="coh-mini-grid">
                 <?= renderMinibox ($SYR_cl,'🚰 Ventil',coh_d($d, 'SyrVlv').'<br>'.$SYR_valve) ?>
                 <?= renderMinibox ($SYR_clalarmStatus,'Alarmstatus',$SYR_alarm_lamp . ' ' .$SYR_alarmStatus . $leaktxt) ?>

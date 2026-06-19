@@ -124,44 +124,65 @@ class SyncService
     // ======================================================
     // PULL
     // ======================================================
-    private function runPull(mysqli $db, string $raspiBase): ?array
-    {
-        $resarr = [];
-        $res = $db->query("
-            SELECT last_sync
-            FROM tl_coh_sync_log
-            WHERE sync_type='sensorvalue_pull'
-            LIMIT 1
-        ");
-        $row = $res?->fetch_assoc();
-        $lastSync = trim((string)($row['last_sync'] ?? ''));
-        $ts = strtotime($lastSync);
-        if ($ts === false) {
-            $this->logger->debugMe("WARNUNG last_sync ungültig [$lastSync]");
-            $ts = 0;
-        }
-        if ($ts >= time() - 300) {
-            $this->logger->debugMe("Pull nicht fällig lastSync $lastSync");
-            $resarr['status'] = 'OK';
-            $resarr['msg'] = "Pull nicht fällig lastSync $lastSync";
-            return $resarr;
-        }
-        $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $ts;
-        $this->logger->debugMe("Pull startet: $pullUrl");
-        try {
-            $api = $this->apiGetJson($pullUrl);
-        } catch (\Throwable $e) {
-            $this->logger->Error("Pull Fehler: " . $e->getMessage());
-            $resarr['status'] = 'NOK';
-            $resarr['msg'] = "Pull Fehler: " . $e->getMessage();
-            return $resarr;
-        }
-        $rows = $api['rows'] ?? [];
-        $count = 0;
-        $db->begin_transaction();
-        try {
+private function runPull(mysqli $db, string $raspiBase): ?array
+{
+    $resarr = [];
+
+    $res = $db->query("
+        SELECT last_sync
+        FROM tl_coh_sync_log
+        WHERE sync_type='sensorvalue_pull'
+        LIMIT 1
+    ");
+
+    $row = $res?->fetch_assoc();
+    $lastSync = trim((string)($row['last_sync'] ?? ''));
+    $ts = strtotime($lastSync);
+
+    if ($ts === false) {
+        $this->logger->debugMe("WARNUNG last_sync ungültig [$lastSync]");
+        $ts = 0;
+    }
+
+    if ($ts >= time() - 300) {
+        $this->logger->debugMe("Pull nicht fällig lastSync $lastSync");
+        $resarr['status'] = 'OK';
+        $resarr['msg'] = "Pull nicht fällig lastSync $lastSync";
+        return $resarr;
+    }
+
+    $count = 0;
+    $pullRuns = 0;
+    $maxPullRuns = 4;
+    $batchSize = 1000;
+    $sinceTs = $ts;
+
+    $db->begin_transaction();
+
+    try {
+        do {
+            $pullRuns++;
+
+            $pullUrl = $raspiBase . $this->raspiApi['pullPath'] . '?since=' . $sinceTs;
+            $this->logger->debugMe("Pull $pullRuns startet: $pullUrl");
+
+            try {
+                $api = $this->apiGetJson($pullUrl);
+            } catch (\Throwable $e) {
+                throw new \RuntimeException("Pull Fehler: " . $e->getMessage());
+            }
+
+            $rows = $api['rows'] ?? [];
+
+            if (empty($rows)) {
+                $this->logger->debugMe("Pull $pullRuns keine neuen Datensätze");
+                break;
+            }
+
             $batch = [];
-            $batchSize = 1000;
+            $maxTstampInRun = $sinceTs;
+            $rowsInRun = 0;
+
             foreach ($rows as $r) {
                 $tstamp          = (int)($r['tstamp'] ?? 0);
                 $sensorID        = $db->real_escape_string((string)($r['sensorID'] ?? ''));
@@ -169,9 +190,15 @@ class SyncService
                 $sensorEinheit   = $db->real_escape_string((string)($r['sensorEinheit'] ?? ''));
                 $sensorValueType = $db->real_escape_string((string)($r['sensorValueType'] ?? ''));
                 $sensorSource    = $db->real_escape_string((string)($r['sensorSource'] ?? ''));
+
                 if ($tstamp <= 0 || $sensorID === '') {
                     continue;
                 }
+
+                if ($tstamp > $maxTstampInRun) {
+                    $maxTstampInRun = $tstamp;
+                }
+
                 $batch[] = "(
                     $tstamp,
                     '$sensorID',
@@ -180,39 +207,72 @@ class SyncService
                     '$sensorValueType',
                     '$sensorSource'
                 )";
+
+                $rowsInRun++;
+
                 if (count($batch) >= $batchSize) {
                     $count += $this->insertBatch($db, $batch);
                     $batch = [];
                 }
             }
+
             if (!empty($batch)) {
                 $count += $this->insertBatch($db, $batch);
             }
-                $db->query("
-                    UPDATE tl_coh_sync_log
-                    SET last_sync = NOW(),
-                        tstamp = UNIX_TIMESTAMP()
-                    WHERE sync_type='sensorvalue_pull'
-                ");
-            $db->commit();
-        } catch (\Throwable $e) {
-            $db->rollback();
-            $this->logger->Error("Pull Rollback: " . $e->getMessage());
-            $resarr['status'] = 'NOK';
-            $resarr['msg'] = "Pull Rollback: " . $e->getMessage();
-            return $resarr;
-        }
-        $this->logger->debugMe("Pull fertig: $count Datensätze");
-        if ($this->logger->isDebug()) {
-            $this->debugStats($db);
-        }
-        $resarr['status'] = 'OK';
-        $msg = "Pull $count Datensätze";
-        if ($count > 4990) $msg .= " sync in pulltime wiederholen evtl. zusätzliche vorhanden.";
-        $resarr['msg'] = $msg;
+
+            $this->logger->debugMe("Pull $pullRuns fertig: $rowsInRun empfangen");
+
+            if ($maxTstampInRun <= $sinceTs) {
+                $this->logger->debugMe("Pull Abbruch: sinceTs konnte nicht erhöht werden");
+                break;
+            }
+
+            $sinceTs = $maxTstampInRun;
+
+            if (count($rows) < 5000) {
+                break;
+            }
+
+        } while ($pullRuns < $maxPullRuns);
+
+        $db->query("
+            UPDATE tl_coh_sync_log
+            SET last_sync = FROM_UNIXTIME($sinceTs),
+                tstamp = UNIX_TIMESTAMP()
+            WHERE sync_type='sensorvalue_pull'
+        ");
+
+        $db->commit();
+
+    } catch (\Throwable $e) {
+        $db->rollback();
+
+        $this->logger->Error("Pull Rollback: " . $e->getMessage());
+
+        $resarr['status'] = 'NOK';
+        $resarr['msg'] = "Pull Rollback: " . $e->getMessage();
+
         return $resarr;
-        
     }
+
+    $this->logger->debugMe("Pull fertig: $count Datensätze in $pullRuns Durchläufen");
+
+    if ($this->logger->isDebug()) {
+        $this->debugStats($db);
+    }
+
+    $resarr['status'] = 'OK';
+
+    $msg = "Pull $count Datensätze in $pullRuns Durchläufen";
+
+    if ($pullRuns >= $maxPullRuns && $count >= 20000) {
+        $msg .= " sync später erneut ausführen, evtl. sind weitere vorhanden.";
+    }
+
+    $resarr['msg'] = $msg;
+
+    return $resarr;
+}
     private function insertBatch(mysqli $db, array $batch): int
     {
         $sql = "
