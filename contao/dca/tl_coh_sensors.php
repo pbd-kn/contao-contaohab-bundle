@@ -129,7 +129,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'label' => ['Transform'],
             'inputType' => 'select',
             'options' => [
-                'elwaPwrkWh','elwaPwr','elwaTemp',
+                '-','elwaPwrkWh','elwaPwr','elwaTemp', 'elwaProt',
                 'tskWh','tsWatt'
             ],
             'eval' => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],

@@ -154,18 +154,42 @@ $GLOBALS['TL_DCA'][$strTable] = array(
 /* klasse für alle callback funktionen zu things */
 class tl_coh_geraete
 {
-    public function validateHostOrIp(string $value): string
-    {
-        if (filter_var($value, FILTER_VALIDATE_IP)) {
-            return $value;
-        }
+public function validateHostOrIp(string $value): string
+{
+    $value = trim($value);
 
-        // einfache Hostname-Prüfung (z. B. "my-host.local" oder "example.com")
-        if (preg_match('/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/', $value)) {
-            return $value;
-        }
-
-        throw new \InvalidArgumentException('Bitte eine gültige IP-Adresse oder einen Hostnamen eingeben.');
+    if ($this->isMyPvApiAccess($value)) {
+        return $value;
     }
+
+    if (filter_var($value, FILTER_VALIDATE_IP)) {
+        return $value;
+    }
+
+    // einfache Hostname-Prüfung (z.B. "my-host.local" oder "example.com")
+    if (preg_match('/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/', $value)) {
+        return $value;
+    }
+
+    throw new \InvalidArgumentException(
+        'Bitte eine gültige IP-Adresse, einen Hostnamen oder my-PV API-Zugang im Format serialnummer:APIKey eingeben.'
+    );
+}
+
+private function isMyPvApiAccess(string $value): bool
+{
+    if (!str_contains($value, ':')) {
+        return false;
+    }
+
+    [$serial, $apiKey] = array_map('trim', explode(':', $value, 2));
+
+    if (!preg_match('/^[0-9]{8,20}$/', $serial)) {
+        return false;
+    }
+
+    return strlen($apiKey) >= 20
+        && preg_match('/^[A-Za-z0-9._-]+$/', $apiKey) === 1;
+}
 
 }

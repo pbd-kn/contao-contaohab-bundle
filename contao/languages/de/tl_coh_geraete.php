@@ -28,8 +28,8 @@ $GLOBALS['TL_LANG']['tl_coh_geraete']['show'] = "Datensatz mit ID: %s ansehen";
  * Fields
  */
 $GLOBALS['TL_LANG']['tl_coh_geraete']['geraeteID']  = ['GeräteID','Eineutige Id des Geräts wird zur Auswahl des entsprechen Service (SensorService) verwendet'];
-$GLOBALS['TL_LANG']['tl_coh_geraete']['geraeteTitle']  = ['Gerätetitel','Azeigename des Greäts '];
-$GLOBALS['TL_LANG']['tl_coh_geraete']['geraeteUrl']  = ['Geräteurl','IP Adresse des Gerates aaa.bbb.ccc.ddd '];
+$GLOBALS['TL_LANG']['tl_coh_geraete']['geraeteTitle']  = ['Gerätetitel','Anzeigename des Greäts '];
+$GLOBALS['TL_LANG']['tl_coh_geraete']['geraeteUrl']  = ['Geräteurl','IP Adresse des Gerates aaa.bbb.ccc.ddd oder serialnumber:APIKey'];
 $GLOBALS['TL_LANG']['tl_coh_geraete']['geraeteDescription'] = ['Gerätebeschreibung','Ausführliche Beschreibung des Geräts'];
 
 
