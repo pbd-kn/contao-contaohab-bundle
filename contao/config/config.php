@@ -10,17 +10,11 @@
  * @link https://github.com/pbd-kn/contao-contaohab-bundle
  */
 
-use PbdKn\ContaoContaohabBundle\Model\ThingsModel;
 use Contao\System;
 
 /**
  * Backend modules
  */
-$GLOBALS['BE_MOD']['contao_hab']['Things'] = array(
-    'tables' => array('tl_coh_things'),
-	'icon'       => 'bundles/pbdkncontaocontaohab/icons/formdata_all.gif',
-    'stylesheet' => 'bundles/pbdkncontaocontaohab/css/style.css',
-);
 
 $GLOBALS['BE_MOD']['contao_hab']['Sensor'] = array (
 	'tables'     => ['tl_coh_sensors'],
@@ -54,19 +48,9 @@ $GLOBALS['BE_MOD']['contao_hab']['Settings'] = [
 /**
  * Models
  */
-$GLOBALS['TL_MODELS']['tl_coh_things'] = ThingsModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_sensorvalue'] = SensorValueModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_sensors'] = SensorModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_geraete'] = GeraeteModel::class;
 $GLOBALS['TL_MODELS']['tl_coh_sync_log'] = RaspSyncModel::class;
-
-
-/**
- * Fe Modules
- */
-
-$GLOBALS['FE_MOD']['COH']['coh_things'] = 'PbdKn\ContaoContaohabBundle\Module\ModuleCohThings'; 
-
-
 
 

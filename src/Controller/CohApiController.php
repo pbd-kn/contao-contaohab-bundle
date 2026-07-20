@@ -26,9 +26,6 @@ class CohApiController extends AbstractController
     #[Route('/api/coh_update_interval', name: 'api_coh_update_interval', methods: ['GET'])]
     public function fetchUpdateInterval(): JsonResponse
     {
-        $db = Database::getInstance();
-        $result = $db->execute("SELECT update_interval FROM tl_coh_things LIMIT 1");
-
-        return new JsonResponse(['interval' => $result->numRows ? (int) $result->update_interval : 5000]);
+        return new JsonResponse(['interval' => 5000]);
     }
 }

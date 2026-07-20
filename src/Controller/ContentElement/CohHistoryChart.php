@@ -103,6 +103,7 @@ class CohHistoryChart extends AbstractContentElementController
                  LEFT JOIN tl_coh_sensors s ON sv.sensorID = s.sensorID
                  WHERE sv.tstamp >= ? AND sv.tstamp < ?
                  AND sv.sensorID IN (?)
+                 AND s.sensorActive = "1"
                  ORDER BY sv.sensorID ASC, sv.tstamp ASC',
                 [$start->getTimestamp(), $end->getTimestamp(), $selectedSensors],
                 [\PDO::PARAM_INT, \PDO::PARAM_INT, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
