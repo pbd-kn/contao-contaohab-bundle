@@ -21,13 +21,15 @@ class SyncSensorDataCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $error = $this->syncService->sync($output);
+        $result = $this->syncService->sync($output);
 
-        if ($error !== null) {
-            $output->writeln("<error>Fehler bei der Synchronisation:</error>");
-            $output->writeln("<error>$error</error>");
+        if (($result['status'] ?? 'NOK') !== 'OK') {
+            $output->writeln('<error>Fehler bei der Synchronisation:</error>');
+            $output->writeln('<error>'.json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT).'</error>');
             return Command::FAILURE;
         }
+
+        $output->writeln('<info>Synchronisation erfolgreich abgeschlossen.</info>');
         return Command::SUCCESS;
     }
 }

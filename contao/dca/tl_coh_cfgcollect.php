@@ -23,7 +23,6 @@ use Contao\StringUtil;
 
 
 use Contao\Controller;
-use PbdKn\ContaoContaohabBundle\Controller\FrontendModule\DisplayThingsController;
 //use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 //use PbdKn\ContaoContaohabBundle\Module\ModuleCohCallback; // Die Klasse importieren!
 
@@ -63,14 +62,6 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
             )
         ),
         'operations'        => array(
-/*
-            'meinKnopf' => array(
-                'label' => ['Mein Button', 'Das ist mein Spezialknopf'],
-                'href'  => '/contao?do=coh_things&key=custom&id=%s',
-                'icon'  => 'bundles/pbdkncontaocontaohab/icons/mail.gif',
-                'button_callback' => ['tl_coh_cfgcollect', 'generateCustomButton'],
-            ),
-*/
             'edit'   => array(
                 'href'  => 'act=edit',
                 'icon'  => 'edit.svg'
@@ -145,7 +136,6 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
 
 
 
-/* klasse für alle callback funktionen zu things */
 class tl_coh_cfgcollect
 {
 }

@@ -151,7 +151,6 @@ $GLOBALS['TL_DCA'][$strTable] = array(
 
 
 
-/* klasse für alle callback funktionen zu things */
 class tl_coh_geraete
 {
 public function validateHostOrIp(string $value): string

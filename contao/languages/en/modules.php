@@ -12,17 +12,12 @@ declare(strict_types=1);
  * @link https://github.com/pbd-kn/contao-contaohab-bundle
  */
 
-use PbdKn\ContaoContaohabBundle\Controller\FrontendModule\DisplayThingsController;
-
 /**
  * Backend modules
  */
 $GLOBALS['TL_LANG']['MOD']['contao_hab'] = 'ContaoHab';
-$GLOBALS['TL_LANG']['MOD']['things_collection'] = ['contaohab things', 'Modul für Things'];
 
 /**
  * Frontend modules
  */
 $GLOBALS['TL_LANG']['FMD']['contao_hab'] = 'ContaoHab';
-$GLOBALS['TL_LANG']['FMD'][DisplayThingsController::TYPE] = ['DisplayThings', 'stellt alle Things dar'];
-

@@ -102,6 +102,7 @@ class CohAktuellChart extends AbstractContentElementController
                 LEFT JOIN tl_coh_sensors s3
                 ON s1.sensorID = s3.sensorID
                 WHERE s1.sensorID IN (?)
+                  AND s3.sensorActive = "1"
                   AND s1.sensorValue IS NOT NULL
                   AND s1.sensorValue <> \'\'
         ) x

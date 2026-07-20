@@ -46,8 +46,8 @@ class SyncService
         $this->logger->debugMe("Start Synchronisation");
         mysqli_report(MYSQLI_REPORT_OFF);
         $result = $this->connectFirstAvailable([
-            ['name' => 'LIMA',  'cfg' => $this->lima],
             ['name' => 'LOCAL', 'cfg' => $this->local],
+            ['name' => 'LIMA',  'cfg' => $this->lima],
         ], $output);
         $masterDb = $result[0];
         $env      = $result[1];
@@ -327,7 +327,11 @@ private function runPull(mysqli $db, string $raspiBase): ?array
         ];
         foreach ($tables as $table) {
             $this->logger->debugMe("Push Tabelle: $table");
-            $rs = $db->query("SELECT * FROM $table");
+            $sql = $table === 'tl_coh_sensors'
+                ? "SELECT * FROM $table WHERE sensorActive='1'"
+                : "SELECT * FROM $table";
+
+            $rs = $db->query($sql);
             if (!$rs) {
                 $this->logger->Error("Push SELECT Fehler $table: " . $db->error);
                 $resarr['status'] = 'NOK';

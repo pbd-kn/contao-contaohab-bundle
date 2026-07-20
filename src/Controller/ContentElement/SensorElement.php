@@ -85,6 +85,7 @@ class SensorElement extends AbstractContentElementController
         $allSensors = $this->connection->fetchAllAssociative(
             "SELECT sensorID, sensorTitle, sensorEinheit, sensorLokalId, outputMode
              FROM tl_coh_sensors
+             WHERE sensorActive='1'
              ORDER BY sensorTitle"
         );
         /*
@@ -115,7 +116,8 @@ class SensorElement extends AbstractContentElementController
                     ON v1.sensorID = v2.sensorID 
                     AND v1.tstamp = v2.max_tstamp
                 ) sv ON sv.sensorID = s.sensorID
-                WHERE s.sensorID IN (?)
+                WHERE s.sensorActive='1'
+                AND s.sensorID IN (?)
                 ORDER BY s.sensorTitle",
                 [$selectedSensors],
                 [Connection::PARAM_STR_ARRAY]

@@ -102,12 +102,12 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['canvas_ekd_data'] = [
 /**
  * Content elements CohHistoryChart
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_legend},type,headline,coh_canvas_things,selectedSensors;{template_legend:hide},coh_history_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_legend},type,headline,selectedSensors;{template_legend:hide},coh_history_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 
 /**
  * Content elements CohAktuellChart
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,coh_canvas_things,selectedSensors;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,selectedSensors;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 
 // Felder für Template-Auswahl definieren
 $GLOBALS['TL_DCA']['tl_content']['fields']['coh_history_template'] = [
@@ -162,54 +162,21 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['coh_aktuell_template'] = [
 ];
 
 
-$GLOBALS['TL_DCA']['tl_content']['fields']['coh_canvas_things'] = [
-    'label' => ['Anzuzeigende Things', 'Wählen Sie die Things, die in der Visualisierung angezeigt werden sollen.'],
-    'inputType' => 'checkboxWizard',
-    'eval' => ['multiple' => true, 'chosen' => true, 'submitOnChange' => true], // <- das ist neu!
-    'options_callback' => function () {
-        $db = \Contao\System::getContainer()->get('database_connection');
-        $rows = $db->fetchAllAssociative('SELECT thingID, thingTitle FROM tl_coh_things ORDER BY thingID');
-
-        return array_column($rows, 'thingID', 'thingID');
-    },
-    'sql' => "blob NULL"
-];
-
 $GLOBALS['TL_DCA']['tl_content']['fields']['selectedSensors'] = [
-    'label' => ['Sensorvariablen', 'Wählen Sie die Sensorvariablen aus, die angezeigt werden sollen.'],
+    'label' => ['Sensorvariablen', 'W�hlen Sie die Sensorvariablen aus, die angezeigt werden sollen.'],
     'inputType' => 'select',
     'eval' => ['multiple' => true, 'chosen' => true, 'tl_class' => 'clr'],
-    'options_callback' => function (\Contao\DataContainer $dc) {
-        $thingIds = \Contao\StringUtil::deserialize($dc->activeRecord->coh_canvas_things, true);
-
-        if (empty($thingIds)) {
-            return [];
-        }
-
+    'options_callback' => function () {
         $db = \Contao\System::getContainer()->get('database_connection');
-        $rows = $db->fetchAllAssociative(
-            'SELECT Sensorvariable FROM tl_coh_things WHERE thingID IN (?)',
-            [$thingIds],
-            [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-        );
+        $rows = $db->fetchAllAssociative("SELECT sensorID, sensorTitle FROM tl_coh_sensors WHERE sensorActive='1' ORDER BY sensorTitle, sensorID");
 
-        $sensoren = [];
-
+        $options = [];
         foreach ($rows as $row) {
-            $decoded = \Contao\StringUtil::deserialize($row['Sensorvariable'], true);
-
-            if (is_array($decoded)) {
-                foreach ($decoded as $sensorName) {
-                    $sensoren[$sensorName] = $sensorName;
-                }
-            } elseif (!empty($row['Sensorvariable'])) {
-                $sensoren[$row['Sensorvariable']] = $row['Sensorvariable'];
-            }
+            $title = $row['sensorTitle'] ?: $row['sensorID'];
+            $options[$row['sensorID']] = sprintf('%s (%s)', $title, $row['sensorID']);
         }
 
-        ksort($sensoren); // alphabetisch sortieren (optional)
-
-        return $sensoren;
+        return $options;
     },
     'sql' => "blob NULL"
 ];
@@ -243,7 +210,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['coh_selectedSensor'] = [
         $db = \Contao\System::getContainer()->get('database_connection');
 
         $rows = $db->fetchAllAssociative(
-            "SELECT sensorID, sensorTitle FROM tl_coh_sensors ORDER BY sensorTitle"
+            "SELECT sensorID, sensorTitle FROM tl_coh_sensors WHERE sensorActive='1' ORDER BY sensorTitle"
         );
 
         $options = [];

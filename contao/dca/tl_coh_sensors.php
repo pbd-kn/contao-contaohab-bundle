@@ -25,13 +25,13 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
     'list' => [
         'sorting' => [
             'mode'        => 2,
-            'fields'      => ['sensorTitle'],
+            'fields'      => ['sensorTitle','sensorID','sensorSource'],
             'flag'        => DataContainer::SORT_ASC,
             'panelLayout' => 'filter;sort,search,limit',
         ],
         'label' => [
-            'fields' => ['sensorID','sensorTitle','sensorEinheit'],
-            'format' => '%s | %s (%s)',
+            'fields' => ['sensorID','sensorTitle','sensorEinheit','sensorActive'],
+            'label_callback' => ['tl_coh_sensors', 'formatSensorLabel'],
         ],
         'operations' => [
             'edit'   => ['href'=>'act=edit','icon'=>'edit.svg'],
@@ -46,8 +46,8 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
         'default' => '
             {base_legend},sensorID,sensorTitle,
-            sensorEinheit,sensorValueType,
-            sensorSource,sensorLokalId,
+            sensorActive,sensorEinheit,sensorValueType,
+            sensorSource,sensorLokalId,sensorComment,
             transFormProcedur,outputMode;
 
             {calc_legend},isComponent;
@@ -74,7 +74,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         // ---------------- BASIS ----------------
 
         'sensorID' => [
-            'label'     => ['Sensor-ID', 'Eindeutige technische ID, wenn sensorLokalId nicht gesetzt ist verwender der Controller auf dem Raspberry diese Id zum Zugriff auf den Sensorwert'],
+            'label'     => ['Sensor-ID', 'Eindeutige technische ID. Wenn sensorLokalId nicht gesetzt ist, verwendet der Controller auf dem Raspberry diese ID zum Zugriff auf den Sensorwert.'],
             'inputType' => 'text',
             'search'    => true,
             'sorting'   => true,
@@ -92,10 +92,18 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
+        'sensorActive' => [
+            'label'     => ['Aktiv', 'Deaktivierte Sensoren bleiben erhalten, werden aber nicht angezeigt und nicht zum Raspberry Ã¼bertragen.'],
+            'inputType' => 'checkbox',
+            'filter'    => true,
+            'eval'      => ['tl_class'=>'w50'],
+            'sql'       => "char(1) NOT NULL default '1'",
+            'default'   => '1',
+        ],
         'sensorEinheit' => [
             'label' => ['Einheit'],
             'inputType' => 'select',
-            'options'   => ['kWh','W','kW','°C','Datum','Zeit','DatumZeit','Text','OK'],
+            'options'   => ['-','kWh','W','kW','°C','Datum','Zeit','DatumZeit','Text','OK','%'],
             'eval'      => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
@@ -112,24 +120,32 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'label' => ['Quelle', 'Auch Verweis auf Service beim Raspberry'],
             'inputType' => 'select',
             'search'    => true,
+            'filter'    => true,
+            'sorting'   => true,
             'options_callback' => ['tl_coh_sensors','getGeraeteIDs'],
             'eval' => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql' => "varchar(255) NOT NULL default ''",
         ],
 
         'sensorLokalId' => [
-            'label' => ['Lokale ID', 'diese Referenz steht dem Service auf dem Raspberry zur Verfügung'],
+            'label' => ['Lokale ID', 'Diese Referenz steht dem Service auf dem Raspberry zur VerfÃ¼gung.'],
             'inputType' => 'text',
             'search'    => true,
             'eval'      => ['maxlength'=>255,'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
 
+        'sensorComment' => [
+            'label'     => ['Kommentar', 'Interne Notiz dazu, was der Sensor misst oder wofÃ¼r er verwendet wird.'],
+            'inputType' => 'textarea',
+            'eval'      => ['tl_class'=>'clr', 'rows'=>4],
+            'sql'       => "text NULL",
+        ],
         'transFormProcedur' => [
             'label' => ['Transform'],
             'inputType' => 'select',
             'options' => [
-                '-','elwaPwrkWh','elwaPwr','elwaTemp', 'elwaProt',
+                '-','durch_10','durch_100','durch_1000','elwaPwrkWh','elwaPwr','elwaTemp',
                 'tskWh','tsWatt'
             ],
             'eval' => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
@@ -206,7 +222,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'label' => ['Speichern'],
             'inputType' => 'select',
             'options'   => [0,1,2,3,4,5],
-            'reference' => ['Nein','Polltime','Stündlich','Täglich','Wöchentlich','Monatlich'],
+            'reference' => ['Nein','Polltime','StÃ¼ndlich','TÃ¤glich','WÃ¶chentlich','Monatlich'],
             'eval'      => ['tl_class'=>'w50'],
             'sql'       => "tinyint(1) NOT NULL default '0'",
         ],
@@ -220,6 +236,24 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
 
 class tl_coh_sensors
 {
+    public function formatSensorLabel(array $row, string $label, DataContainer $dc, array $args): string
+    {
+        $sensorId = (string)($row['sensorID'] ?? $args[0] ?? '');
+        $title = (string)($row['sensorTitle'] ?? $args[1] ?? '');
+        $unit = (string)($row['sensorEinheit'] ?? $args[2] ?? '');
+        $active = (string)($row['sensorActive'] ?? $args[3] ?? '');
+
+        $label = sprintf('%s | %s (%s)', $sensorId, $title, $unit);
+
+        if ($active === '1') {
+            return $label;
+        }
+
+        return sprintf(
+            '<span style="color:#777;text-decoration:line-through;">[INAKTIV] %s</span>',
+            htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+        );
+    }
     public function getGeraeteIDs(): array
     {
         $db = Database::getInstance();
@@ -243,7 +277,7 @@ class tl_coh_sensors
         $db = Database::getInstance();
         $options = [];
 
-        $res = $db->prepare("SELECT sensorID FROM tl_coh_sensors")->execute();
+        $res = $db->prepare("SELECT sensorID FROM tl_coh_sensors WHERE sensorActive='1' ORDER BY sensorID")->execute();
 
         while ($res->next()) {
             $options[$res->sensorID] = $res->sensorID;
