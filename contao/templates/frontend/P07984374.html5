@@ -43,13 +43,20 @@
             return (float) str_replace(',', '.', (string) $value);
         }
     }
-    
+    coh_wh_to_kwh
     if (!function_exists('coh_teile')) {
-        function coh_teile( $value, int $teiler = 1000, int $round = 2): string {
-        $value = is_numeric($value) ? (float) $value : 0.0;
-        if ($teiler === 0) { $teiler = 1; }
-        return number_format( $value / $teiler, $round, ',', '.' );
-        }    
+        function coh_wh_to_kwh($value, int $teiler = 1000string $default = '-'): string
+        {
+            if (!is_numeric($value)) { return $default; }
+            return number_format((float) $value / 1000, 2, ',', '.');
+        }
+    }
+    if (!function_exists('coh_w_to_kw')) {
+        function coh_w_to_kw($value, string $default = '-'): string
+        {
+            if (!is_numeric($value)) { return $default; }
+            return number_format((float) $value / 1000, 2, ',', '.');
+        }
     }
     if (!function_exists('renderMinibox')) {
         function renderMinibox($class, $label, $value): string
@@ -76,6 +83,29 @@
         }
     }
     
+        /*
+         * Abgeleitete Werte wie im alten Template
+         */
+        $zwzPower = '0';
+        $zwzPowerUnit = 'kW';
+        if (isset($d['ZWZZaehlerPowerIn'], $d['ZWZZaehlerPowerOut'])) {
+            $zwzPower = round( coh_num($d['ZWZZaehlerPowerOut']['sensorValue']) - coh_num($d['ZWZZaehlerPowerIn']['sensorValue']),2);
+            $zwzPowerUnit = $d['ZWZZaehlerPowerIn']['sensorEinheit'] ?? 'kW';
+        }
+        $tasmotaPower = '0';
+        $tasmotaPowerUnit = 'kW';
+        if (isset($d['TS_E_out_208'], $d['TS_E_in_108'])) {
+            $tasmotaPower = round( coh_num($d['TS_E_out_208']['sensorValue']) - coh_num($d['TS_E_in_108']['sensorValue']),2);
+            $tasmotaPowerUnit = $d['TS_E_in_108']['sensorEinheit'] ?? 'kW';
+        }
+        $zwzTotal = '-';
+        $zwzTotalUnit = 'kWh';
+        if (isset($d['ZWZZaehlerTotalPVEnergieImport'], $d['ZWZZaehlerTotalPVEnergieExport'])) {
+            $imp = $d['ZWZZaehlerTotalPVEnergieImport']['sensorValue'] ?? '-';
+            $exp = $d['ZWZZaehlerTotalPVEnergieExport']['sensorValue'] ?? '-';
+            $zwzTotal = $imp.'/'.$exp;
+            $zwzTotalUnit = $d['ZWZZaehlerTotalPVEnergieImport']['sensorEinheit'] ?? 'kWh';
+        }
 //var_dump($d);
         $live = coh_v($d, 'IQ_Live', []);   // live Daten Iq_box
 /*
@@ -92,7 +122,7 @@
         } elseif (!is_array($live)) {
             $live = [];
         }
-//var_dump($live);
+var_dump($live);
 //        renderArray($live);
         $raspberryAll = coh_v($d, 'Raspberry_All', []);    // Raspberry daten
 //var_dump($raspberryAll);
@@ -113,11 +143,10 @@
         $batteryPercent = $live['batterySoc'];
         $batteryPower   = $live['batteryPower'];
         $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
-        $IQTodayWorkAll = coh_v($d, 'IQ_Today_work', []);    // 
-//        renderArray($IQTodayWorkAll);
-        $IQliveTime = coh_v($d, 'IQ_Lifetime', []);   // liveTime Daten Iq_box
-//        renderArray($IQliveTime);
-//        renderArray($IQliveTime['years']);
+        $IQTodayWorkAll = coh_v($d, 'IQ_Today_work', []);    // Raspberry daten
+        if (!is_array($IQTodayWorkAll)) {
+            $IQTodayWorkAll = [];
+        }
 /*
 generation	erzeugte Solarenergie	
 consumption	Verbrauch	
@@ -159,15 +188,19 @@ gridDraw	aus dem Stromnetz bezogen
                     ?>
                     <div class="coh-mini-grid">
                     
-                        <?= renderMinibox ('','🔋️ Füllstand Akku',$live['batterySoc']  .' % ') ?>
-                        <?= renderMinibox ('','🔋️ Leistung Batterie',coh_teile ($live['batteryPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile ($live['housePower'])  .' kW ') ?>
-                        <?= renderMinibox ('','🏠  Netzeinspeisung',coh_teile ($live['gridPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','⚡💦️Heizstab',coh_teile ($live['heatingRodPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','🌡️ Heizstab Temp1',coh_d($d, 'ELaktTemp1').'<br>'.coh_v($d, 'ELaktTemp1') . ' °C') ?>
-                        <?= renderMinibox ('','🌡️ Heizstab Temp2',coh_v($d, 'ELaktTemp2') . ' °C') ?>
-                        <?= renderMinibox ('','⚡  Heizstab Akt. Leistung',coh_v($d, 'ELaktPwr') . ' kW') ?>
+                        <?= renderMinibox ('','☀️ Füllstand Akku',$live['batterySoc']  .' % ') ?>
+                        <?= renderMinibox ('','☀️ Solar akt',coh_w_to_kw($live['pvPower'] ?? null) .' kW') ?>
+                        <?= renderMinibox ('','☀️ Leistung Solar',$live['pvPower']/1000  .' kW ') ?>
+                        <?= renderMinibox ('','🏠  Eigenverbrauch',$live['housePower']/1000  .' kW ') ?>
+                        <?= renderMinibox ('','☀️ Solarzelle gesamt',coh_v($d, 'IQSolar_harmonized_work_Solar_gesamt') .' kWh') ?>
+                        <?= renderMinibox ($akkuPowerClass,'⚡ Akku Laden/Entladen',coh_v($d, 'IQbattery_94_battery_power') .' kW') ?>
+                        <?= renderMinibox ('','📊 Ges. Import/Export ZWZ  ',$zwzTotal . ' ' . $zwzTotalUnit) ?>
+                        <?php
+                            if ($zwzPower >= 0) $cl='is-green';
+                            else  $cl='is-red';
+                        ?>
+                        <?= renderMinibox ($cl,'🔀 ZWZ akt. Import/Export',$zwzPower . ' ' . $zwzPowerUnit) ?>
+                        <?= renderMinibox ('','📊 Ges. Import/Export SWR(TS) ',coh_v($d, 'TS_E_in_108') . ' kWh' . '<br>' . coh_v($d, 'TS_E_out_208') . ' kWh') ?>
                     </div>
                 </div>
             </div>
@@ -185,32 +218,23 @@ gridDraw	aus dem Stromnetz bezogen
                     */
                     ?>
                     <div class="coh-mini-grid">
-                        <?= renderMinibox ('','☀️ Solar heute',coh_teile ($IQTodayWorkAll['generation'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQTodayWorkAll['consumption'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋  Akku geladen',coh_teile($IQTodayWorkAll['batteryFeed'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋️ Akku entnommen',coh_teile($IQTodayWorkAll['batteryDraw'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','⚡️ Netz eingespeist',coh_teile($IQTodayWorkAll['gridFeed'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','⚡️ Netz entnommen',coh_teile($IQTodayWorkAll['gridDraw'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Solar heute',coh_wh_to_kwh($IQTodayWorkAll['generation'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','🏠 Eigenverbrauch',coh_wh_to_kwh($IQTodayWorkAll['consumption'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Akku geladen',coh_wh_to_kwh($IQTodayWorkAll['batteryFeed'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Akku entnommen',coh_wh_to_kwh($IQTodayWorkAll['batteryDraw'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Netz eingespeist',coh_wh_to_kwh($IQTodayWorkAll['gridFeed'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Netz entnommen',coh_wh_to_kwh($IQTodayWorkAll['gridDraw'] ?? null) .' kWh') ?>
                     </div>
                 </div>
             </div>
-            <div class="coh-hero coh-hero-today">
-                <div class="coh-hero-text">
-                    <?php 
-                        $erstesJahr = array_key_first($IQliveTime['years']);
-                        $letzterJahr = array_key_last($IQliveTime['years']);
-                    ?>
-                    <div class="coh-hero-label">Werte gesamt <?= $erstesJahr ?> - <?= $letzterJahr?></div>
-                    <div class="coh-mini-grid">
-                        <?= renderMinibox ('','📊  Ges. Import/Export SWR(TS) ',coh_teile (coh_v($d, 'TS_E_in_108'),1) . ' kWh' . '<br>' . coh_teile (coh_v($d, 'TS_E_out_208'),1) . ' kWh') ?>
-                        <?= renderMinibox ('','☀️ Solar ',coh_teile ($IQliveTime['generation'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQliveTime['consumption'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋️ Akku geladen',coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋 Akku entnommen',coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','⚡️ Netz eingespeist',coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','⚡️ Netz entnommen',coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') ?>
-                    </div>
-                </div>
+        </div>
+        <div class="coh-card">
+            <div class="coh-card-title">🔥 Heizstab</div>
+            <div class="coh-mini-grid">
+                <?= renderMinibox ('','🌡️ Heizstab Temp1',coh_d($d, 'ELaktTemp1').'<br>'.coh_v($d, 'ELaktTemp1') . ' °C') ?>
+                <?= renderMinibox ('','🌡️ Heizstab Temp2',coh_v($d, 'ELaktTemp2') . ' °C') ?>
+                <?= renderMinibox ('','⚡ Heizstab Akt. Leistung',coh_v($d, 'ELaktPwr') . ' kW') ?>
+                <?= renderMinibox ('','🔥 BoostStatus',coh_v($d, 'ELaktboostactive')) ?>
             </div>
         </div>
         <details class="coh-toggle">

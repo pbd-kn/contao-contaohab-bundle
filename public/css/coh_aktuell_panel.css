@@ -92,6 +92,10 @@
     width: 100%;
 }
 
+.coh-hero-today .coh-hero-text {
+    grid-column: 1 / -1;
+}
+
 .coh-gauge-wrap {
     width: 90px;
 }
@@ -129,7 +133,7 @@
     font-weight: 700;
     //color: var(--coh-blue);
 }
-.coh-mini-head {    /* sorgtz dafür dass icon und text nebeeinander stehn */
+.coh-mini-head {    /* sorgtz dafÃ¼r dass icon und text nebeeinander stehn */
     display: flex;
     align-items: center;
     gap: 6px;
@@ -198,11 +202,52 @@
 
 .coh-toggle-body {
     padding: 10px;
+    display: block;
 }
 
 .coh-pre {
     font-size: 13px;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 0;
+}
+
+.coh-toggle-body > .coh-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    margin-top: 0 !important;
+    white-space: normal;
+}
+
+.coh-toggle-body > .coh-row + .coh-row {
+    margin-top: 8px !important;
+}
+
+.coh-toggle-body > .coh-row > .coh-label {
+    flex: 0 0 auto;
+}
+
+.coh-toggle-body > .coh-row > .coh-value {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: normal;
+}
+
+/* Die von renderArray() erzeugten Intervalle links nebeneinander anzeigen. */
+.coh-toggle-body > .coh-row + .coh-row .coh-pre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+.coh-toggle-body > .coh-row + .coh-row .coh-pre > div {
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 5px;
+    margin-left: 0 !important;
 }
 
 /* =========================================

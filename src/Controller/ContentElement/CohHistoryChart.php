@@ -7,12 +7,10 @@ use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
-use PbdKn\ContaoContaohabBundle\Service\SyncService;
-use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
 
 #[AsContentElement(CohHistoryChart::TYPE, category: 'COH')]
 class CohHistoryChart extends AbstractContentElementController
@@ -20,9 +18,7 @@ class CohHistoryChart extends AbstractContentElementController
     public const TYPE = 'coh_history_chart';
 
     public function __construct(
-        private readonly Connection $connection,
-        private readonly SyncService $syncService,
-        private readonly LoggerService $logger
+        private readonly SensorManager $sensorManager
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -50,12 +46,11 @@ class CohHistoryChart extends AbstractContentElementController
         $templateName = $model->coh_history_template ?: 'coh_history_template';
         $template = $this->createTemplate($model, $templateName);
 
-        $this->syncService->sync();
-
         $unitField  = 'unit_chart_' . $model->id;
         $valueField = 'value_chart_' . $model->id;
 
-        $allowedUnits = ['day', 'week', 'month', 'year'];
+        // Die Ampere.IQ-History-Endpunkte werden derzeit tageweise abgefragt.
+        $allowedUnits = ['day'];
 
         $unit = (string) $request->query->get($unitField, 'day');
         if (!in_array($unit, $allowedUnits, true)) {
@@ -96,18 +91,23 @@ class CohHistoryChart extends AbstractContentElementController
 
         if (!empty($selectedSensors)) {
 
-            $rows = $this->connection->fetchAllAssociative(
-                'SELECT sv.tstamp, sv.sensorID, sv.sensorValue, sv.sensorEinheit,
-                        s.sensorTitle, s.outputMode
-                 FROM tl_coh_sensorvalue sv
-                 LEFT JOIN tl_coh_sensors s ON sv.sensorID = s.sensorID
-                 WHERE sv.tstamp >= ? AND sv.tstamp < ?
-                 AND sv.sensorID IN (?)
-                 AND s.sensorActive = "1"
-                 ORDER BY sv.sensorID ASC, sv.tstamp ASC',
-                [$start->getTimestamp(), $end->getTimestamp(), $selectedSensors],
-                [\PDO::PARAM_INT, \PDO::PARAM_INT, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-            );
+            $rows = [];
+            foreach ($this->sensorManager->fetchAll($selectedSensors, $currentValue) as $row) {
+                $row['sensorTitle'] ??= $row['sensorID'] ?? '';
+                $row['outputMode'] ??= 'absolute';
+                if (!empty($row['historyPoints'])) {
+                    foreach ($row['historyPoints'] as $point) {
+                        $historyRow = $row;
+                        $historyRow['tstamp'] = (new \DateTimeImmutable($point['x']))->getTimestamp();
+                        $historyRow['sensorValue'] = $point['y'];
+                        unset($historyRow['historyPoints']);
+                        $rows[] = $historyRow;
+                    }
+                    continue;
+                }
+                $row['tstamp'] = (new \DateTimeImmutable($currentValue))->getTimestamp();
+                $rows[] = $row;
+            }
 
             // gruppieren
             $grouped = [];

@@ -163,17 +163,27 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['coh_aktuell_template'] = [
 
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['selectedSensors'] = [
-    'label' => ['Sensorvariablen', 'W�hlen Sie die Sensorvariablen aus, die angezeigt werden sollen.'],
+    'label' => ['Sensorvariablen', 'Wählen Sie einen Sensor aus, tippen Sie zum Suchen und wiederholen Sie dies für weitere Sensoren. Gesucht werden kann nach Quelle, Bezeichnung oder Sensor-ID.'],
     'inputType' => 'select',
-    'eval' => ['multiple' => true, 'chosen' => true, 'tl_class' => 'clr'],
-    'options_callback' => function () {
+    'eval' => [
+        'multiple' => true,
+        'chosen' => true,
+        'tl_class' => 'clr',
+    ],
+    'options_callback' => static function (): array {
         $db = \Contao\System::getContainer()->get('database_connection');
-        $rows = $db->fetchAllAssociative("SELECT sensorID, sensorTitle FROM tl_coh_sensors WHERE sensorActive='1' ORDER BY sensorTitle, sensorID");
+        $rows = $db->fetchAllAssociative(
+            "SELECT sensorID, sensorTitle, sensorSource
+             FROM tl_coh_sensors
+             WHERE sensorActive='1'
+             ORDER BY sensorSource, sensorTitle, sensorID"
+        );
 
         $options = [];
         foreach ($rows as $row) {
+            $source = $row['sensorSource'] ?: 'Ohne Quelle';
             $title = $row['sensorTitle'] ?: $row['sensorID'];
-            $options[$row['sensorID']] = sprintf('%s (%s)', $title, $row['sensorID']);
+            $options[$source][$row['sensorID']] = sprintf('%s - %s', $title, $row['sensorID']);
         }
 
         return $options;

@@ -7,12 +7,11 @@ use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
-use PbdKn\ContaoContaohabBundle\Service\SyncService;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
 
 #[AsContentElement(CohAktuellChart::TYPE, category: 'COH')]
 class CohAktuellChart extends AbstractContentElementController
@@ -23,9 +22,8 @@ class CohAktuellChart extends AbstractContentElementController
     private string $baseSet = "http://192.168.178.65:5333/trio/set/";
 
     public function __construct(
-        private readonly Connection $connection,
-        private readonly SyncService $syncService,
-        private readonly LoggerService $logger
+        private readonly LoggerService $logger,
+        private readonly SensorManager $sensorManager
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -56,73 +54,24 @@ class CohAktuellChart extends AbstractContentElementController
         $this->addCssOnce('bundles/pbdkncontaocontaohab/css/coh_aktuell_panel.css');
         $templateName = $model->coh_aktuell_template ?: 'ce_coh_aktuell_chart';
         $template = $this->createTemplate($model, $templateName);
-        $resSync = $this->syncService->sync();
-        if ($resSync['status'] !== 'OK') { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>".$resSync['status']; }
-        $template->syncResult = $resSync;
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
         if (!empty($selectedSensors)) {
-            // s1 sensorValue s3 sensor
-        $rows = $this->connection->fetchAllAssociative(
-            '
-                SELECT 
-                sensorvalue_id,
-                sensorvalue_tstamp,
-                sensorID,
-                sensorValue,
-                sensorEinheit,
-                sensorValueType,
-                sensorSource,
-                sensor_config_id,
-                sensor_config_tstamp,
-                sensorTitle,
-                config_sensorEinheit,
-                outputMode,
-                sensorlokalid
-                FROM (
-                    SELECT
-                        s1.id AS sensorvalue_id,
-                        s1.tstamp AS sensorvalue_tstamp,
-                        s1.sensorID,
-                        s1.sensorValue,
-                        s1.sensorEinheit,
-                        s1.sensorValueType,
-                        s1.sensorSource,
-                        s3.id AS sensor_config_id,
-                        s3.tstamp AS sensor_config_tstamp,
-                        s3.sensorTitle,
-                        s3.sensorEinheit AS config_sensorEinheit,
-                        s3.outputMode,
-                        s3.sensorlokalid,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY s1.sensorID
-                            ORDER BY s1.tstamp DESC, s1.id DESC
-                ) rn
-                FROM tl_coh_sensorvalue s1
-                LEFT JOIN tl_coh_sensors s3
-                ON s1.sensorID = s3.sensorID
-                WHERE s1.sensorID IN (?)
-                  AND s3.sensorActive = "1"
-                  AND s1.sensorValue IS NOT NULL
-                  AND s1.sensorValue <> \'\'
-        ) x
-        WHERE rn = 1
-        ORDER BY sensorID
-        ',
-        [$selectedSensors],
-        [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-    );
+            $rows = $this->sensorManager->fetchAll($selectedSensors);
             foreach ($rows as $row) {
                 $sensorID = $row['sensorID'];   // ✅ DAS ist dein Key
                 //$ts = date('d.m.Y H:i', (int) $row['sensorvalue_tstamp']);
                 $val = is_numeric($row['sensorValue']) ? round((float)$row['sensorValue'], 2) : $row['sensorValue'];
                 $data[$sensorID]['sensorValue']   = $val;
                 $data[$sensorID]['sensorID']      = $row['sensorID'];
-                $data[$sensorID]['sensorTitle']   = $row['sensorTitle'];
+                $data[$sensorID]['sensorTitle']   = $row['sensorTitle'] ?? $sensorID;
                 $data[$sensorID]['sensorEinheit'] = $row['sensorEinheit'];
-                $data[$sensorID]['sensorDatum'] = !empty($row['sensorvalue_tstamp']) ? date('d.m.Y H:i', (int)$row['sensorvalue_tstamp']) : '0.0.0 00:00';
-                $data[$sensorID]['sensorConfigDatum'] = !empty($row['sensor_config_tstamp']) ? date('d.m.Y H:i', (int)$row['sensor_config_tstamp']) : '';
-                $this->logger->debugMe("Aktuell {$sensorID} = {$val}");
+                $data[$sensorID]['sensorDatum'] = date('d.m.Y H:i');
+                $data[$sensorID]['sensorConfigDatum'] = '';
+                $logValue = is_array($val)
+                    ? json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                    : (string) $val;
+                $this->logger->debugMe("Aktuell {$sensorID} = {$logValue}");
             }        
         }
 
@@ -131,12 +80,12 @@ class CohAktuellChart extends AbstractContentElementController
         $template->ajaxToken = 'COH_CODE';
 
         // --- Sync Info ---
-        $result = $this->connection->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'sensorvalue_pull'")->fetchOne();
+        $result = false;
 
         $template->lastPullSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
 
         // --- Letzte Änderung Sensorwerte ---
-        $lastChange = $this->connection->executeQuery("SELECT MAX(tstamp) FROM tl_coh_sensorvalue")->fetchOne();
+        $lastChange = time();
         if ($lastChange) {
             $template->lastSensorChange = date('d.m.Y H:i', (int)$lastChange);
             $diff = time() - (int)$lastChange;
@@ -147,7 +96,7 @@ class CohAktuellChart extends AbstractContentElementController
         }
 
         // --- Push Sync ---
-        $result = $this->connection->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'config_push'")->fetchOne();
+        $result = false;
         $template->lastPushSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
 
         return $template->getResponse();

@@ -39,11 +39,9 @@ $GLOBALS['BE_MOD']['contao_hab']['RemotCfg'] = array (
 $GLOBALS['BE_MOD']['contao_hab']['sync_log'] = [
     'tables' => ['tl_coh_sync_log'],
 ];
-$GLOBALS['BE_MOD']['contao_hab']['Settings'] = [
-    'settings' => [
-        'tables' => ['tl_coh_settings'],
-        'icon'   => 'system/themes/flexible/icons/settings.svg'
-    ]
+$GLOBALS['BE_MOD']['contao_hab']['sensorcollector_settings'] = [
+    'tables' => ['tl_coh_sensorcollector_settings'],
+    'icon' => 'system/themes/flexible/icons/settings.svg',
 ];
 /**
  * Models

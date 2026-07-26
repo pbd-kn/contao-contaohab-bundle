@@ -1,13 +1,17 @@
 <?php
-    function renderArray($arr) {
-            foreach ($arr as $key => $value) {
+    function renderArray($arr, string $prefix = '') {
+        foreach ($arr as $key => $value) {
+            $escapedKey = str_replace(["\\", "'"], ["\\\\", "\\'"], (string) $key);
+            $path = $prefix === '' ? (string) $key : $prefix . "['" . $escapedKey . "']";
             if (is_array($value)) {
-                echo "<div><strong>$key:</strong></div>";
+                echo '<div><strong>' . htmlspecialchars($path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ':</strong></div>';
                 echo "<div style='margin-left:15px'>";
-                renderArray($value);
+                renderArray($value, $path);
                 echo "</div>";
             } else {
-                echo "<div>$key: $value</div>";
+                $displayValue = $value === null ? 'null' : (is_bool($value) ? ($value ? 'true' : 'false') : (string) $value);
+                echo '<div><span class="coh-sensor-key">' . htmlspecialchars($path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                    . '</span> : ' . htmlspecialchars($displayValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</div>';
             }
         }
     }
@@ -32,7 +36,7 @@
 
     <input type="text"
         id="sensorFilter"
-        placeholder="Sensor suchen (* möglich) Auswahl innerhalb der Gruppen"
+        placeholder="Sensor suchen (* möglich) "
         style="width:500px;margin-bottom:10px;">
     <form method="get">
         <div id="sensorList">
@@ -67,7 +71,31 @@
                 </tr>
                 <tr>
                     <td><b>Letzter Wert</b></td>
-                    <td> <?= $sensor['sensorValue'] ?> <?= $sensor['sensorEinheit'] ?></td>
+                    <td>
+                        <?php
+                            $sensorValue = $sensor['sensorValue'] ?? null;
+                            $sensorValueArray = null;
+
+                            if (is_array($sensorValue)) {
+                                $sensorValueArray = $sensorValue;
+                            } elseif (is_object($sensorValue)) {
+                                $sensorValueArray = (array) $sensorValue;
+                            } elseif (is_string($sensorValue)) {
+                                $decodedValue = json_decode($sensorValue, true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($decodedValue)) {
+                                    $sensorValueArray = $decodedValue;
+                                }
+                            }
+                        ?>
+                        <?php if ($sensorValueArray !== null): ?>
+                            <div class="coh-sensor-array">
+                                <?php renderArray($sensorValueArray, 'sensorValueArray'); ?>
+                            </div>
+                        <?php else: ?>
+                            <?= htmlspecialchars((string) $sensorValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                            <?= htmlspecialchars((string) ($sensor['sensorEinheit'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <tr>
                     <td><b>Einheit</b></td>
@@ -95,49 +123,19 @@
 </div>
 
 <style>
-.sensorGroup{
-    border:1px solid #ccc;
-    margin-bottom:8px;
+.sensorItem {
+    display: block;
+    margin: 0 0 4px;
+    line-height: 1.35;
 }
-.groupHeader{
-    background:#eee;
-    padding:6px;
-    cursor:pointer;
-    font-weight:bold;
-}
-.groupContent{
-    padding:6px;
-    display:none;
-}
-.sensorItem{
-    display:block;
-}
-.arrow{
-    display:inline-block;
-    width:0;
-    height:0;
-    border-top:5px solid transparent;
-    border-bottom:5px solid transparent;
-    border-left:7px solid #333;
-    margin-right:6px;
-    transition: transform 0.2s;
-}
-.groupHeader.open .arrow{
-    transform: rotate(90deg);
+
+.sensorItem input[type="checkbox"] {
+    margin: 0 6px 0 0;
+    vertical-align: middle;
 }
 </style>
-<script>
 
-function toggleGroup(header){
-    const content = header.nextElementSibling;
-    if(content.style.display === "block") {
-        content.style.display = "none";
-        header.classList.remove("open");
-    } else {
-        content.style.display = "block";
-        header.classList.add("open");
-    }
-}
+<script>
 document.getElementById('sensorFilter').addEventListener('keyup', function(){
     let filter = this.value.toLowerCase();
     /* Wildcard entfernen */

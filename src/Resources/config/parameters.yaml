@@ -1,3 +1,19 @@
 #config/parameters.yaml
 parameters:
+    coh_sensors.ampere_iq_username: ''
+    coh_sensors.ampere_iq_password: ''
+    coh_sensors.http_timeout: 20
+    coh_sensors.http_connect_timeout: 10
+    coh_sensors.heizstab:
+        cloud_base_url: 'https://api.my-pv.com/api/v1'
+        local_login_path: '/auth.jsn'
+        local_password: ''
+        local_password_field: 'pw'
+        insecure_tls: false
+    coh_sensors.ampere_iq_params_file: 'C:/wampneu/www/co5/co5Bundles/COH-Sensorcollector/execScripts/task_solar_params.json'
+    coh_sensors.heizstab_params_file: 'C:/wampneu/www/co5/co5Bundles/COH-Sensorcollector/execScripts/task_heizstab_params.json'
+    coh_sensors.ampere_iq_user: '%env(default:coh_sensors.ampere_iq_username:COH_AMPERE_IQ_USERNAME)%'
+    coh_sensors.ampere_iq_pass: '%env(default:coh_sensors.ampere_iq_password:COH_AMPERE_IQ_PASSWORD)%'
+    coh_sensors.ampere_iq_retries: 3
+    coh_sensors.ampere_iq_retry_delay: 10
 

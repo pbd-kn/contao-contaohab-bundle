@@ -39,9 +39,6 @@ if (is_string($headline)) {
   <div style="display:flex">
     <select class="button button-tonal-md" style="margin-right: 10px;" name="<?= $this->unitField ?>" onchange="this.form.submit()">
       <option value="day" <?= $this->currentUnit === 'day' ? 'selected' : '' ?>>Tag</option>
-      <option value="week" <?= $this->currentUnit === 'week' ? 'selected' : '' ?>>Woche</option>
-      <option value="month" <?= $this->currentUnit === 'month' ? 'selected' : '' ?>>Monat</option>
-      <option value="year" <?= $this->currentUnit === 'year' ? 'selected' : '' ?>>Jahr</option>
     </select>
 
     <button class="button button-tonal-md" type="submit"

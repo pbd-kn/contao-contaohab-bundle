@@ -128,7 +128,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'sensorLokalId' => [
-            'label' => ['Lokale ID', 'Diese Referenz steht dem Service auf dem Raspberry zur VerfÃ¼gung.'],
+            'label' => ['Lokale ID', 'Raspberry-Gruppen: raspberry.all, raspberry.system oder raspberry.heating. Einzelwerte wie bisher, zum Beispiel heating.serverStatus.'],
             'inputType' => 'text',
             'search'    => true,
             'eval'      => ['maxlength'=>255,'tl_class'=>'w50'],

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.1">
+  <file datatype="php" original="contao/languages/en/modules.php" source-language="en" target-language="de">
+    <body>
+      <trans-unit id="MOD.sensorcollector_settings.0">
+        <source>Sensorcollector settings</source>
+        <target>Sensorcollector-Einstellungen</target>
+      </trans-unit>
+      <trans-unit id="MOD.sensorcollector_settings.1">
+        <source>Manage IQBox and heating rod credentials</source>
+        <target>IQBox- und Heizstab-Zugangsdaten verwalten</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

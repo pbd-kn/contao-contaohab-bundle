@@ -1,0 +1,51 @@
+<?php
+
+$GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
+    'config' => [
+        'dataContainer' => Contao\DC_Table::class,
+        'enableVersioning' => true,
+        'sql' => [
+            'keys' => ['id' => 'primary'],
+        ],
+    ],
+    'list' => [
+        'sorting' => ['mode' => 1, 'fields' => ['id'], 'flag' => 11],
+        'label' => ['fields' => ['title'], 'format' => '%s'],
+        'global_operations' => ['all' => ['href' => 'act=select', 'class' => 'header_edit_all']],
+        'operations' => [
+            'edit' => ['href' => 'act=edit', 'icon' => 'edit.svg'],
+            'copy' => ['href' => 'act=copy', 'icon' => 'copy.svg'],
+            'delete' => ['href' => 'act=delete', 'icon' => 'delete.svg', 'attributes' => 'onclick="if(!confirm(this.dataset.msg))return false;" data-msg="'.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '').'"'],
+        ],
+    ],
+    'palettes' => [
+        'default' => '{general_legend},title;{ampere_legend},ampereUsername,amperePassword,ampereRetries,ampereRetryDelay,lifetimeCacheSeconds;{heizstab_local_legend},heizstabLocalEnabled,heizstabUrl,heizstabLoginPath,heizstabPassword,heizstabPasswordField,heizstabCookieFile,heizstabInsecureTls;{heizstab_cloud_legend},heizstabCloudEnabled,heizstabCloudBaseUrl,heizstabCloudSerial,heizstabCloudApiToken;{raspberry_api_legend},raspberryApiEnabled,raspberryApiBaseUrl,raspberryApiToken,raspberryApiTimeout,raspberryApiCacheSeconds',
+    ],
+    'fields' => [
+        'id' => ['sql' => "int(10) unsigned NOT NULL auto_increment"],
+        'tstamp' => ['sql' => "int(10) unsigned NOT NULL default 0"],
+        'title' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'maxlength' => 128, 'tl_class' => 'w50'], 'sql' => "varchar(128) NOT NULL default ''"],
+        'ampereUsername' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'amperePassword' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'ampereRetries' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 3"],
+        'ampereRetryDelay' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 10"],
+        'lifetimeCacheSeconds' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "int(10) unsigned NOT NULL default 60"],
+        'ampereTokens' => ['sql' => "blob NULL"],
+        'heizstabLocalEnabled' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default '1'"],
+        'heizstabUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'heizstabLoginPath' => ['inputType' => 'text', 'eval' => ['maxlength' => 128, 'tl_class' => 'w50'], 'sql' => "varchar(128) NOT NULL default '/auth.jsn'"],
+        'heizstabPassword' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'heizstabPasswordField' => ['inputType' => 'text', 'eval' => ['maxlength' => 64, 'tl_class' => 'w50'], 'sql' => "varchar(64) NOT NULL default 'pw'"],
+        'heizstabCookieFile' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'vendor/pbd-kn/contao-contaohab-bundle/contao/config/heizstabCookieFile.txt'"],
+        'heizstabInsecureTls' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default ''"],
+        'heizstabCloudEnabled' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default ''"],
+        'heizstabCloudBaseUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'https://api.my-pv.com/api/v1'"],
+        'heizstabCloudSerial' => ['inputType' => 'text', 'eval' => ['maxlength' => 64, 'tl_class' => 'w50'], 'sql' => "varchar(64) NOT NULL default ''"],
+        'heizstabCloudApiToken' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'raspberryApiEnabled' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default ''"],
+        'raspberryApiBaseUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'http://192.168.178.49'"],
+        'raspberryApiToken' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'raspberryApiTimeout' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 10"],
+        'raspberryApiCacheSeconds' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "int(10) unsigned NOT NULL default 15"],
+    ],
+];

@@ -324,6 +324,7 @@ private function runPull(mysqli $db, string $raspiBase): ?array
             'tl_coh_sensors',
             'tl_coh_cfgcollect',
             'tl_coh_geraete',
+            'tl_coh_sensorcollector_settings',
         ];
         foreach ($tables as $table) {
             $this->logger->debugMe("Push Tabelle: $table");

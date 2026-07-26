@@ -13,8 +13,7 @@ use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
-use PbdKn\ContaoContaohabBundle\Service\SyncService;
-use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
 
 #[AsContentElement(SensorElement::TYPE, category: 'COH', template: 'ce_coh_sensorelement')]
 class SensorElement extends AbstractContentElementController
@@ -23,8 +22,7 @@ class SensorElement extends AbstractContentElementController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly SyncService $syncService,
-        private readonly LoggerService $logger
+        private readonly SensorManager $sensorManager
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -49,14 +47,11 @@ class SensorElement extends AbstractContentElementController
             return new Response($wildcard->parse());
         }
         /*-----------------------------------------
-         * Template wählen
+         * Template wÃ¤hlen
          * -----------------------------------------
         */
         $templateName = $model->coh_template ?: 'ce_coh_sensorelement';
         $template = $this->createTemplate($model, $templateName);
-        $resSync = $this->syncService->sync();
-        if ($resSync['status'] !== 'OK') { $template->syncError = "<br>Syncronisation mit rasperry fehlgeschlagen.<br>".$resSync['status']; }
-        $template->syncResult = $resSync;
         /*
          * -----------------------------------------
          * eindeutiger Formularparameter
@@ -79,7 +74,7 @@ class SensorElement extends AbstractContentElementController
         }
         /*
          * -----------------------------------------
-         * Alle Sensoren laden (für Checkboxliste)
+         * Alle Sensoren laden (fÃ¼r Checkboxliste)
          * -----------------------------------------
         */
         $allSensors = $this->connection->fetchAllAssociative(
@@ -90,42 +85,16 @@ class SensorElement extends AbstractContentElementController
         );
         /*
          * -----------------------------------------
-         * Gewählte Sensoren laden + letzter Wert
+         * GewÃ¤hlte Sensoren laden + letzter Wert
          * -----------------------------------------
         */
         $sensors = [];
 
 
         if (!empty($selectedSensors)) {
-            $rows = $this->connection->fetchAllAssociative(
-                "SELECT 
-                    s.*,
-                    sv.sensorValue,
-                    sv.tstamp,
-                    sv.sensorEinheit AS svsensorEinheit,
-                    sv.sensorValueType AS svsensorValueType
-                FROM tl_coh_sensors s
-                LEFT JOIN (
-                    SELECT v1.*
-                    FROM tl_coh_sensorvalue v1
-                    INNER JOIN (
-                        SELECT sensorID, MAX(tstamp) AS max_tstamp
-                        FROM tl_coh_sensorvalue
-                        GROUP BY sensorID
-                    ) v2 
-                    ON v1.sensorID = v2.sensorID 
-                    AND v1.tstamp = v2.max_tstamp
-                ) sv ON sv.sensorID = s.sensorID
-                WHERE s.sensorActive='1'
-                AND s.sensorID IN (?)
-                ORDER BY s.sensorTitle",
-                [$selectedSensors],
-                [Connection::PARAM_STR_ARRAY]
-            );
+            $rows = $this->sensorManager->fetchAll($selectedSensors);
             foreach ($rows as $row) {
-                $row['date'] = !empty($row['tstamp']) ? date('d.m.Y H:i:s', (int)$row['tstamp']) : '';
-                if (!empty($row['svsensorEinheit'])) { $row['sensorEinheit'] = $row['svsensorEinheit']; }
-                if (!empty($row['svsensorValueType'])) { $row['sensorValueType'] = $row['svsensorValueType']; }
+                $row['date'] = date('d.m.Y H:i:s');
                 $sensors[] = $row;
             }
         }        
@@ -140,23 +109,23 @@ class SensorElement extends AbstractContentElementController
         $template->fieldName = $field;
         
         // --- Sync Info ---
-        $result = $this->connection->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'sensorvalue_pull'")->fetchOne();
+        $result = false;
 
         $template->lastPullSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
 
-        // --- Letzte Änderung Sensorwerte ---
-        $lastChange = $this->connection->executeQuery("SELECT MAX(tstamp) FROM tl_coh_sensorvalue")->fetchOne();
+        // --- Letzte Ã„nderung Sensorwerte ---
+        $lastChange = time();
         if ($lastChange) {
             $template->lastSensorChange = date('d.m.Y H:i', (int)$lastChange);
             $diff = time() - (int)$lastChange;
-            $template->lastSensorChangeStatus = ($diff > 900) ? 'Fehler: Letzter Eintrag älter als 15 Min' : 'OK';
+            $template->lastSensorChangeStatus = ($diff > 900) ? 'Fehler: Letzter Eintrag Ã¤lter als 15 Min' : 'OK';
         } else {
             $template->lastSensorChange = 'Keine Daten';
             $template->lastSensorChangeStatus = 'Fehler';
         }
 
         // --- Push Sync ---
-        $result = $this->connection->executeQuery("SELECT last_sync FROM tl_coh_sync_log WHERE sync_type = 'config_push'")->fetchOne();
+        $result = false;
         $template->lastPushSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
         return $template->getResponse();
     }

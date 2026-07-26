@@ -9,6 +9,10 @@ services:
         bind:
             #$projectDir: '%kernel.project_dir%'
 
+    _instanceof:
+        PbdKn\ContaoContaohabBundle\Service\Sensors\SensorFetcherInterface:
+            tags: ['sensor.fetcher']
+
 
     PbdKn\ContaoContaohabBundle\:
         resource: '../../../src/'
@@ -41,16 +45,10 @@ services:
            $syncService: '@PbdKn\ContaoContaohabBundle\Service\SyncService'
         tags: ['console.command']
 
-#    PbdKn\ContaoContaohabBundle\Sensor\SensorManager:
-#        public: true
-#        arguments:
-#          $fetchers: !tagged_iterator sensor.fetcher
+    PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager:
+        arguments:
+          $fetchers: !tagged_iterator sensor.fetcher
 
-    PbdKn\ContaoContaohabBundle\Sensor\IQBoxSensorService:
-        tags: ['sensor.fetcher']
-
-    PbdKn\ContaoContaohabBundle\Sensor\TasmotaSensorService:
-        tags: ['sensor.fetcher']
-
-    PbdKn\ContaoContaohabBundle\Sensor\HeizstabSensorService:
-        tags: ['sensor.fetcher']
+    PbdKn\ContaoContaohabBundle\Service\Sensors\HeizstabSensorService:
+        arguments:
+          $paramsFile: '%coh_sensors.heizstab_params_file%'

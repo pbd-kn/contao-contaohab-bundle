@@ -12,16 +12,14 @@ use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Doctrine\DBAL\Connection;
-use PbdKn\ContaoContaohabBundle\Service\SyncService;
+use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
 
 
 #[AsContentElement('canvas_ekd', category: 'COH')]
 class CanvasEKDController extends AbstractContentElementController
 {
     public function __construct(
-        private readonly Connection $connection,
-        private readonly SyncService $syncService
+        private readonly SensorManager $sensorManager
     ) {}
     
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -42,10 +40,6 @@ class CanvasEKDController extends AbstractContentElementController
         // ✅ Hier Template aus dem Modell verwenden (wenn gesetzt)
 
         $template = $this->createTemplate($model, $model->canvas_ekd_template ?: 'ce_canvas_ekd_default');
-        $error = $this->syncService->sync();              // Daten synchronisieren
-        if ($error !== null) {
-            $template->syncError = $error;
-        }
         // notwendige sensoren lesen
         $selectedSensors = [
             'IQbattery_94_battery_stateOfCharge',   // füllstand Akku
@@ -59,31 +53,23 @@ class CanvasEKDController extends AbstractContentElementController
             'ELaktPwr',                              // Leisung Heizstab
             'ELaktTemp2'
         ];
-        $placeholders = implode(',', array_fill(0, count($selectedSensors), '?'));
-
-            $rows = $this->connection->fetchAllAssociative(
-                'SELECT *
-                    FROM (
-                        SELECT s1.*, s3.sensorTitle,
-                            ROW_NUMBER() OVER (
-                                PARTITION BY s1.sensorID
-                                ORDER BY s1.tstamp DESC, s1.id DESC
-                            ) rn
-                    FROM tl_coh_sensorvalue s1
-                        LEFT JOIN tl_coh_sensors s3 ON s1.sensorID = s3.sensorID
-                            WHERE s1.sensorID IN (?)
-                                AND s1.sensorValue IS NOT NULL
-                                AND s1.sensorValue <> \'\'
-                    ) x
-                WHERE rn = 1
-                ORDER BY sensorID',
-                [$selectedSensors],
-                [\Doctrine\DBAL\Connection::PARAM_STR_ARRAY]
-            );
+        $rows = $this->sensorManager->fetchAll($selectedSensors);
         // daten der Sensoren speichern
         $dataSensor = [];
+        foreach ($selectedSensors as $sensorId) {
+            $dataSensor[$sensorId] = [
+                'time' => date('d.m.Y H:i'),
+                'label' => $sensorId,
+                'sensorTitle' => $sensorId,
+                'sensorId' => $sensorId,
+                'sensorValue' => 0,
+                'sensorEinheit' => '',
+                'sensorValueType' => '',
+                'sensorSource' => '',
+            ];
+        }
         foreach ($rows as $row) {
-            $ts = date('d.m.Y H:i', $row['tstamp']);
+            $ts = date('d.m.Y H:i');
 
             $id = $row['sensorID'];
             // Prüfen, ob numerisch (z. B. "12.3", "42", aber auch "3e5")
