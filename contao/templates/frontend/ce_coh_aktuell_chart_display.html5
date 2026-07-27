@@ -95,27 +95,48 @@
 //var_dump($live);
 //        renderArray($live);
         $raspberryAll = coh_v($d, 'Raspberry_All', []);    // Raspberry daten
-//var_dump($raspberryAll);
-//        renderArray($raspberryAll);
-        $raspberrySystem = $raspberryAll['system'];
-        $raspberryHeating = $raspberryAll['heating'];
+        if (is_string($raspberryAll)) {
+            $decodedRaspberry = json_decode($raspberryAll, true);
+            $raspberryAll = is_array($decodedRaspberry) ? $decodedRaspberry : [];
+        } elseif (!is_array($raspberryAll)) {
+            $raspberryAll = [];
+        }
+
+        $raspberryAvailable = isset($raspberryAll['system'])
+            && is_array($raspberryAll['system']);
+        $raspberrySystem = $raspberryAll['system'] ?? [];
+        $raspberryHeating = $raspberryAll['heating'] ?? [];
 //var_dump($raspberrySystem);
 
-        $HeizstabIntervalls = $raspberryHeating['intervals'];
+        $HeizstabIntervalls = is_array($raspberryHeating['intervals'] ?? null)
+            ? $raspberryHeating['intervals']
+            : [];
 //var_dump($intervalls);
 //        renderArray($HeizstabIntervalls);
-        $heizungprotocol = $raspberryHeating['protocol'] ;
+        $heizungprotocol = (string) ($raspberryHeating['protocol'] ?? '');
 //var_dump($heizungprotocol);
         //renderArray($heizungprotocol);
         $HZprotokollHasError = preg_match('/error|fehler/i', $heizungprotocol) === 1;
-        $heizstabServerOk = $raspberryHeating['serverStatus'];
+        $heizstabServerOk = $raspberryHeating['serverStatus'] ?? false;
         
-        $batteryPercent = $live['batterySoc'];
-        $batteryPower   = $live['batteryPower'];
+        $batteryPercent = $live['batterySoc'] ?? 0;
+        $batteryPower   = $live['batteryPower'] ?? 0;
         $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
         $IQTodayWorkAll = coh_v($d, 'IQ_Today_work', []);    // 
+        if (is_string($IQTodayWorkAll)) {
+            $decodedToday = json_decode($IQTodayWorkAll, true);
+            $IQTodayWorkAll = is_array($decodedToday) ? $decodedToday : [];
+        } elseif (!is_array($IQTodayWorkAll)) {
+            $IQTodayWorkAll = [];
+        }
 //        renderArray($IQTodayWorkAll);
         $IQliveTime = coh_v($d, 'IQ_Lifetime', []);   // liveTime Daten Iq_box
+        if (is_string($IQliveTime)) {
+            $decodedLifetime = json_decode($IQliveTime, true);
+            $IQliveTime = is_array($decodedLifetime) ? $decodedLifetime : [];
+        } elseif (!is_array($IQliveTime)) {
+            $IQliveTime = [];
+        }
 //        renderArray($IQliveTime);
 //        renderArray($IQliveTime['years']);
 /*
@@ -159,12 +180,12 @@ gridDraw	aus dem Stromnetz bezogen
                     ?>
                     <div class="coh-mini-grid">
                     
-                        <?= renderMinibox ('','🔋️ Füllstand Akku',$live['batterySoc']  .' % ') ?>
-                        <?= renderMinibox ('','🔋️ Leistung Batterie',coh_teile ($live['batteryPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile ($live['housePower'])  .' kW ') ?>
-                        <?= renderMinibox ('','🏠  Netzeinspeisung',coh_teile ($live['gridPower'])  .' kW ') ?>
-                        <?= renderMinibox ('','⚡💦️Heizstab',coh_teile ($live['heatingRodPower'])  .' kW ') ?>
+                        <?= renderMinibox ('','🔋️ Füllstand Akku',($live['batterySoc'] ?? '-')  .' % ') ?>
+                        <?= renderMinibox ('','🔋️ Leistung Batterie',coh_teile ($live['batteryPower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile ($live['housePower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','🏠  Netzeinspeisung',coh_teile ($live['gridPower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','⚡💦️Heizstab',coh_teile ($live['heatingRodPower'] ?? 0)  .' kW ') ?>
                         <?= renderMinibox ('','🌡️ Heizstab Temp1',coh_d($d, 'ELaktTemp1').'<br>'.coh_v($d, 'ELaktTemp1') . ' °C') ?>
                         <?= renderMinibox ('','🌡️ Heizstab Temp2',coh_v($d, 'ELaktTemp2') . ' °C') ?>
                         <?= renderMinibox ('','⚡  Heizstab Akt. Leistung',coh_v($d, 'ELaktPwr') . ' kW') ?>
@@ -197,8 +218,11 @@ gridDraw	aus dem Stromnetz bezogen
             <div class="coh-hero coh-hero-today">
                 <div class="coh-hero-text">
                     <?php 
-                        $erstesJahr = array_key_first($IQliveTime['years']);
-                        $letzterJahr = array_key_last($IQliveTime['years']);
+                        $years = is_array($IQliveTime['years'] ?? null)
+                            ? $IQliveTime['years']
+                            : [];
+                        $erstesJahr = $years !== [] ? array_key_first($years) : '-';
+                        $letzterJahr = $years !== [] ? array_key_last($years) : '-';
                     ?>
                     <div class="coh-hero-label">Werte gesamt <?= $erstesJahr ?> - <?= $letzterJahr?></div>
                     <div class="coh-mini-grid">
@@ -213,6 +237,18 @@ gridDraw	aus dem Stromnetz bezogen
                 </div>
             </div>
         </div>
+        <?php if (!$raspberryAvailable): ?>
+            <div class="coh-card">
+                <div class="coh-card-title">🖥️ Raspberry</div>
+                <div class="coh-row is-gray">
+                    <div class="coh-icon">ℹ️</div>
+                    <div class="coh-label">
+                        Raspberry-Daten sind nicht verfügbar.
+                        Der Raspberry ist möglicherweise nur lokal erreichbar.
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
         <details class="coh-toggle">
             <summary class="coh-row <?= $HZprotokollHasError ? 'is-red' : '' ?>">📝 HeizstabServer</summary>
             <div class="coh-toggle-body">
@@ -242,11 +278,13 @@ gridDraw	aus dem Stromnetz bezogen
         </details>
         <details class="coh-toggle">
             <?php
-                        $plattendiskUsageProzent = $raspberrySystem['diskUsage'] . '%';
-                        $plattendiskAll =  $raspberrySystem['diskCheckResult'];
-                        $plattenFS =  $raspberrySystem['diskFilesystem'];
-                        $plattendiskUsageTotal =  $raspberrySystem['diskTotalHuman'];
-                        $plattendiskUsageFS =  $raspberrySystem['diskUsedHuman'];
+                        $plattendiskUsageProzent = ($raspberrySystem['diskUsage'] ?? 0) . '%';
+                        $plattendiskAll = is_array($raspberrySystem['diskCheckResult'] ?? null)
+                            ? $raspberrySystem['diskCheckResult']
+                            : [];
+                        $plattenFS = $raspberrySystem['diskFilesystem'] ?? '-';
+                        $plattendiskUsageTotal = $raspberrySystem['diskTotalHuman'] ?? '-';
+                        $plattendiskUsageFS = $raspberrySystem['diskUsedHuman'] ?? '-';
 /*
                         diskUsage: 24.49
                         diskCheckResult:
@@ -282,6 +320,7 @@ gridDraw	aus dem Stromnetz bezogen
                 </div>
             </div>
         </details>
+        <?php endif; ?>
     </div>                <!-- ende stack -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
