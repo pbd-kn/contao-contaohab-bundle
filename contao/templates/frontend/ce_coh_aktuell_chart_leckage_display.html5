@@ -310,20 +310,6 @@
     ?>
 
     <div class="coh-stack">
-        <div class="coh-meta">
-            <div class="coh-meta-line">Push Tabellen: <?= $this->lastPullSync ?></div>
-            <div class="coh-meta-line">Stand Sensoren: <?= $this->lastSensorChange ?></div>
-            <?php if (($this->lastSensorChangeStatus ?? 'OK') !== 'OK'): ?>
-                <div class="coh-error">Status: <?= $this->lastSensorChangeStatus ?></div>
-            <?php endif; ?>
-
-            <?php if (!empty($this->syncError)): ?>
-                <div class="coh-error"><?= $this->syncError ?></div>
-            <?php endif; ?>
-            <?php if (!empty($this->syncResult)): ?>
-                <?php renderArray($this->syncResult); ?>
-            <?php endif; ?>
-        </div>
 
         <div class="coh-card">
             <div class="coh-card-title">🔋Akku &amp; 🌤️Solar</div>

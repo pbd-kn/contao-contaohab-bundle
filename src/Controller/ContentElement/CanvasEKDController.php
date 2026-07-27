@@ -40,57 +40,99 @@ class CanvasEKDController extends AbstractContentElementController
         // ✅ Hier Template aus dem Modell verwenden (wenn gesetzt)
 
         $template = $this->createTemplate($model, $model->canvas_ekd_template ?: 'ce_canvas_ekd_default');
-        // notwendige sensoren lesen
+
         $selectedSensors = [
-            'IQbattery_94_battery_stateOfCharge',   // füllstand Akku
-            'IQinverter_94_inverter_pvPower',       // Leistung Solar
-            'IQinverter_94_inverter_selfConsumptionPower', // Eigenverbrauch
-            'IQbattery_94_battery_power',            // Akku laden/entladen
-            'IQbattery_94_harmonized_power_in',
-            'IQbattery_94_harmonized_power_out',
-            'ZWZZaehlerPowerIn',                    // Power von SWR
-            'ZWZZaehlerPowerOut',                   // Power zu SWR
-            'ELaktPwr',                              // Leisung Heizstab
+            'IQ_Live',                               // sensorLokalId "live" aus der Ampere.IQ-Cloud
+            'IQ_Today',
             'ELaktTemp2'
         ];
         $rows = $this->sensorManager->fetchAll($selectedSensors);
-        // daten der Sensoren speichern
+
+        // Die ausgewählten Sensoren bleiben für alternative Canvas-Templates
+        // in der bisherigen, vollständig befüllten Struktur verfügbar.
         $dataSensor = [];
+        $timestamp = date('d.m.Y H:i');
         foreach ($selectedSensors as $sensorId) {
+            $row = $rows[$sensorId] ?? [];
+            $value = $row['sensorValue'] ?? 0;
+            $normalizedValue = $value;
+            if ( is_int($value) || is_float($value) || (is_string($value) && is_numeric($value)) ) {
+                $normalizedValue = (float) $value;
+            }
             $dataSensor[$sensorId] = [
-                'time' => date('d.m.Y H:i'),
+                'time' => $timestamp,
                 'label' => $sensorId,
-                'sensorTitle' => $sensorId,
+                'sensorTitle' => $row['sensorTitle'] ?? $sensorId,
                 'sensorId' => $sensorId,
-                'sensorValue' => 0,
-                'sensorEinheit' => '',
-                'sensorValueType' => '',
-                'sensorSource' => '',
+                'sensorValue' => $normalizedValue,
+                'sensorEinheit' => (string) ($row['sensorEinheit'] ?? ''),
+                'sensorValueType' => (string) ($row['sensorValueType'] ?? ''),
+                'sensorSource' => (string) ($row['sensorSource'] ?? ''),
             ];
         }
-        foreach ($rows as $row) {
-            $ts = date('d.m.Y H:i');
-
-            $id = $row['sensorID'];
-            // Prüfen, ob numerisch (z. B. "12.3", "42", aber auch "3e5")
-            if (is_numeric($row['sensorValue'])) {
-                $val = (float) $row['sensorValue'];
-            } else {
-                $val = $row['sensorValue']; // als Text übernehmen
-            }
-            $unitLabel = $row['sensorEinheit'] ?: '';
-            $sensorTitle = $row['sensorTitle'] ?: 'Kein Titel';
-            $dataSensor[$id]['time'] = $ts;
-            $dataSensor[$id]['label'] = $id;
-            $dataSensor[$id]['sensorTitle'] = $sensorTitle;
-            $dataSensor[$id]['sensorId'] = $id;
-            $dataSensor[$id]['sensorValue'] = $val;
-            $dataSensor[$id]['sensorEinheit'] = $unitLabel;
-            $dataSensor[$id]['sensorValueType'] = !empty($row['sensorValueType']) ? $row['sensorValueType'] : '';
-            $dataSensor[$id]['sensorSource'] = !empty($row['sensorSource']) ? $row['sensorSource'] : '';
-        }
-        
         $template->dataSensor = $dataSensor;
+
+        $iqLive = $dataSensor['IQ_Live']['sensorValue'];
+        if (!is_array($iqLive)) {
+            $iqLive = [];
+        }
+        $heatingRodTemperature = $dataSensor['ELaktTemp2']['sensorValue'];
+        $temperatureUnit = $dataSensor['ELaktTemp2']['sensorEinheit'];
+
+        $iqToday = $dataSensor['IQ_Today']['sensorValue'];
+        if (!is_array($iqToday)) {
+            $iqToday = [];
+        }
+        $todayWork = isset($iqToday['work']) && is_array($iqToday['work'])
+            ? $iqToday['work']
+            : $iqToday;
+        $todayWorkLabels = [
+            'generation' => 'Solarerzeugung',
+            'consumption' => 'Gesamtverbrauch',
+            'batteryFeed' => 'Batterieladung',
+            'batteryDraw' => 'Batterieentladung',
+            'gridFeed' => 'Netzeinspeisung',
+            'gridDraw' => 'Netzbezug',
+        ];
+        $todayWorkValues = [];
+        foreach ($todayWorkLabels as $field => $title) {
+            $valueWh = (float) ($todayWork[$field] ?? 0);
+            $todayWorkValues[] = [
+                'title' => $title,
+                'value' => number_format($valueWh / 1000, 2, ',', '.') . ' kWh',
+            ];
+        }
+
+        $selfSufficiency = $iqToday['selfSufficiency']['value'] ?? null;
+        if (!is_numeric($selfSufficiency)) {
+            $consumption = (float) ($todayWork['consumption'] ?? 0);
+            $gridDraw = (float) ($todayWork['gridDraw'] ?? 0);
+            $selfSufficiency = $consumption > 0
+                ? (1 - $gridDraw / $consumption) * 100
+                : 0;
+        }
+        $selfSufficiency = max(0, min(100, (float) $selfSufficiency));
+        array_unshift($todayWorkValues, [
+            'title' => 'Autarkiegrad',
+            'value' => number_format($selfSufficiency, 1, ',', '.') . ' %',
+            'featured' => true,
+        ]);
+
+        $template->todayWorkValues = $todayWorkValues;
+
+        $pvPower = (float) ($iqLive['pvPower'] ?? 0);
+        $housePower = (float) ($iqLive['housePower'] ?? 0);
+        $gridPower = (float) ($iqLive['gridPower'] ?? 0);
+        $batteryPower = (float) ($iqLive['batteryPower'] ?? 0);
+        $heatingRodPower = (float) ($iqLive['heatingRodPower'] ?? 0);
+        $batterySoc = (float) ($iqLive['batterySoc'] ?? 0);
+        $pvPowerKw = round($pvPower / 1000, 2);
+        $housePowerKw = round(abs($housePower) / 1000, 2);
+        $gridPowerKw = round(abs($gridPower) / 1000, 2);
+        $batteryPowerKw = round($batteryPower / 1000, 2);
+        $heatingRodPowerKw = round(abs($heatingRodPower) / 1000, 2);
+        $powerUnit = 'kW';
+        $socUnit = '%';
 
         $data = StringUtil::deserialize($model->canvas_ekd_data, true);
         $elements = [];
@@ -107,7 +149,7 @@ class CanvasEKDController extends AbstractContentElementController
                 'rotation' => (float)($row['rotation'] ?? 0),
                 'opacity' => (float)($row['opacity'] ?? 1),
             ];
-            if (in_array(strtolower($type ?? ''), ['bar'], true)) {
+            if (strtolower($type ?? '') === 'bar') {
                 $entry['value'] = (float)($row['value'] ?? 0);             // legt fest ob gescrollt wird
                 $entry['direction'] = $row['direction'] ?? 'up';
                 $entry['color'] = $row['color'] ?: '#f60';
@@ -116,20 +158,17 @@ class CanvasEKDController extends AbstractContentElementController
                 $entry['label'] = $bartype ;
                 switch ($bartype) {
                     case 'barsolar':
-                        $val = $entry['label'] .' '.$dataSensor['IQinverter_94_inverter_pvPower']['sensorValue'].' '.$dataSensor['IQinverter_94_inverter_pvPower']['sensorEinheit'];
                         $val ='';
                         $entry['label'] = $val ;
                         $entry['direction'] = 'down'; // oder jeder andere Wert aus deiner Select-Option 
-                        if ($dataSensor['IQinverter_94_inverter_pvPower']['sensorValue'] > 0) {
+                        if ($pvPower > 0) {
                           $entry['value'] = 100; // oder jeder andere Wert aus deiner Select-Option
                         } else {
                           $entry['value'] = 0; // oder jeder andere Wert aus deiner Select-Option
                         }
                         break;
                     case 'barakku':
-                        $val = $entry['label'].' '.$dataSensor['IQbattery_94_battery_stateOfCharge']['sensorValue'].' '.$dataSensor['IQbattery_94_battery_stateOfCharge']['sensorEinheit'];
-                        $val = $entry['label'].' '.$dataSensor['IQbattery_94_battery_power']['sensorValue'].' '.$dataSensor['IQbattery_94_battery_power']['sensorEinheit'];
-                        $valueNum = (float) $dataSensor['IQbattery_94_battery_power']['sensorValue'];
+                        $valueNum = $batteryPower;
                         //$val=$valueNum;
                         $val ='';
                         $entry['label'] = $val ;
@@ -146,16 +185,15 @@ class CanvasEKDController extends AbstractContentElementController
                         }
                         break;
                    case 'bareinspeisung':
-                        $val = $entry['label'] . ' '.$dataSensor['ZWZZaehlerPowerIn']['sensorValue'].' '.$dataSensor['ZWZZaehlerPowerIn']['sensorEinheit'];
-                        $val .= ' '.$dataSensor['ZWZZaehlerPowerOut']['sensorValue'].' '.$dataSensor['ZWZZaehlerPowerOut']['sensorEinheit'];
                         $val ='';
                         $entry['label'] = $val ;
-                        if ($dataSensor['ZWZZaehlerPowerIn']['sensorValue'] >= 0 ) {
+                        // Ampere.IQ: negativ = Einspeisung, positiv = Netzbezug.
+                        if ($gridPower < 0) {
                            $entry['direction'] = 'right'; // oder jeder andere Wert aus deiner Select-Option 
                         } else {
                            $entry['direction'] = 'left'; // oder jeder andere Wert aus deiner Select-Option 
                         }
-                        if ($dataSensor['ZWZZaehlerPowerIn']['sensorValue'] >= 0) {
+                        if (abs($gridPower) > 0.1) {
                           $entry['value'] = 100; // oder jeder andere Wert aus deiner Select-Option
                         } else {
                           $entry['value'] = 0; // oder jeder andere Wert aus deiner Select-Option
@@ -163,11 +201,10 @@ class CanvasEKDController extends AbstractContentElementController
                         
                         break;
                    case 'barheizstab':
-                        $val = $entry['label'].' '.$dataSensor['ELaktPwr']['sensorValue'].' '.$dataSensor['ELaktPwr']['sensorEinheit'];
                         $val ='';
                         $entry['label'] = $val ;
                         $entry['direction'] = 'down'; // oder jeder andere Wert aus deiner Select-Option 
-                        if ($dataSensor['ELaktPwr']['sensorValue'] > 0) {
+                        if (abs($heatingRodPower) > 0.1) {
                           $entry['value'] = 100; // oder jeder andere Wert aus deiner Select-Option
                         } else {
                           $entry['value'] = 0; // oder jeder andere Wert aus deiner Select-Option
@@ -185,33 +222,26 @@ class CanvasEKDController extends AbstractContentElementController
                 $entry['src'] = $fileModel->path;
                 $entry['label'] = trim((string)($row['label'] ?? ''));
                 if (in_array(strtolower($type ?? ''), ['haus'], true)) {
-                    $valSolar=(int)$dataSensor['IQinverter_94_inverter_pvPower']['sensorValue'];
-                    $valHeizstab=(int)$dataSensor['ELaktPwr']['sensorValue'];
-                    $valAkku=(int)$dataSensor['IQbattery_94_battery_power']['sensorValue'];
-                    $valSWR=(int)$dataSensor['ZWZZaehlerPowerOut']['sensorValue']-(int)$dataSensor['ZWZZaehlerPowerIn']['sensorValue'];
-                    $valBerechnet = $valSolar-$valHeizstab-$valAkku-$valSWR;
-                    $val = "Eigenverbrauch \n".$dataSensor['IQinverter_94_inverter_selfConsumptionPower']['sensorValue'].' '.$dataSensor['IQinverter_94_inverter_selfConsumptionPower']['sensorEinheit'];
-                    $val .= "\nberechnet ".$valBerechnet.' '.$dataSensor['IQinverter_94_inverter_selfConsumptionPower']['sensorEinheit'];
+                    $val = "Eigenverbrauch \n".$housePowerKw.' '.$powerUnit;
                     $entry['label'] = $entry['label'] . ' '.$val ;
                 }
                 if (in_array(strtolower($type ?? ''), ['solarzelle'], true)) {
-                    $val = "Solarleistung \n".$dataSensor['IQinverter_94_inverter_pvPower']['sensorValue'].' '.$dataSensor['IQinverter_94_inverter_pvPower']['sensorEinheit'];
+                    $val = "Solarleistung \n".$pvPowerKw.' '.$powerUnit;
                     $entry['label'] = $val ;
                 }
                 if (in_array(strtolower($type ?? ''), ['heizstab'], true)) {
-                    $val = "Heizstab \n".$dataSensor['ELaktPwr']['sensorValue'].' '.$dataSensor['ELaktPwr']['sensorEinheit'];
-                    $val .= "\n".$dataSensor['ELaktTemp2']['sensorValue'].' '.$dataSensor['ELaktTemp2']['sensorEinheit'];
+                    $val = "Heizstab \n".$heatingRodPowerKw.' '.$powerUnit;
+                    $val .= "\n".$heatingRodTemperature.' '.$temperatureUnit;
                     $entry['label'] = $val ;
                 }
                 if (in_array(strtolower($type ?? ''), ['akku'], true)) {
-                    $val = "Akku \n".$dataSensor['IQbattery_94_battery_stateOfCharge']['sensorValue'].' '.$dataSensor['IQbattery_94_battery_stateOfCharge']['sensorEinheit'];
-                    $val .= "\n".$dataSensor['IQbattery_94_battery_power']['sensorValue'].' '.$dataSensor['IQbattery_94_battery_power']['sensorEinheit'];
+                    $val = "Akku \n".$batterySoc.' '.$socUnit;
+                    $val .= "\n".$batteryPowerKw.' '.$powerUnit;
                     $entry['label'] = $val ;
                 }
                 if (in_array(strtolower($type ?? ''), ['einspeisung'], true)) {
-                    $val = "Einspeisung";
-                    $val .= "\nvon SWR\t".$dataSensor['ZWZZaehlerPowerIn']['sensorValue'].' '.$dataSensor['ZWZZaehlerPowerIn']['sensorEinheit'];
-                    $val .= "\nnach SWR\t".$dataSensor['ZWZZaehlerPowerOut']['sensorValue'].' '.$dataSensor['ZWZZaehlerPowerOut']['sensorEinheit'];
+                    $gridLabel = $gridPower < 0 ? 'Einspeisung' : ($gridPower > 0 ? 'Netzbezug' : 'Netzleistung');
+                    $val = $gridLabel."\n".$gridPowerKw.' '.$powerUnit;
                     $entry['label'] = $val ;
                 }
             }
@@ -223,8 +253,23 @@ class CanvasEKDController extends AbstractContentElementController
         foreach ($elements as $e) {
             $w = $e['width'] ?? 64;
             $h = $e['height'] ?? 64;
-            $maxX = max($maxX, $e['x'] + $w);
-            $maxY = max($maxY, $e['y'] + $h + ($e['label'] ? 20 : 0));
+            $label = (string) ($e['label'] ?? '');
+            $labelLines = $label !== '' ? (preg_split('/\R/u', $label) ?: []) : [];
+            $longestLabelLength = 0;
+            foreach ($labelLines as $labelLine) {
+                $lineLength = function_exists('mb_strlen')
+                    ? mb_strlen($labelLine)
+                    : strlen($labelLine);
+                $longestLabelLength = max($longestLabelLength, $lineLength);
+            }
+
+            // Das Template zeichnet Labels linksbündig in 12px sans-serif.
+            // Etwa 7 Pixel pro Zeichen plus Reserve verhindern ein Abschneiden.
+            $labelWidth = $longestLabelLength * 7 + 12;
+            $labelHeight = $labelLines !== [] ? 4 + count($labelLines) * 14 : 0;
+
+            $maxX = max($maxX, $e['x'] + $w, $e['x'] + $labelWidth);
+            $maxY = max($maxY, $e['y'] + $h + $labelHeight);
         }
 
 

@@ -40,10 +40,10 @@ services:
           $container: '@service_container' # Injiziere den service_container
 
 
-    PbdKn\ContaoContaohabBundle\Command\SyncSensorDataCommand:
-        arguments:
-           $syncService: '@PbdKn\ContaoContaohabBundle\Service\SyncService'
-        tags: ['console.command']
+#    PbdKn\ContaoContaohabBundle\Command\SyncSensorDataCommand:
+#        arguments:
+#           $syncService: '@PbdKn\ContaoContaohabBundle\Service\SyncService'
+#        tags: ['console.command']
 
     PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager:
         arguments:
