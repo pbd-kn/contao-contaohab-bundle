@@ -4,6 +4,7 @@ $GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector setti
 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['general_legend'] = 'General';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_legend'] = 'Ampere.IQ cloud';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_legend'] = 'Heating rod access';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] = 'Local heating rod';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry status API';
@@ -13,6 +14,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['amperePassword'] = ['Amp
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereRetries'] = ['Maximum attempts', 'Number of cloud request attempts'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereRetryDelay'] = ['Retry delay', 'Delay between attempts in seconds'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['lifetimeCacheSeconds'] = ['Lifetime cache duration', 'Lifetime value validity in seconds'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAccess'] = ['Access mode', 'Selects exactly one access method for the heating rod.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAccessOptions'] = ['disabled' => 'Disabled', 'local' => 'Local', 'cloud' => 'my-PV cloud'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAuthEnabled'] = ['Use authentication', 'Sign in to the local heating rod and use the session cookie'];
+
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabLocalEnabled'] = ['Enable local heating rod', 'Use local access to the heating rod'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabUrl'] = ['Local heating rod URL', 'For example https://192.168.178.68'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabLoginPath'] = ['Login path', 'Default: /auth.jsn'];

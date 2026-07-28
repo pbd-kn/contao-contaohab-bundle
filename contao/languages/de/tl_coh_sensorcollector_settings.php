@@ -4,6 +4,7 @@ $GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector-Einst
 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['general_legend'] = 'Allgemein';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_legend'] = 'Ampere.IQ-Cloud';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_legend'] = 'Heizstabzugriff';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] = 'Heizstab lokal';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV-Cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry-Status-API';
@@ -13,6 +14,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['amperePassword'] = ['Amp
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereRetries'] = ['Maximale Versuche', 'Anzahl der Cloud-Abrufversuche'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereRetryDelay'] = ['Wartezeit', 'Pause zwischen Versuchen in Sekunden'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['lifetimeCacheSeconds'] = ['Lifetime-Cachezeit', 'Gueltigkeit der Lifetime-Werte in Sekunden'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAccess'] = ['Zugriffsart', 'Legt genau einen Zugriffsweg fuer den Heizstab fest.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAccessOptions'] = ['disabled' => 'Deaktiviert', 'local' => 'Lokal', 'cloud' => 'my-PV-Cloud'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAuthEnabled'] = ['Authentifizierung verwenden', 'Am lokalen Heizstab anmelden und das Sitzungscookie verwenden'];
+
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabLocalEnabled'] = ['Lokalen Heizstab aktivieren', 'Lokalen Zugriff auf den Heizstab verwenden'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabUrl'] = ['Lokale Heizstab-URL', 'Zum Beispiel https://192.168.178.68'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabLoginPath'] = ['Loginpfad', 'Standard: /auth.jsn'];

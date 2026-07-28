@@ -19,7 +19,12 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
         ],
     ],
     'palettes' => [
-        'default' => '{general_legend},title;{ampere_legend},ampereUsername,amperePassword,ampereRetries,ampereRetryDelay,lifetimeCacheSeconds;{heizstab_local_legend},heizstabLocalEnabled,heizstabUrl,heizstabLoginPath,heizstabPassword,heizstabPasswordField,heizstabCookieFile,heizstabInsecureTls;{heizstab_cloud_legend},heizstabCloudEnabled,heizstabCloudBaseUrl,heizstabCloudSerial,heizstabCloudApiToken;{raspberry_api_legend},raspberryApiEnabled,raspberryApiBaseUrl,raspberryApiToken,raspberryApiTimeout,raspberryApiCacheSeconds',
+        '__selector__' => ['heizstabAccess'],
+        'default' => '{general_legend},title;{ampere_legend},ampereUsername,amperePassword,ampereRetries,ampereRetryDelay,lifetimeCacheSeconds;{heizstab_legend},heizstabAccess;{raspberry_api_legend},raspberryApiEnabled,raspberryApiBaseUrl,raspberryApiToken,raspberryApiTimeout,raspberryApiCacheSeconds',
+    ],
+    'subpalettes' => [
+        'heizstabAccess_local' => 'heizstabUrl,heizstabAuthEnabled,heizstabLoginPath,heizstabPassword,heizstabPasswordField,heizstabCookieFile,heizstabInsecureTls',
+        'heizstabAccess_cloud' => 'heizstabCloudBaseUrl,heizstabCloudSerial,heizstabCloudApiToken',
     ],
     'fields' => [
         'id' => ['sql' => "int(10) unsigned NOT NULL auto_increment"],
@@ -31,6 +36,15 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
         'ampereRetryDelay' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 10"],
         'lifetimeCacheSeconds' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "int(10) unsigned NOT NULL default 60"],
         'ampereTokens' => ['sql' => "blob NULL"],
+        'heizstabAccess' => [
+            'inputType' => 'radio',
+            'options' => ['disabled', 'local', 'cloud'],
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabAccessOptions'],
+            'eval' => ['mandatory' => true, 'submitOnChange' => true, 'tl_class' => 'clr'],
+            'sql' => "varchar(16) NOT NULL default 'disabled'",
+        ],
+        'heizstabAuthEnabled' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default '1'"],
+        // Legacy-Spalten bleiben erhalten, damit bestehende Installationen verlustfrei migriert werden.
         'heizstabLocalEnabled' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default '1'"],
         'heizstabUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
         'heizstabLoginPath' => ['inputType' => 'text', 'eval' => ['maxlength' => 128, 'tl_class' => 'w50'], 'sql' => "varchar(128) NOT NULL default '/auth.jsn'"],

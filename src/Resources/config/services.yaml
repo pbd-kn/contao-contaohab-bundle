@@ -48,7 +48,3 @@ services:
     PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager:
         arguments:
           $fetchers: !tagged_iterator sensor.fetcher
-
-    PbdKn\ContaoContaohabBundle\Service\Sensors\HeizstabSensorService:
-        arguments:
-          $paramsFile: '%coh_sensors.heizstab_params_file%'

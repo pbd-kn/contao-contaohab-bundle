@@ -2,6 +2,7 @@
 
 namespace PbdKn\ContaoContaohabBundle\Service\Sensors;
 
+use Doctrine\DBAL\Connection;
 use PbdKn\ContaoContaohabBundle\Model\SensorModel;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 
@@ -14,7 +15,7 @@ class HeizstabSensorService implements SensorFetcherInterface
     private ?array $setupData  = null;
     
 
-    public function __construct(LoggerService $logger, private readonly string $paramsFile)
+    public function __construct(LoggerService $logger, private readonly Connection $connection)
     {
         $this->logger = $logger;
     }
@@ -31,7 +32,7 @@ class HeizstabSensorService implements SensorFetcherInterface
         /* Alter Einzelabruf bleibt vorlaeufig als Referenz unerreichbar. */
         $res=array();
         try {
-            $this->logger->debugMe('Heizstab Sensorservice sensorID: '.$sensor->sensorID.' Cloud-Parameter '.$this->paramsFile);
+            $this->logger->debugMe('Heizstab Sensorservice sensorID: '.$sensor->sensorID);
             if ($this->getDataFromDevice() === null) {
                 return null;
             }
@@ -73,7 +74,7 @@ class HeizstabSensorService implements SensorFetcherInterface
             if (count($sensors) === 0) {
                 return null;
             }
-            $this->logger->debugMe('Heizstab Sensorservice Cloud-Parameter '.$this->paramsFile.' len sensors:'.count($sensors));
+            $this->logger->debugMe('Heizstab Sensorservice len sensors:'.count($sensors));
             if ($this->getDataFromDevice() === null) {
                 $this->logger->debugMe('getDataFromDevice null');
                 return null;
@@ -120,22 +121,52 @@ class HeizstabSensorService implements SensorFetcherInterface
     }
     private function getDataFromDevice() {
         try {
-            if (!is_file($this->paramsFile)) {
-                throw new \RuntimeException("Heizstab-Parameterdatei fehlt: {$this->paramsFile}");
+            $settings = $this->connection->fetchAssociative(
+                'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
+            );
+            if (!$settings) {
+                throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
             }
-            $parameters = TaskAccess::loadParameters($this->paramsFile);
-            $apiConfig = is_array($parameters['heizstabApi'] ?? null) ? $parameters['heizstabApi'] : [];
-            if (empty($apiConfig['enabled'])) {
-                throw new \RuntimeException('heizstabApi ist in der Parameterdatei nicht aktiviert.');
+            $mode = (string) ($settings['heizstabAccess'] ?? '');
+            if (!in_array($mode, ['disabled', 'local', 'cloud'], true)) {
+                // Bei der frueher moeglichen Doppelauswahl hat Cloud Vorrang.
+                $mode = !empty($settings['heizstabCloudEnabled'])
+                    ? 'cloud'
+                    : (!empty($settings['heizstabLocalEnabled']) ? 'local' : 'disabled');
             }
-            $cloud = TaskAccess::heizstabCloud($parameters, TaskAccess::loggerAdapter($this->logger));
-            $this->aktData = $cloud->data();
-            $setupResponse = $cloud->setup();
+            if ($mode === 'disabled') {
+                $this->logger->debugMe('Heizstabzugriff ist deaktiviert.');
+
+                return null;
+            }
+            if ($mode === 'local') {
+                $parameters = [
+                    'urlheizStab' => (string) ($settings['heizstabUrl'] ?? ''),
+                    'heizstabAuth' => [
+                        'enabled' => !empty($settings['heizstabAuthEnabled']),
+                        'loginPath' => (string) ($settings['heizstabLoginPath'] ?? '/auth.jsn'),
+                        'password' => (string) ($settings['heizstabPassword'] ?? ''),
+                        'passwordField' => (string) ($settings['heizstabPasswordField'] ?? 'pw'),
+                        'cookieFile' => (string) ($settings['heizstabCookieFile'] ?? ''),
+                        'insecureTls' => !empty($settings['heizstabInsecureTls']),
+                    ],
+                ];
+                $access = TaskAccess::heizstabLocal($parameters, dirname(__DIR__), TaskAccess::loggerAdapter($this->logger));
+            } else {
+                $parameters = ['heizstabApi' => [
+                    'baseUrl' => (string) ($settings['heizstabCloudBaseUrl'] ?? ''),
+                    'serial' => (string) ($settings['heizstabCloudSerial'] ?? ''),
+                    'apiToken' => (string) ($settings['heizstabCloudApiToken'] ?? ''),
+                ]];
+                $access = TaskAccess::heizstabCloud($parameters, TaskAccess::loggerAdapter($this->logger));
+            }
+            $this->aktData = $access->data();
+            $setupResponse = $access->setup();
             $this->setupData = is_array($setupResponse['setup'] ?? null)
                 ? $setupResponse['setup']
                 : $setupResponse;
         } catch (\Throwable $e) {
-            $this->logger->Error('Heizstab: Cloud-Zugriff fehlgeschlagen: '.$e->getMessage());
+            $this->logger->Error('Heizstab: Zugriff fehlgeschlagen: '.$e->getMessage());
             return null;
         }
         return "OK";

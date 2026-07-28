@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PbdKn\ContaoContaohabBundle\Service\Sensors;
 
+use Composer\CaBundle\CaBundle;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
@@ -157,6 +158,9 @@ final class HeizstabCloudAccess
                 'Content-Type: application/json',
             ],
         ];
+        if (class_exists(CaBundle::class)) {
+            $options[CURLOPT_CAINFO] = CaBundle::getSystemCaRootBundlePath();
+        }
         if (!empty($this->config['insecureTls'])) {
             $options[CURLOPT_SSL_VERIFYPEER] = false;
             $options[CURLOPT_SSL_VERIFYHOST] = false;
