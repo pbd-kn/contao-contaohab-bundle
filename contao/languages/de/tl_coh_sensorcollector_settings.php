@@ -5,6 +5,7 @@ $GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector-Einst
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['general_legend'] = 'Allgemein';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_legend'] = 'Ampere.IQ-Cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_legend'] = 'Heizstabzugriff';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmota_legend'] = 'Tasmota-Zugriff';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] = 'Heizstab lokal';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV-Cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry-Status-API';
@@ -25,6 +26,13 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabPassword'] = ['H
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabPasswordField'] = ['Passwortfeld', 'Standard: pw'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCookieFile'] = ['Cookie-Datei', 'Cookie-Datei innerhalb des installierten ContaoHab-Bundles'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabInsecureTls'] = ['Unsicheres TLS erlauben', 'Nur fuer lokale Geraete mit selbst signiertem Zertifikat'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmotaAccess'] = ['Zugriffsart', 'Tasmota direkt lokal oder über die API des Raspberry abrufen.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmotaAccessOptions'] = ['disabled' => 'Deaktiviert', 'local' => 'Direkt lokal', 'raspberry' => 'Über Raspberry-API'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmotaRaspberryBaseUrl'] = ['Raspberry-Basis-URL', 'Vom Hoster erreichbare URL, zum Beispiel die MyFRITZ-Adresse.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmotaRaspberryToken'] = ['Raspberry-API-Token', 'Wird als X-COH-TOKEN übertragen.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmotaRaspberryPath'] = ['Tasmota-API-Pfad', 'Standard: /api/coh/tasmota.php'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmotaRequestTimeout'] = ['HTTP-Timeout', 'Maximale Dauer des Requests in Sekunden.'];
+
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudEnabled'] = ['my-PV-Cloud aktivieren', 'Cloudzugriff statt lokaler URL verwenden'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudBaseUrl'] = ['my-PV-Cloud-URL', 'Basis-URL der API'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudSerial'] = ['Seriennummer', 'Seriennummer des my-PV-Geraets'];

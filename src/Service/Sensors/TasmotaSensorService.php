@@ -1,193 +1,186 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PbdKn\ContaoContaohabBundle\Service\Sensors;
 
-use PbdKn\ContaoContaohabBundle\Model\SensorModel;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Doctrine\DBAL\Connection;
+use PbdKn\ContaoContaohabBundle\Model\SensorModel;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-/* implementiert die Tasmota Zugriffe */
-
-class TasmotaSensorService implements SensorFetcherInterface
+final class TasmotaSensorService implements SensorFetcherInterface
 {
-    private HttpClientInterface $httpClient;
-    private Connection $connection;
-    private ?LoggerService $logger = null;
-    private ?array $dataFromDevice = null;
-
-    public function __construct(HttpClientInterface $httpClient, Connection $connection,LoggerService $logger)
-    {
-        $this->httpClient = $httpClient;
-        $this->logger = $logger;
-        $this->connection = $connection;
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+        private readonly Connection $connection,
+        private readonly LoggerService $logger,
+    ) {
     }
 
     public function supports(SensorModel $sensor): bool
     {
-        return strtolower($sensor->sensorSource) === 'tasmota';
+        return strtolower((string) $sensor->sensorSource) === 'tasmota';
     }
 
     public function fetch(SensorModel $sensor): ?array
     {
-        $res=array();
-        try {
-            $url=$sensor->geraeteUrl;
-            if ($url && !str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
-                $url = 'http://' . $url;
-            }
- 
-            $this->logger->debugMe('Tasmota Sensorservice sensorID: '.$sensor->sensorID.' url '.$url);    
-
-            if (!$url) {
-                $message = "Tasmota: geraeteUrl fehlt bei Sensor {$sensor->sensorID}";
-
-                return null;
-            }
-            if ( $this->getDataFromDevice($url) === null) {
-                return null;
-            }
-
-            $value = $data['StatusSNS']['ENERGY']['Power'] ?? null;
-
-            if ($value === null) {
-                $message = "Tasmota: Kein Power-Wert gefunden fÃ¼r Sensor {$sensor->sensorID}";
-                $this->logger->debugMe($message);    
-
-                return null;
-            }
-
-            // ? Erfolg: Log + Datenbank-Update
-            $this->logger->debugMe("Tasmota: Sensor {$sensor->sensorID} liefert {$value} W");    
-
-            $res[]= [
-                'sensorID'        => $sensor->sensorID,
-                'sensorValue'     => $value,
-                'sensorEinheit'   => $sensor->sensorEinheit,
-                'sensorValueType' => $sensor->sensorValueType,
-                'sensorSource'    => $sensor->sensorSource,
-            ];
-        } catch (\Throwable $e) {
-            $message = "Tasmota: Fehler bei {$sensor->sensorID}: " . $e->getMessage();
-            $this->logger->Error($message);    
-
-            return null;
-        }
-        return $res;
+        return $this->fetchArr([$sensor])[(string) $sensor->sensorID] ?? null;
     }
+
     public function fetchArr(array $sensors, ?string $date = null, array $fetchedValues = []): ?array
-    {   $res=array();
-        try {
-            if (count($sensors) > 0) {
-                $url=$sensors[0]->geraeteUrl;
-                if ($url && !str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
-                    $url = 'http://' . $url;
-                }
-            } 
-            $this->logger->debugMe('Tasmota Sensorservice  url '.$url.' len sensors:'.count($sensors));    
-
-            if (!$url) {
-                $message = "Tasmota: keine url  Sensor {$sensors[0]->sensorID}";
-
-                return null;
-            }
-            if ( $this->getDataFromDevice($url) === null) {
-                return null;
-            }
-            $this->logger->debugMe('Tasmota Sensorservice vor schleife count:  '.count($sensors));    
-            // Zugriff auf Werte, z.B.:
-            foreach ($sensors as $sensor) {
-                $this->logger->debugMe('Tasmota Sensorservice  lese  '.$sensor->sensorID);
-                $lokalAccess=$sensor->sensorID;
-                if (!empty($sensor->sensorLokalId)) $lokalAccess=$sensor->sensorLokalId;
-    
-                if (isset($this->dataFromDevice['StatusSNS']['M60'][$lokalAccess])) {
-                    $value = $this->dataFromDevice['StatusSNS']['M60'][$lokalAccess];
-                    $einheit=$sensor->sensorEinheit;  
-                    if (!empty($sensor->transFormProcedur)) {
-                        if (method_exists($this, $sensor->transFormProcedur)) {
-                            $arr = $this->{$sensor->transFormProcedur}($value);
-                            $einheit=$arr['einheit'];                    
-                            $value=$arr['wert'];
-                        } else {
-                            $this->logger->Error("Tasmota transFormProcedur ".$sensor->transFormProcedur." fÃ¼r SensorID  '.$sensor->sensorID.' existiert nicht");  
-                        }                 
-                    }                   
-                    $this->logger->debugMe("Tasmota Sensorservice SensorID  '.$sensor->sensorID.' lokalAccess $lokalAccess value $value Einheit $einheit");  
-                    $res[$sensor->sensorID] = [
-                        'sensorID'        => $sensor->sensorID,
-                        'sensorValue'     => $value,
-                        'sensorEinheit'   => $einheit,
-                        'sensorValueType' => $sensor->sensorValueType,
-                        'sensorSource'    => $sensor->sensorSource,
-                    ];
-                    $this->logger->debugMe("sensorID: $value");
-                } else {
-                    $this->logger->debugMe('Tasmota Sensorservice keinen wert fÃ¼r sensorID: '.$sensor->sensorID);    
-                }
-            }
-            return $res;
-        } catch (\Throwable $e) {
-            $message = "Tasmota: Fehler bei : " . $e->getMessage();
-            $this->logger->Error($message);    
-
-            return null;
+    {
+        if ($sensors === []) {
+            return [];
         }
-        return $res;
-    }
-    private function getDataFromDevice(string $url) { 
-
 
         try {
-            $url = $url.'/cm?cmnd=Status%2010';    //Request um die daten zu holen 
-            $response = $this->httpClient->request('GET', $url);
-            $data = $response->toArray();
-            $this->logger->debugMe("Antwort: " . json_encode($data)); // ? sicher logbar
-/*
-            liefert das Array
-                data[StatusSNS][Time]:2025-04-05T16:41:03
-                data[StatusSNS][M60]:
-                data[StatusSNS][M60][TS_E_in_108]:549.61    TS_E_in108   kWh ist als parameter beim tasmota von mir so konfiguriert
-                data[StatusSNS][M60][TS_E_out_208]:3067.49  dito         kWh
-                data[StatusSNS][M60][TS_Power]:-3345                     W
-                data[StatusSNS][M60][TS_Power_L1]:-1088                  W
-                data[StatusSNS][M60][TS_Power_L2]:-1102                  W
-                data[StatusSNS][M60][TS_Power_L3]:-1155                  W
-*/
-            $this->dataFromDevice=$data;
-//            echo "Ausgabe Interpretation\n";
-            foreach ($data as $k=>$v) {
-                $this->logger->debugMe("dataFromDevice[$k]:"); // ? sicher logbar
+            $settings = $this->connection->fetchAssociative(
+                'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
+            );
+            if (!$settings) {
+                throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
+            }
 
-                foreach ($v as $k1=>$v1) {
-                    if (is_array($v1)) {
-                        $this->logger->debugMe("dataFromDevice[$k][$k1]:"); // ? sicher logbar
-                        foreach ($v1 as $k2=>$v2) {
-                            $this->logger->debugMe("dataFromDevice[$k][$k1][$k2]: $v2"); // ? sicher logbar
+            $mode = (string) ($settings['tasmotaAccess'] ?? 'local');
+            if ($mode === 'disabled') {
+                $this->logger->debugMe('Tasmota-Zugriff ist deaktiviert.');
+
+                return [];
+            }
+            if (!in_array($mode, ['local', 'raspberry'], true)) {
+                throw new \RuntimeException("Unbekannte Tasmota-Zugriffsart '$mode'.");
+            }
+
+            $deviceUrl = $this->normalizeDeviceUrl((string) $sensors[0]->geraeteUrl);
+            $data = $mode === 'raspberry'
+                ? $this->requestViaRaspberry($settings, $deviceUrl)
+                : $this->requestLocal($deviceUrl);
+
+            $result = [];
+            foreach ($sensors as $sensor) {
+                $sensorId = (string) $sensor->sensorID;
+                $localId = trim((string) $sensor->sensorLokalId);
+                $access = $localId !== '' ? $localId : $sensorId;
+
+                if (strcasecmp($sensorId, 'tasmota.akt') === 0 || strcasecmp($access, 'tasmota.akt') === 0) {
+                    $value = $data;
+                    $unit = (string) $sensor->sensorEinheit;
+                } else {
+                    $found = false;
+                    $value = $this->valueFromPayload($data, $access, $found);
+                    if (!$found) {
+                        $this->logger->Error("Tasmota-Wert '$access' für SensorID '$sensorId' fehlt.");
+                        continue;
+                    }
+                    $unit = (string) $sensor->sensorEinheit;
+                    $transform = trim((string) $sensor->transFormProcedur);
+                    if ($transform !== '' && $transform !== '-') {
+                        if (!method_exists($this, $transform)) {
+                            $this->logger->Error("Tasmota-Transformation '$transform' für SensorID '$sensorId' existiert nicht.");
+                        } else {
+                            $transformed = $this->{$transform}($value);
+                            $value = $transformed['wert'];
+                            $unit = $transformed['einheit'];
                         }
-                    }   else {
-                            $this->logger->debugMe("dataFromDevice[$k][$k1]: $v1"); // ? sicher logbar
                     }
                 }
-            }            
-        } catch (\Throwable $e) {
-            $this->logger->Error("Tasmota: Fehler bei getDataFromDevice : " . $e->getMessage());
-            return null;
+
+                $result[$sensorId] = [
+                    'sensorID' => $sensorId,
+                    'sensorValue' => $value,
+                    'sensorEinheit' => $unit,
+                    'sensorValueType' => (string) $sensor->sensorValueType,
+                    'sensorSource' => (string) $sensor->sensorSource,
+                ];
+            }
+
+            return $result;
+        } catch (\Throwable $error) {
+            $this->logger->Error('Tasmota: ' . $error->getMessage());
+
+            return [];
         }
-        return $this->dataFromDevice=$data;
-        
-    }
-    // funktionen zur normierung des Status
-    private function tskWh($stat) {   // tasmota Wert in kwh
-        $resArr['wert'] = $stat;
-        $resArr['einheit']='kWh';
-        return $resArr;
-    }
-    private function tsWatt($stat) {   // tasmota Wert in W
-        $resArr['wert'] = $stat;
-        $resArr['einheit']='W';
-        return $resArr;
     }
 
+    private function requestLocal(string $deviceUrl): array
+    {
+        $url = rtrim($deviceUrl, '/') . '/cm?cmnd=' . rawurlencode('Status 10');
+        $response = $this->httpClient->request('GET', $url, ['timeout' => 15]);
+        $data = $response->toArray(false);
+        if ($response->getStatusCode() !== 200 || !is_array($data)) {
+            throw new \RuntimeException("Lokaler Abruf lieferte HTTP {$response->getStatusCode()}.");
+        }
+
+        return $data;
+    }
+
+    private function requestViaRaspberry(array $settings, string $deviceUrl): array
+    {
+        $baseUrl = rtrim(trim((string) ($settings['tasmotaRaspberryBaseUrl'] ?? '')), '/');
+        $path = '/' . ltrim(trim((string) ($settings['tasmotaRaspberryPath'] ?? '/api/coh/tasmota.php')), '/');
+        if ($baseUrl === '') {
+            throw new \RuntimeException('Raspberry-Basis-URL für Tasmota fehlt.');
+        }
+        $response = $this->httpClient->request('GET', $baseUrl . $path, [
+            'headers' => [
+                'Accept' => 'application/json',
+                'X-COH-TOKEN' => (string) ($settings['tasmotaRaspberryToken'] ?? ''),
+            ],
+            'query' => ['deviceUrl' => $deviceUrl],
+            'timeout' => max(1, (int) ($settings['tasmotaRequestTimeout'] ?? 15)),
+        ]);
+        $payload = $response->toArray(false);
+        if ($response->getStatusCode() !== 200 || empty($payload['ok']) || !is_array($payload['data'] ?? null)) {
+            throw new \RuntimeException('Ungültige Raspberry-Tasmota-Antwort: ' . json_encode($payload, JSON_UNESCAPED_UNICODE));
+        }
+
+        return $payload['data'];
+    }
+
+    private function normalizeDeviceUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            throw new \RuntimeException('geraeteUrl fehlt.');
+        }
+        if (!preg_match('~^https?://~i', $url)) {
+            $url = 'http://' . $url;
+        }
+
+        return rtrim($url, '/');
+    }
+
+    private function valueFromPayload(array $data, string $access, bool &$found): mixed
+    {
+        if (array_key_exists($access, $data['StatusSNS']['M60'] ?? [])) {
+            $found = true;
+
+            return $data['StatusSNS']['M60'][$access];
+        }
+
+        $path = preg_replace('~^tasmota\.~i', '', trim($access));
+        $cursor = $data;
+        foreach (explode('.', (string) $path) as $part) {
+            if (!is_array($cursor) || !array_key_exists($part, $cursor)) {
+                $found = false;
+
+                return null;
+            }
+            $cursor = $cursor[$part];
+        }
+        $found = true;
+
+        return $cursor;
+    }
+
+    private function tskWh(mixed $value): array
+    {
+        return ['wert' => $value, 'einheit' => 'kWh'];
+    }
+
+    private function tsWatt(mixed $value): array
+    {
+        return ['wert' => $value, 'einheit' => 'W'];
+    }
 }
-
