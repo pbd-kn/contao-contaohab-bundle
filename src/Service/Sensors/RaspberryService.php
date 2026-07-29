@@ -74,18 +74,27 @@ final class RaspberryService implements SensorFetcherInterface
         $settings = $this->connection->fetchAssociative(
             'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
         );
-        if (!$settings || empty($settings['raspberryApiEnabled'])) {
-            throw new \RuntimeException('Raspberry-API ist in den Sensorcollector-Einstellungen nicht aktiviert.');
+        if (!$settings) {
+            throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
+        }
+        $mode = (string) ($settings['raspberryAccess'] ?? '');
+        if (!in_array($mode, ['disabled', 'local', 'http'], true)) {
+            $mode = !empty($settings['raspberryApiEnabled']) ? 'local' : 'disabled';
+        }
+        if ($mode === 'disabled') {
+            throw new \RuntimeException('Raspberry-Zugriff ist deaktiviert.');
         }
         $cacheSeconds = max(0, (int) ($settings['raspberryApiCacheSeconds'] ?? 15));
         if ($this->snapshot !== null && time() - $this->snapshotAt < $cacheSeconds) {
             return $this->snapshot;
         }
-        $baseUrl = rtrim(trim((string) ($settings['raspberryApiBaseUrl'] ?? '')), '/');
+        $baseUrlField = $mode === 'http' ? 'raspberryApiWanBaseUrl' : 'raspberryApiBaseUrl';
+        $baseUrl = rtrim(trim((string) ($settings[$baseUrlField] ?? '')), '/');
         if ($baseUrl === '') {
             throw new \RuntimeException('Raspberry-API-Basis-URL fehlt.');
         }
-        $response = $this->httpClient->request('GET', $baseUrl . '/api/coh/raspberry-status.php', [
+        $path = '/' . ltrim(trim((string) ($settings['raspberryApiPath'] ?? '/api/coh/raspberry-status.php')), '/');
+        $response = $this->httpClient->request('GET', $baseUrl . $path, [
             'headers' => [
                 'Accept' => 'application/json',
                 'X-COH-TOKEN' => (string) ($settings['raspberryApiToken'] ?? ''),

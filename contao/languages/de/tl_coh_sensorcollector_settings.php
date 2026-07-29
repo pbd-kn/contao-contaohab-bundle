@@ -37,6 +37,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudEnabled'] =
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudBaseUrl'] = ['my-PV-Cloud-URL', 'Basis-URL der API'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudSerial'] = ['Seriennummer', 'Seriennummer des my-PV-Geraets'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstabCloudApiToken'] = ['API-Token', 'Bearer-Token der my-PV-Cloud'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryAccess'] = ['Zugriffsart', 'Raspberry-Werte lokal im LAN oder über die externe HTTP-Adresse abrufen.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryAccessOptions'] = ['disabled' => 'Deaktiviert', 'local' => 'Lokal (LAN)', 'http' => 'HTTP von außen'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiWanBaseUrl'] = ['Externe Raspberry-Basis-URL', 'Vom Hoster erreichbare URL, zum Beispiel die MyFRITZ-Adresse.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiPath'] = ['Raspberry-API-Pfad', 'Standard: /api/coh/raspberry-status.php'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiEnabled'] = ['Raspberry-API aktivieren', 'Statuswerte ueber die HTTP-API des Raspberry lesen'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiBaseUrl'] = ['Raspberry-Basis-URL', 'Zum Beispiel http://192.168.178.49'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiToken'] = ['Raspberry-API-Token', 'Wird als X-COH-TOKEN an den Raspberry gesendet'];

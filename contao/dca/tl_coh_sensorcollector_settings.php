@@ -19,13 +19,15 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
         ],
     ],
     'palettes' => [
-        '__selector__' => ['heizstabAccess', 'tasmotaAccess'],
-        'default' => '{general_legend},title;{ampere_legend},ampereUsername,amperePassword,ampereRetries,ampereRetryDelay,lifetimeCacheSeconds;{heizstab_legend},heizstabAccess;{tasmota_legend},tasmotaAccess;{raspberry_api_legend},raspberryApiEnabled,raspberryApiBaseUrl,raspberryApiToken,raspberryApiTimeout,raspberryApiCacheSeconds',
+        '__selector__' => ['heizstabAccess', 'tasmotaAccess', 'raspberryAccess'],
+        'default' => '{general_legend},title;{ampere_legend},ampereUsername,amperePassword,ampereRetries,ampereRetryDelay,lifetimeCacheSeconds;{heizstab_legend},heizstabAccess;{tasmota_legend},tasmotaAccess;{raspberry_api_legend},raspberryAccess',
     ],
     'subpalettes' => [
         'heizstabAccess_local' => 'heizstabUrl,heizstabAuthEnabled,heizstabLoginPath,heizstabPassword,heizstabPasswordField,heizstabCookieFile,heizstabInsecureTls',
         'heizstabAccess_cloud' => 'heizstabCloudBaseUrl,heizstabCloudSerial,heizstabCloudApiToken',
         'tasmotaAccess_raspberry' => 'tasmotaRaspberryBaseUrl,tasmotaRaspberryToken,tasmotaRaspberryPath,tasmotaRequestTimeout',
+        'raspberryAccess_local' => 'raspberryApiBaseUrl,raspberryApiToken,raspberryApiPath,raspberryApiTimeout,raspberryApiCacheSeconds',
+        'raspberryAccess_http' => 'raspberryApiWanBaseUrl,raspberryApiToken,raspberryApiPath,raspberryApiTimeout,raspberryApiCacheSeconds',
     ],
     'fields' => [
         'id' => ['sql' => "int(10) unsigned NOT NULL auto_increment"],
@@ -58,9 +60,19 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
         'heizstabCloudSerial' => ['inputType' => 'text', 'eval' => ['maxlength' => 64, 'tl_class' => 'w50'], 'sql' => "varchar(64) NOT NULL default ''"],
         'heizstabCloudApiToken' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
         'raspberryApiEnabled' => ['inputType' => 'checkbox', 'eval' => ['tl_class' => 'w50 m12'], 'sql' => "char(1) NOT NULL default ''"],
+        'raspberryAccess' => [
+            'inputType' => 'radio',
+            'options' => ['disabled', 'local', 'http'],
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryAccessOptions'],
+            'eval' => ['mandatory' => true, 'submitOnChange' => true, 'tl_class' => 'clr'],
+            'sql' => "varchar(16) NOT NULL default 'disabled'",
+        ],
+        // Legacy-Feld fuer die Migration bestehender Installationen.
         'raspberryApiBaseUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'http://192.168.178.49'"],
         'raspberryApiToken' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'raspberryApiWanBaseUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'http://p1pu92iv4i9yh2m2.myfritz.net'"],
         'raspberryApiTimeout' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 10"],
+        'raspberryApiPath' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default '/api/coh/raspberry-status.php'"],
         'tasmotaAccess' => [
             'inputType' => 'radio',
             'options' => ['disabled', 'local', 'raspberry'],
