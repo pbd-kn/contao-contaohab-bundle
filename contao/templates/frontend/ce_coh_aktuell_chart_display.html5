@@ -181,11 +181,10 @@ gridDraw	aus dem Stromnetz bezogen
                     ?>
                     <div class="coh-mini-grid">
                     
-                        <?= renderMinibox ('','🔋️ Füllstand Akku',($live['batterySoc'] ?? '-')  .' % ') ?>
-                        <?= renderMinibox ('','🔋️ Leistung Batterie',coh_teile ($live['batteryPower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','🔋️Akku',' Füllstand '.($live['batterySoc'] ?? '-')  .' %<br>'.'Laden/Entladen '.coh_teile ($live['batteryPower'] ?? 0)  .' kW ') ?>
                         <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'] ?? 0)  .' kW ')?>
                         <?= renderMinibox ('','🏠  Haus ','Eigenverbrauch '.coh_teile(abs(coh_num($live['housePower'] ?? 0)))  .' kW <br>'.'Netzeinspeisung '. coh_teile(abs(coh_num($live['gridPower'] ?? 0)))  .' kW ') ?>
-                        <?= renderMinibox ('','⚡💦️Heizstab Leistung',coh_teile ($live['heatingRodPower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','⚡💦️Heizstab Leistung',     coh_teile(abs(coh_num($live['heatingRodPower'] ?? 0)))  .' kW ') ?>
                         <?= renderMinibox ('','🌡️ Heizstab ','Temp1 '.coh_v($d, 'ELaktTemp1') . ' °C<br>'.'Temp2 '.coh_v($d, 'ELaktTemp2') . ' °C') ?>
                     </div>
                 </div>
