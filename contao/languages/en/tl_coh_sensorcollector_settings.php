@@ -6,6 +6,7 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['general_legend'] = 'Gene
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_legend'] = 'Ampere.IQ cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_legend'] = 'Heating rod access';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmota_legend'] = 'Tasmota access';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserleckage_legend'] = 'Water leakage access';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] = 'Local heating rod';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry status API';
@@ -46,3 +47,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiBaseUrl'] = 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiToken'] = ['Raspberry API token', 'Sent to the Raspberry as X-COH-TOKEN'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiTimeout'] = ['HTTP timeout', 'Maximum request duration in seconds'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberryApiCacheSeconds'] = ['Raspberry cache duration', 'Reuse an already loaded status response for this many seconds'];
+
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserLeckageAccess'] = ['Access mode', 'Read the SYR water leakage device directly or through the Raspberry API.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserLeckageAccessOptions'] = ['disabled' => 'Disabled', 'local' => 'Direct local access', 'raspberry' => 'Through Raspberry API'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserLeckageRaspberryBaseUrl'] = ['Raspberry base URL', 'URL reachable from the hosting server, for example the MyFRITZ address.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserLeckageRaspberryToken'] = ['Raspberry API token', 'Sent as X-COH-TOKEN.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserLeckageRaspberryPath'] = ['Water leakage API path', 'Default: /api/coh/wasserleckage.php'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserLeckageRequestTimeout'] = ['HTTP timeout', 'Maximum request duration in seconds.'];

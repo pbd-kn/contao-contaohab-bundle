@@ -16,7 +16,7 @@ services:
 
     PbdKn\ContaoContaohabBundle\:
         resource: '../../../src/'
-        exclude: '../../{DependencyInjection,Resources,public,Tests}'
+        exclude: '../../{DependencyInjection,Resources,public,Tests,Service/Sensors/RaspberryExecScripts}'
 
     PbdKn\ContaoContaohabBundle\Controller\:
         resource: '../../Controller/'

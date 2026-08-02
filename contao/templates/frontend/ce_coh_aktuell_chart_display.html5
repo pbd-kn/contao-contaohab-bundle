@@ -121,7 +121,10 @@
         $heizstabServerOk = $raspberryHeating['serverStatus'] ?? false;
         
         $batteryPercent = $live['batterySoc'] ?? 0;
-        $batteryPower   = $live['batteryPower'] ?? 0;
+        $batteryPower   = coh_num($live['batteryPower'] ?? 0);
+        $batteryPowerLabel = $batteryPower < 0
+            ? 'Laden'
+            : ($batteryPower > 0 ? 'Entladen' : 'Ruhezustand');
         $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
         $IQTodayWorkAll = coh_v($d, 'IQ_Today_work', []);    // 
         if (is_string($IQTodayWorkAll)) {
@@ -160,7 +163,6 @@ gridDraw	aus dem Stromnetz bezogen
 ?>
 
     <div class="coh-stack">
-
         <div class="coh-card">
             <div class="coh-card-title">🔋Akku &amp; 🌤️Solar</div>
             <div class="coh-hero">
@@ -181,7 +183,7 @@ gridDraw	aus dem Stromnetz bezogen
                     ?>
                     <div class="coh-mini-grid">
                     
-                        <?= renderMinibox ('','🔋️Akku',' Füllstand '.($live['batterySoc'] ?? '-')  .' %<br>'.'Laden/Entladen '.coh_teile ($live['batteryPower'] ?? 0)  .' kW ') ?>
+                        <?= renderMinibox ('','🔋️Akku',' Füllstand '.($live['batterySoc'] ?? '-')  .' %<br>'.$batteryPowerLabel.' '.coh_teile(abs($batteryPower))  .' kW ') ?>
                         <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'] ?? 0)  .' kW ')?>
                         <?= renderMinibox ('','🏠  Haus ','Eigenverbrauch '.coh_teile(abs(coh_num($live['housePower'] ?? 0)))  .' kW <br>'.'Netzeinspeisung '. coh_teile(abs(coh_num($live['gridPower'] ?? 0)))  .' kW ') ?>
                         <?= renderMinibox ('','⚡💦️Heizstab Leistung',     coh_teile(abs(coh_num($live['heatingRodPower'] ?? 0)))  .' kW ') ?>

@@ -129,7 +129,7 @@ class CanvasEKDController extends AbstractContentElementController
         $pvPowerKw = round($pvPower / 1000, 2);
         $housePowerKw = round(abs($housePower) / 1000, 2);
         $gridPowerKw = round(abs($gridPower) / 1000, 2);
-        $batteryPowerKw = round($batteryPower / 1000, 2);
+        $batteryPowerKw = round(abs($batteryPower) / 1000, 2);
         $heatingRodPowerKw = round(abs($heatingRodPower) / 1000, 2);
         $powerUnit = 'kW';
         $socUnit = '%';
@@ -175,13 +175,17 @@ class CanvasEKDController extends AbstractContentElementController
                         if (abs($valueNum) > 0.1) {
                             // sicher kein "echtes" 0
                           $entry['value'] = 100; // oder jeder andere Wert aus deiner Select-Option
-                          if ($valueNum > 0) {
-                            $entry['direction'] = 'left'; // oder jeder andere Wert aus deiner Select-Option 
+                          // Ampere.IQ: negativ = Akku wird geladen, positiv = Akku wird entladen.
+                          // Der Akku steht links vom Haus: Laden fließt nach links zum Akku,
+                          // Entladen nach rechts vom Akku zum Haus.
+                          if ($valueNum < 0) {
+                            $entry['direction'] = 'left';
                           } else {
-                            $entry['direction'] = 'right'; // oder jeder andere Wert aus deiner Select-Option 
+                            $entry['direction'] = 'right';
                           }
-                        } else {
-                          $entry['value'] = 0; // oder jeder andere Wert aus deiner Select-Option
+                        }
+                        else {
+                          $entry['value'] = 0;
                         }
                         break;
                    case 'bareinspeisung':
@@ -235,7 +239,10 @@ class CanvasEKDController extends AbstractContentElementController
                     $entry['label'] = $val ;
                 }
                 if (in_array(strtolower($type ?? ''), ['akku'], true)) {
-                    $val = "Akku \n".$batterySoc.' '.$socUnit;
+                    $batteryLabel = $batteryPower < 0
+                        ? 'Akku lädt'
+                        : ($batteryPower > 0 ? 'Akku entlädt' : 'Akku');
+                    $val = $batteryLabel." \n".$batterySoc.' '.$socUnit;
                     $val .= "\n".$batteryPowerKw.' '.$powerUnit;
                     $entry['label'] = $val ;
                 }

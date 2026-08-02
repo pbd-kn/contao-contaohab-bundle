@@ -1,7 +1,8 @@
-﻿<?php if ($this->headlineText): ?>
+<?php if ($this->headlineText): ?>
   <<?= $this->headlineLevel ?>><?= $this->headlineText ?></<?= $this->headlineLevel ?>>
 <?php endif; ?>
 
+<div class="coh-canvas-summary" id="canvas-summary-<?= $this->chartId ?>">
 <div class="canvas-wrapper" id="canvas-wrapper-<?= $this->chartId ?>">
   <canvas
     class="coh_canvas"
@@ -25,10 +26,17 @@
   </section>
 
   <style>
+    #canvas-summary-<?= $this->chartId ?> {
+      display: grid;
+      grid-template-columns: max-content minmax(20rem, <?= $this->canvasWidth ?>px);
+      align-items: start;
+      gap: 1rem;
+    }
+
     #canvas-wrapper-<?= $this->chartId ?> + .coh-today-work {
       box-sizing: border-box;
       max-width: <?= $this->canvasWidth ?>px;
-      margin-top: 1rem;
+      margin-top: 0;
       padding: 1rem;
       border: 1px solid #cbd8e3;
       border-radius: .5rem;
@@ -94,10 +102,17 @@
     .coh-today-work__bottom-space {
       height: 1rem;
     }
+
+    @media (max-width: 800px) {
+      #canvas-summary-<?= $this->chartId ?> {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   </style>
   <div class="coh-today-work__bottom-space" aria-hidden="true"></div>
 <?php endif; ?>
 
+</div>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("<?= $this->chartId ?>");
