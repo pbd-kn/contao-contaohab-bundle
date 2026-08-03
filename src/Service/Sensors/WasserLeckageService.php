@@ -157,14 +157,26 @@ final class WasserLeckageService implements SensorFetcherInterface
             throw new \RuntimeException('Raspberry-Basis-URL fuer Wasserleckage fehlt.');
         }
 
-        $response = $this->httpClient->request('GET', $baseUrl . $path, [
+        $options = [
             'headers' => [
                 'Accept' => 'application/json',
                 'X-COH-TOKEN' => (string) ($settings['wasserLeckageRaspberryToken'] ?? ''),
             ],
             'query' => ['deviceUrl' => $deviceUrl],
             'timeout' => max(1, (int) ($settings['wasserLeckageRequestTimeout'] ?? 15)),
-        ]);
+        ];
+
+        // MyFRITZ kann per IPv6 auf der FRITZ!Box statt auf der IPv4-Portfreigabe landen.
+        // Den Hostnamen deshalb dynamisch auf seinen aktuellen A-Record aufloesen.
+        $host = (string) parse_url($baseUrl, PHP_URL_HOST);
+        if ($host !== '' && filter_var($host, FILTER_VALIDATE_IP) === false) {
+            $ipv4 = gethostbyname($host);
+            if ($ipv4 !== $host && filter_var($ipv4, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+                $options['resolve'] = [$host => $ipv4];
+            }
+        }
+
+        $response = $this->httpClient->request('GET', $baseUrl . $path, $options);
         $payload = $response->toArray(false);
         if ($response->getStatusCode() !== 200 || empty($payload['ok']) || !is_array($payload['data'] ?? null)) {
             throw new \RuntimeException('Ungueltige Raspberry-Wasserleckage-Antwort: ' . json_encode($payload, JSON_UNESCAPED_UNICODE));
