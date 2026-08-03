@@ -141,8 +141,26 @@
         } elseif (!is_array($IQliveTime)) {
             $IQliveTime = [];
         }
+        
 //        renderArray($IQliveTime);
 //        renderArray($IQliveTime['years']);
+        // syr daten aus smal
+        $Syr_small = coh_v($d, 'Syr_small', []);   // liveTime Daten Iq_box
+        if (is_string($Syr_small)) {
+            $decodedSyr = json_decode($Syr_small, true);
+            $Syr_small = is_array($decodedSyr) ? $decodedSyr : [];
+        } elseif (!is_array($Syr_small)) {
+            $Syr_small = [];
+        }
+        $Syr_ventilWert = (int) $Syr_small['VLV'] ?? 0;
+        $Syr_ventilText = match ((int) ($Syr_small['VLV'] ?? 0)) { 10 => 'ZU', 11 => 'am Schließen', 20 => 'OFFEN', 21 => 'am Öffnen', default => 'UNBEKANNT' };
+        $Syr_ventilClass = $Syr_ventilWert == 20 ? 'is-green' : 'is-red';
+
+        $Syr_batVolt = ($Syr_small["BAT"] ?? 0) / 100;
+        $Syr_batPercent = max(0, min(100, round(($Syr_batVolt - 4.9) / (6.2 - 4.9) * 100)));   // 6.2 V voll 4.2V leer
+
+        
+        
 /*
 generation	erzeugte Solarenergie	
 consumption	Verbrauch	
@@ -228,6 +246,18 @@ gridDraw	aus dem Stromnetz bezogen
                         <?= renderMinibox ('','🔋️ Akku','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','⚡️ Netz IQox','eingespeist '.coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile (coh_v($d, 'TS_E_out_208'),1) . ' kWh' . '<br>entnommen ' . coh_teile (coh_v($d, 'TS_E_in_108'),1) . ' kWh') ?>
+                    </div>
+                </div>
+            </div>
+            <div class="coh-hero coh-hero-today">
+                <div class="coh-hero-text">
+                    <div class="coh-hero-label">Syr Wasserzähler</div>
+                    <div class="coh-mini-grid">
+                        <?= renderMinibox ($Syr_ventilClass,'🚰 ️Ventil'," Zustand ($Syr_ventilWert) $Syr_ventilText") ?>
+                        <?= renderMinibox ('','🔋 ️Batterie'," $Syr_batPercent % $Syr_batVolt V") ?>
+                        <?= renderMinibox ('','📊  Gesamtverbrauch',($Syr_small["VOL"] ?? 0).' l') ?>
+                        <?= renderMinibox ('','💧  Akt. Durchfluss',($Syr_small["FLO"] ?? 0).' l') ?>
+                        <?= renderMinibox('', '🧭 Druck', number_format((float) ($Syr_small['BAR'] ?? 0) / 1000, 2) . ' bar') ?>
                     </div>
                 </div>
             </div>
