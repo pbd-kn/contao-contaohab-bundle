@@ -45,7 +45,7 @@ final class WasserLeckageService implements SensorFetcherInterface
                 'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
             );
             if (!$settings) {
-                throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
+                throw new \RuntimeException('!Keine Sensorcollector-Einstellungen vorhanden.');
             }
 
             $mode = (string) ($settings['wasserLeckageAccess'] ?? 'local');
