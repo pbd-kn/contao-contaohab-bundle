@@ -162,7 +162,16 @@
         $Syr_batVolt = ($Syr_small["BAT"] ?? 0) / 100;
         $Syr_batPercent = max(0, min(100, round(($Syr_batVolt - 4.9) / (6.2 - 4.9) * 100)));   // 6.2 V voll 4.2V leer
 
-        
+        $tasmotaAll = coh_v($d, 'tasmota.alltasmota.akt', []);    // Tasmota daten
+        if (is_string($tasmotaAll)) {
+            $decodedTasmota = json_decode($tasmotaAll, true);
+            $tasmotaAll = is_array($decodedTasmota) ? $decodedTasmota : [];
+        } elseif (!is_array($tasmotaAll)) {
+            $tasmotaAll = [];
+        }
+        $tasmotaM60 = is_array($tasmotaAll['StatusSNS']['M60'] ?? null) ? $tasmotaAll['StatusSNS']['M60']: [];
+
+
         
 /*
 generation	erzeugte Solarenergie	
@@ -248,7 +257,7 @@ gridDraw	aus dem Stromnetz bezogen
                         <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQliveTime['consumption'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','🔋️ Akku','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','⚡️ Netz IQox','eingespeist '.coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile (coh_v($d, 'TS_E_out_208'),1) . ' kWh' . '<br>entnommen ' . coh_teile (coh_v($d, 'TS_E_in_108'),1) . ' kWh') ?>
+                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile($tasmotaM60['TS_E_out_208'] ?? 0, 1) . ' kWh' . '<br>entnommen ' . coh_teile($tasmotaM60['TS_E_in_108'] ?? 0, 1) . ' kWh') ?>
                     </div>
                 </div>
             </div>
