@@ -106,12 +106,12 @@
         $raspberryAvailable = isset($raspberryAll['system'])
             && is_array($raspberryAll['system']);
         $raspberrySystem = $raspberryAll['system'] ?? [];
-        $raspberryHeating = $raspberryAll['heating'] ?? [];
 //var_dump($raspberrySystem);
+        $raspberryHeating = $raspberryAll['heating'] ?? [];
+        $raspberryBackup = $raspberryAll['backup'] ?? [];
+//var_dump($raspberryBackup);
 
-        $HeizstabIntervalls = is_array($raspberryHeating['intervals'] ?? null)
-            ? $raspberryHeating['intervals']
-            : [];
+        $HeizstabIntervalls = is_array($raspberryHeating['intervals'] ?? null) ? $raspberryHeating['intervals'] : [];
 //var_dump($intervalls);
 //        renderArray($HeizstabIntervalls);
         $heizungprotocol = (string) ($raspberryHeating['protocol'] ?? '');
