@@ -108,8 +108,6 @@
         $raspberrySystem = $raspberryAll['system'] ?? [];
 //var_dump($raspberrySystem);
         $raspberryHeating = $raspberryAll['heating'] ?? [];
-        $raspberryBackup = $raspberryAll['backup'] ?? [];
-//var_dump($raspberryBackup);
 
         $HeizstabIntervalls = is_array($raspberryHeating['intervals'] ?? null) ? $raspberryHeating['intervals'] : [];
 //var_dump($intervalls);
@@ -119,6 +117,11 @@
         //renderArray($heizungprotocol);
         $HZprotokollHasError = preg_match('/error|fehler/i', $heizungprotocol) === 1;
         $heizstabServerOk = $raspberryHeating['serverStatus'] ?? false;
+        // backup raspberry
+        $raspberryBackup = $raspberryAll['backup'] ?? [];
+        $raspberryBackupErrors = $raspberryAll['backup']['errors'] ?? [];
+        $raspberryBackupProtocoll = $raspberryAll['backup']['protocol'] ?? [];
+//var_dump($raspberryBackupProtocoll);
         
         $batteryPercent = $live['batterySoc'] ?? 0;
         $batteryPower   = coh_num($live['batteryPower'] ?? 0);
@@ -342,6 +345,16 @@ gridDraw	aus dem Stromnetz bezogen
                     <div class="coh-value"><?= 'Belegung: ' . $plattendiskUsageProzent  ?></div>
                     <div class="coh-value"><?= 'Total:    ' . $plattendiskUsageTotal  ?></div>
                     <div class="coh-value"><?= 'Belegt:   ' . $plattendiskUsageFS ?></div>
+                </div>
+                <div class="coh-row" style="margin-top:8px;">
+                    <div class="coh-icon">😩</div>
+                    <div class="coh-label">Backup-Errors</div>
+                    <div class="coh-value"><?= renderArray($raspberryBackupErrors); ?></div>
+                </div>
+                <div class="coh-row" style="margin-top:8px;">
+                    <div class="coh-icon">📑</div>
+                    <div class="coh-label">Backup-Protokoll</div>
+                    <div class="coh-value"><?= renderArray($raspberryBackupProtocoll); ?></div>
                 </div>
             </div>
         </details>
