@@ -17,6 +17,12 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry status API';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['title'] = ['Label', 'Label for this settings record'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProAccess'] = ['Access mode', 'Query StoragePro directly through Modbus TCP or through the Raspberry proxy.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProAccessOptions'] = ['disabled' => 'Disabled', 'local' => 'Direct local Modbus', 'raspberry' => 'Through Raspberry API'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProRaspberryBaseUrl'] = ['Raspberry base URL', 'Externally reachable Raspberry URL, for example the MyFRITZ address.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProRaspberryToken'] = ['Raspberry API token', 'Sent as X-COH-TOKEN.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProRaspberryPath'] = ['IQBox Modbus API path', 'Default: /api/coh/iqbox-modbus.php'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProRaspberryTimeout'] = ['Raspberry request timeout', 'Maximum wait for the proxied Modbus snapshot in seconds.'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProHost'] = ['StoragePro host', 'Local host name or IP address.'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProPort'] = ['Modbus TCP port', 'Default: 502'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProUnitId'] = ['Modbus unit ID', 'Default: 1'];

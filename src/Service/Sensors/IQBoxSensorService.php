@@ -7,6 +7,7 @@ namespace PbdKn\ContaoContaohabBundle\Service\Sensors;
 use Doctrine\DBAL\Connection;
 use PbdKn\ContaoContaohabBundle\Model\SensorModel;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class IQBoxSensorService implements SensorFetcherInterface
 {
@@ -28,6 +29,7 @@ final class IQBoxSensorService implements SensorFetcherInterface
         private readonly LoggerService $logger,
         private readonly Connection $connection,
         ?callable $modbusFactory = null,
+        private readonly ?HttpClientInterface $httpClient = null,
     ) {
         $this->modbusFactory = $modbusFactory;
     }
@@ -46,6 +48,16 @@ final class IQBoxSensorService implements SensorFetcherInterface
     {
         $result = [];
         $snapshot = null;
+        $settings = $this->settings();
+        $access = strtolower(trim((string) ($settings['storageProAccess'] ?? 'local')));
+        if ($access === 'disabled') {
+            $this->logger->debugMe('IQBox-StoragePro-Zugriff ist deaktiviert.');
+            return [];
+        }
+        if (!in_array($access, ['local', 'raspberry'], true)) {
+            $this->logger->Error("IQBox StoragePro: unbekannte Zugriffsart '$access'.");
+            return [];
+        }
 
         foreach ($sensors as $sensor) {
             $sensorId = (string) $sensor->sensorID;
@@ -55,7 +67,7 @@ final class IQBoxSensorService implements SensorFetcherInterface
                 continue;
             }
             try {
-                $snapshot ??= $this->modbus()->readSnapshot();
+                $snapshot ??= $access === 'raspberry' ? $this->requestViaRaspberry($settings) : $this->modbus($settings)->readSnapshot();
                 $result[$sensorId] = [
                     'sensorID' => $sensorId,
                     'sensorEinheit' => (string) $sensor->sensorEinheit,
@@ -99,12 +111,47 @@ final class IQBoxSensorService implements SensorFetcherInterface
         return "IQBox StoragePro: Fehler bei lokalId $selection: $message";
     }
 
-    private function modbus(): object
+    private function settings(): array
     {
         $settings = $this->connection->fetchAssociative('SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1');
         if (!$settings) {
             throw new \RuntimeException('StoragePro-Modbus-Einstellungen fehlen im Contao-Backend.');
         }
+        return $settings;
+    }
+
+    private function requestViaRaspberry(array $settings): array
+    {
+        if ($this->httpClient === null) {
+            throw new \RuntimeException('HTTP-Client fÃ¼r den Raspberry-IQBox-Zugriff fehlt.');
+        }
+        $baseUrl = rtrim(trim((string) ($settings['storageProRaspberryBaseUrl'] ?? '')), '/');
+        $path = '/' . ltrim(trim((string) ($settings['storageProRaspberryPath'] ?? '/api/coh/iqbox-modbus.php')), '/');
+        if ($baseUrl === '') {
+            throw new \RuntimeException('Raspberry-Basis-URL fÃ¼r IQBox/StoragePro fehlt.');
+        }
+        $response = $this->httpClient->request('GET', $baseUrl . $path, [
+            'headers' => [
+                'Accept' => 'application/json',
+                'X-COH-TOKEN' => (string) ($settings['storageProRaspberryToken'] ?? ''),
+            ],
+            'query' => [
+                'host' => trim((string) ($settings['storageProHost'] ?? '')) ?: self::DEFAULT_HOST,
+                'port' => max(1, (int) ($settings['storageProPort'] ?? 502)),
+                'unitId' => isset($settings['storageProUnitId']) ? (int) $settings['storageProUnitId'] : 1,
+                'timeout' => max(1, (int) ($settings['storageProTimeout'] ?? 3)),
+            ],
+            'timeout' => max(1, (int) ($settings['storageProRaspberryTimeout'] ?? 15)),
+        ]);
+        $payload = $response->toArray(false);
+        if ($response->getStatusCode() !== 200 || empty($payload['ok']) || !is_array($payload['snapshot'] ?? null)) {
+            throw new \RuntimeException('UngÃ¼ltige Raspberry-IQBox-Antwort: ' . json_encode($payload, JSON_UNESCAPED_UNICODE));
+        }
+        return $payload['snapshot'];
+    }
+
+    private function modbus(array $settings): object
+    {
         $host = trim((string) ($settings['storageProHost'] ?? '')) ?: self::DEFAULT_HOST;
         $port = max(1, (int) ($settings['storageProPort'] ?? 502));
         $unitId = isset($settings['storageProUnitId']) ? (int) $settings['storageProUnitId'] : 1;

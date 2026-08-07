@@ -48,6 +48,10 @@ services:
     PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager:
         arguments:
           $fetchers: !tagged_iterator sensor.fetcher
+    PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorService:
+        arguments:
+          $httpClient: '@http_client'
+
     PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorServiceCloud:
         arguments:
           $ampereClParamsFile: '%coh_sensors.ampere_iq_cl_params_file%'
