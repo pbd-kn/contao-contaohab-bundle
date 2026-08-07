@@ -20,7 +20,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
     ],
     'palettes' => [
         '__selector__' => ['heizstabAccess', 'tasmotaAccess', 'wasserLeckageAccess', 'raspberryAccess'],
-        'default' => '{general_legend},title;{ampere_legend},ampereUsername,amperePassword,ampereRetries,ampereRetryDelay,lifetimeCacheSeconds;{heizstab_legend},heizstabAccess;{tasmota_legend},tasmotaAccess;{wasserleckage_legend},wasserLeckageAccess;{raspberry_api_legend},raspberryAccess',
+        'default' => '{general_legend},title;{storagepro_legend},storageProHost,storageProPort,storageProUnitId,storageProTimeout;{ampere_cl_legend},ampereClUsername,ampereClPassword,ampereClRetries,ampereClRetryDelay,ampereClLifetimeCacheSeconds;{heizstab_legend},heizstabAccess;{tasmota_legend},tasmotaAccess;{wasserleckage_legend},wasserLeckageAccess;{raspberry_api_legend},raspberryAccess',
     ],
     'subpalettes' => [
         'heizstabAccess_local' => 'heizstabUrl,heizstabAuthEnabled,heizstabLoginPath,heizstabPassword,heizstabPasswordField,heizstabCookieFile,heizstabInsecureTls',
@@ -34,6 +34,17 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
         'id' => ['sql' => "int(10) unsigned NOT NULL auto_increment"],
         'tstamp' => ['sql' => "int(10) unsigned NOT NULL default 0"],
         'title' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'maxlength' => 128, 'tl_class' => 'w50'], 'sql' => "varchar(128) NOT NULL default ''"],
+        'storageProHost' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'ASP-HSR2103J2311E08738.local'"],
+        'storageProPort' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'rgxp' => 'natural', 'minval' => 1, 'maxval' => 65535, 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 502"],
+        'storageProUnitId' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'rgxp' => 'natural', 'minval' => 0, 'maxval' => 255, 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 1"],
+        'storageProTimeout' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'rgxp' => 'digit', 'minval' => 1, 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 3"],
+        'ampereClUsername' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'ampereClPassword' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'ampereClRetries' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 3"],
+        'ampereClRetryDelay' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 10"],
+        'ampereClLifetimeCacheSeconds' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "int(10) unsigned NOT NULL default 60"],
+        'ampereClTokens' => ['sql' => "blob NULL"],
+        // Alte Cloud-Spalten bleiben nur fuer verlustfreie Schema-Updates bestehen.
         'ampereUsername' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
         'amperePassword' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
         'ampereRetries' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 3"],

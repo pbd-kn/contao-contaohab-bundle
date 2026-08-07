@@ -16,4 +16,10 @@ parameters:
     coh_sensors.ampere_iq_pass: '%env(default:coh_sensors.ampere_iq_password:COH_AMPERE_IQ_PASSWORD)%'
     coh_sensors.ampere_iq_retries: 3
     coh_sensors.ampere_iq_retry_delay: 10
-
+    # Optionaler Fallback fuer IQBoxSensorServiceCloud (Sensorquelle IQBoxCL).
+    coh_sensors.ampere_iq_cl_params_file: '%coh_sensors.ampere_iq_params_file%'
+    coh_sensors.ampere_iq_cl_username: '%env(default:coh_sensors.ampere_iq_username:COH_AMPERE_IQ_CL_USERNAME)%'
+    coh_sensors.ampere_iq_cl_password: '%env(default:coh_sensors.ampere_iq_password:COH_AMPERE_IQ_CL_PASSWORD)%'
+    coh_sensors.ampere_iq_cl_retries: 3
+    coh_sensors.ampere_iq_cl_retry_delay: 10
+    coh_sensors.ampere_iq_cl_lifetime_cache_seconds: 60

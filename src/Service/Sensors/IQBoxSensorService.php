@@ -10,12 +10,26 @@ use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 
 final class IQBoxSensorService implements SensorFetcherInterface
 {
-    private ?AmpereIqHttpAccess $cloud = null;
+    private const DEFAULT_HOST = 'ASP-HSR2103J2311E08738.local';
+
+    /** @var array<string,string> */
+    private const LEGACY_SUFFIXES = [
+        '_batteries_0_state_of_charge' => 'battery.soc',
+        '_batteries_0_power' => 'battery.power',
+        '_photovoltaics_0_power' => 'pv.power',
+        '_consumption_power' => 'house.power',
+        '_powermeter_power' => 'grid.power',
+    ];
+
+    /** @var null|callable(string,int,int,float):object */
+    private $modbusFactory;
 
     public function __construct(
         private readonly LoggerService $logger,
         private readonly Connection $connection,
+        ?callable $modbusFactory = null,
     ) {
+        $this->modbusFactory = $modbusFactory;
     }
 
     public function supports(SensorModel $sensor): bool
@@ -31,186 +45,184 @@ final class IQBoxSensorService implements SensorFetcherInterface
     public function fetchArr(array $sensors, ?string $date = null, array $fetchedValues = []): ?array
     {
         $result = [];
+        $snapshot = null;
 
         foreach ($sensors as $sensor) {
             $sensorId = (string) $sensor->sensorID;
             $selection = trim((string) $sensor->sensorLokalId);
             if ($selection === '') {
-                $this->logger->Error("IQBox Cloud: sensorLokalId fehlt für Sensor $sensorId");
+                $this->logger->Error("IQBox StoragePro: sensorLokalId fehlt für Sensor $sensorId");
                 continue;
             }
             try {
-                $this->logger->debugMe("sensorId $sensorId lokalid $selection");
-                $rawValue = $this->cloud()->getValue($selection, $date);
-                $debugValue = is_array($rawValue) || is_object($rawValue)
-                    ? json_encode($rawValue, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)
-                    : (string) $rawValue;
-                $this->logger->debugMe("sensorId $sensorId lokalid $selection rawValue $debugValue");
-                $row = [
+                $snapshot ??= $this->modbus()->readSnapshot();
+                $result[$sensorId] = [
                     'sensorID' => $sensorId,
                     'sensorEinheit' => (string) $sensor->sensorEinheit,
                     'sensorValueType' => (string) $sensor->sensorValueType,
                     'sensorSource' => (string) $sensor->sensorSource,
+                    'sensorValue' => $this->snapshotValue($snapshot, $selection),
                 ];
-
-                if (str_starts_with(strtolower($selection), 'history.')) {
-                    $row['historyPoints'] = $this->normalizeHistoryPoints($rawValue);
-                    $row['sensorValue'] = $row['historyPoints'] !== []
-                        ? $row['historyPoints'][array_key_last($row['historyPoints'])]['y']
-                        : null;
-                } else {
-                    $row['sensorValue'] = $this->normalizeLiveValue($rawValue);
-                }
-
-                $result[$sensorId] = $row;
             } catch (\Throwable $error) {
-                $this->logger->Error("IQBox Cloud: Fehler bei lokalId $selection: {$error->getMessage()}");
+                $this->logger->Error($this->qualifiedErrorMessage($selection, $error));
             }
         }
 
         return $result;
     }
 
-    private function cloud(): AmpereIqHttpAccess
+    private function qualifiedErrorMessage(string $selection, \Throwable $error): string
     {
-        $settings = $this->connection->fetchAssociative(
-            'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-        );
-        if (!$settings) {
-            throw new \RuntimeException('Ampere.IQ-Einstellungen fehlen im Contao-Backend.');
+        $message = $error->getMessage();
+        if (str_contains($message, 'Modbus-Antwort unvollstÃ¤ndig: Verbindung beendet')) {
+            return sprintf(
+                "IQBox StoragePro: lokalId %s konnte nicht gelesen werden. Der StoragePro hat die Modbus-TCP-Verbindung beendet. Wahrscheinlich ist bereits ein anderer Modbus-Client verbunden (z. B. json-solar-modbus-loop.php). Bitte den anderen Client die Verbindung nach jedem Zugriff freigeben lassen. Technischer Fehler: %s",
+                $selection,
+                $message,
+            );
         }
-        $tokens = json_decode((string) ($settings['ampereTokens'] ?? ''), true);
-        $parameters = ['ampereIq' => [
-            'username' => (string) ($settings['ampereUsername'] ?? ''),
-            'password' => (string) ($settings['amperePassword'] ?? ''),
-            'tokens' => is_array($tokens) ? $tokens : [],
-            'retries' => max(1, (int) ($settings['ampereRetries'] ?? 3)),
-            'retryDelay' => max(0, (int) ($settings['ampereRetryDelay'] ?? 10)),
-            'lifetimeCacheSeconds' => max(0, (int) ($settings['lifetimeCacheSeconds'] ?? 60)),
-        ]];
-        // TaskAccess.php enthält auch den AmpereIqHttpAccess. Durch diesen
-        // Aufruf ist die Datei geladen, bevor die Access-Klasse erzeugt wird.
-        $logger = TaskAccess::loggerAdapter($this->logger);
-        return $this->cloud ??= new AmpereIqHttpAccess(
-            '',
-            $parameters['ampereIq']['retries'],
-            $parameters['ampereIq']['retryDelay'],
-            $logger,
-            $parameters['ampereIq']['lifetimeCacheSeconds'],
-            $parameters,
-            function (array $newTokens) use ($settings): void {
-                $this->connection->update('tl_coh_sensorcollector_settings', [
-                    'ampereTokens' => json_encode($newTokens, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                    'tstamp' => time(),
-                ], ['id' => (int) $settings['id']]);
-            },
-        );
+        if (str_contains($message, 'Timeout')) {
+            return sprintf(
+                'IQBox StoragePro: Timeout beim Lesen von lokalId %s. Host, Port, Erreichbarkeit und eingestellten Timeout prÃ¼fen. Technischer Fehler: %s',
+                $selection,
+                $message,
+            );
+        }
+        if (str_contains($message, 'Modbus-Verbindung zu')) {
+            return sprintf(
+                'IQBox StoragePro: Verbindung fÃ¼r lokalId %s konnte nicht aufgebaut werden. Host, Port und Netzwerk prÃ¼fen. Technischer Fehler: %s',
+                $selection,
+                $message,
+            );
+        }
+
+        return "IQBox StoragePro: Fehler bei lokalId $selection: $message";
     }
 
-    private function normalizeLiveValue(mixed $value): mixed
+    private function modbus(): object
     {
-        if (!is_array($value)) {
-            $this->logger->debugMe("normal  numeric ".$this->numericValue($value));
-            return $this->numericValue($value);
+        $settings = $this->connection->fetchAssociative('SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1');
+        if (!$settings) {
+            throw new \RuntimeException('StoragePro-Modbus-Einstellungen fehlen im Contao-Backend.');
+        }
+        $host = trim((string) ($settings['storageProHost'] ?? '')) ?: self::DEFAULT_HOST;
+        $port = max(1, (int) ($settings['storageProPort'] ?? 502));
+        $unitId = isset($settings['storageProUnitId']) ? (int) $settings['storageProUnitId'] : 1;
+        $timeout = max(0.1, (float) ($settings['storageProTimeout'] ?? 3));
+
+        return $this->modbusFactory !== null
+            ? ($this->modbusFactory)($host, $port, $unitId, $timeout)
+            : new AmpereStorageProModbus($host, $port, $unitId, $timeout);
+    }
+
+    private function snapshotValue(array $snapshot, string $selection): mixed
+    {
+        $data = $snapshot['data'] ?? [];
+        $live = $this->compatibleLiveData($data);
+        $today = $this->compatibleTodayData($data);
+        $lifetime = $this->compatibleLifetimeData($data);
+        $normalized = strtolower(trim($selection));
+
+        if ($normalized === 'modbus') return $data;
+        if (str_starts_with($normalized, 'modbus.')) return $this->pathNode($data, substr(trim($selection), 7));
+
+        $lifetimeAliases = ['pv-total' => 'lifetime.pvProduction', 'pv-gesamt' => 'lifetime.pvProduction', 'total-pv' => 'lifetime.pvProduction', 'lifetime-pv' => 'lifetime.pvProduction'];
+        $lifetimeSelection = $lifetimeAliases[$normalized] ?? trim($selection);
+        if (strcasecmp($lifetimeSelection, 'lifetime') === 0 || strcasecmp($lifetimeSelection, 'lifetime.work') === 0) return $lifetime['work'];
+        if (str_starts_with(strtolower($lifetimeSelection), 'lifetime.')) return $this->pathNode($lifetime, substr($lifetimeSelection, 9));
+
+        $todayAliases = [
+            'heute' => 'today', 'work' => 'today.work', 'arbeit' => 'today.work', 'today-work' => 'today.work',
+            'today-self-sufficiency' => 'today.selfSufficiency', 'today-autarkie' => 'today.selfSufficiency',
+            'today-self-consumption' => 'today.selfConsumption', 'today-eigenverbrauch' => 'today.selfConsumption',
+            'today-saving' => 'today.saving', 'today-ersparnis' => 'today.saving', 'today-saving-energy' => 'today.saving.energy',
+            'today-saving-pv-production' => 'today.saving.energy.pvProduction', 'today-saving-grid-feed' => 'today.saving.energy.gridFeed',
+            'today-saving-own-consumption' => 'today.saving.energy.ownConsumption',
+        ];
+        $todaySelection = $todayAliases[$normalized] ?? trim($selection);
+        if (strcasecmp($todaySelection, 'today') === 0) return $today;
+        if (str_starts_with(strtolower($todaySelection), 'today.')) {
+            $path = substr($todaySelection, 6);
+            if ($path === 'work.consumation') $path = 'work.consumption';
+            return $this->pathNode($today, $path);
         }
 
-        foreach (['value', 'power', 'work', 'state', 'amount'] as $key) {
-            if (array_key_exists($key, $value) && !is_array($value[$key])) {
-                $this->logger->debugMe("value[$key] " .$value[$key]. " numeric ".$this->numericValue($value[$key]));
+        if ($normalized === 'live' || $normalized === 'live.power') return $live;
+        if (str_starts_with($normalized, 'live.power.')) return $this->pathNode($live, substr($selection, 11));
+        if (str_starts_with($normalized, 'live.')) return $this->pathNode($live, substr($selection, 5));
+        if (array_key_exists($selection, $live) && !is_array($live[$selection])) return $live[$selection];
+        if (array_key_exists($selection, $snapshot['aliases'] ?? [])) return $snapshot['aliases'][$selection];
 
-                return $this->numericValue($value[$key]);
-            }
+        $path = $selection;
+        foreach (self::LEGACY_SUFFIXES as $suffix => $modbusPath) {
+            if (str_ends_with($selection, $suffix)) { $path = $modbusPath; break; }
         }
+        if (str_contains($selection, '_powermeter_') && str_ends_with($selection, 'harmonized_power_out')) return max(0.0, -(float) $this->pathValue($data, 'grid.power'));
+        if (str_contains($selection, '_powermeter_') && str_ends_with($selection, 'harmonized_power_in')) return max(0.0, (float) $this->pathValue($data, 'grid.power'));
+        return $this->pathValue($data, $path);
+    }
 
-        // Bereichsauswahlen wie "live" liefern die vollstaendige strukturierte
-        // API-Antwort. Diese bleibt als Array erhalten; nur konkrete Feldpfade
-        // werden oben zu einem einzelnen Sensorwert normalisiert.
+    private function compatibleLifetimeData(array $data): array
+    {
+        $e = $data['energy'] ?? [];
+        $generation = (float) ($e['pv']['total'] ?? 0);
+        $charge = (float) ($e['battery']['chargeTotal'] ?? 0);
+        $discharge = (float) ($e['battery']['dischargeTotal'] ?? 0);
+        $sell = (float) ($e['grid']['sellTotal'] ?? 0);
+        $import = (float) ($e['grid']['feedInTotal'] ?? 0);
+        $consumption = round($generation + $import + $discharge - $sell - $charge, 2);
+        return ['pvProduction' => round($generation * 1000, 2), 'work' => [
+            'generation' => round($generation * 1000, 2), 'consumption' => round($consumption * 1000, 2),
+            'batteryFeed' => round($charge * 1000, 2), 'batteryDraw' => round($discharge * 1000, 2),
+            'gridFeed' => round($sell * 1000, 2), 'gridDraw' => round($import * 1000, 2),
+            'unit' => 'Wh', 'throughDate' => date('Y-m-d'), 'source' => 'StoragePro-Modbus-Gesamtzaehler',
+        ]];
+    }
+
+    private function compatibleTodayData(array $data): array
+    {
+        $e = $data['energy'] ?? [];
+        $generation = round((float) ($e['pv']['today'] ?? 0) * 1000, 2);
+        $consumption = round((float) ($e['house']['calculatedToday'] ?? 0) * 1000, 2);
+        $charge = round((float) ($e['battery']['chargeToday'] ?? 0) * 1000, 2);
+        $discharge = round((float) ($e['battery']['dischargeToday'] ?? 0) * 1000, 2);
+        $sell = round((float) ($e['grid']['sellToday'] ?? 0) * 1000, 2);
+        $import = round((float) ($e['grid']['feedInToday'] ?? 0) * 1000, 2);
+        $autarky = $consumption <= 0 ? null : round(max(0.0, min(100.0, ($consumption - $import) / $consumption * 100)), 2);
+        $own = $generation <= 0 ? null : round(max(0.0, min(100.0, ($generation - $sell) / $generation * 100)), 2);
+        return [
+            'work' => ['generation' => $generation, 'consumption' => $consumption, 'batteryFeed' => $charge, 'batteryDraw' => $discharge, 'gridFeed' => $sell, 'gridDraw' => $import, 'unit' => 'Wh'],
+            'selfSufficiency' => ['value' => $autarky], 'selfConsumption' => ['value' => $own],
+            'saving' => ['energy' => ['pvProduction' => $generation, 'gridFeed' => $sell, 'ownConsumption' => max(0.0, round($generation - $sell, 2))], '_notice' => 'Kosten, Preise, Fahrzeuge und Emissionen sind nicht per Modbus verfügbar.'],
+        ];
+    }
+
+    private function compatibleLiveData(array $data): array
+    {
+        $batteryPower = (float) ($data['battery']['power'] ?? 0);
+        return [
+            'pvPower' => $data['pv']['power'] ?? null, 'housePower' => -abs((float) ($data['house']['power'] ?? 0)),
+            'gridPower' => $data['grid']['power'] ?? null, 'batteryPower' => $batteryPower == 0.0 ? 0 : -$batteryPower,
+            'heatingRodPower' => null, 'batterySoc' => $data['battery']['soc'] ?? null,
+            'inverter' => $data['inverter'] ?? [], 'grid' => $data['grid'] ?? [], 'battery' => $data['battery'] ?? [],
+            'pv' => $data['pv'] ?? [], 'house' => $data['house'] ?? [],
+        ];
+    }
+
+    private function pathValue(array $data, string $path): mixed
+    {
+        $value = $this->pathNode($data, $path);
+        if (is_array($value)) throw new \InvalidArgumentException("Sensorpfad '$path' bezeichnet keinen einzelnen Messwert.");
         return $value;
     }
 
-    /** @return list<array{x: string, y: int|float}> */
-    private function normalizeHistoryPoints(mixed $payload): array
+    private function pathNode(array $data, string $path): mixed
     {
-        $points = [];
-        $this->collectHistoryPoints($payload, $points);
-        usort($points, static fn (array $a, array $b): int => strcmp($a['x'], $b['x']));
-
-        $unique = [];
-        foreach ($points as $point) {
-            $unique[$point['x']] = $point;
+        $value = $data;
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($value) || !array_key_exists($segment, $value)) throw new \InvalidArgumentException("Sensorpfad '$path' ist lokal nicht verfügbar.");
+            $value = $value[$segment];
         }
-
-        return array_values($unique);
-    }
-
-    private function collectHistoryPoints(mixed $node, array &$points): void
-    {
-        if (!is_array($node)) {
-            return;
-        }
-
-        $timestamp = $this->firstScalar($node, ['timestamp', 'time', 'date', 'datetime', 'x', 'from']);
-        $value = $this->firstScalar($node, ['value', 'power', 'work', 'price', 'amount', 'y']);
-        if ($timestamp !== null && $value !== null && is_numeric($value)) {
-            $normalizedTime = $this->normalizeTimestamp($timestamp);
-            if ($normalizedTime !== null) {
-                $points[] = ['x' => $normalizedTime, 'y' => (float) $value];
-            }
-        }
-
-        foreach ($node as $key => $child) {
-            if (is_numeric($child) && is_string($key)) {
-                $normalizedTime = $this->normalizeTimestamp($key);
-                if ($normalizedTime !== null) {
-                    $points[] = ['x' => $normalizedTime, 'y' => (float) $child];
-                    continue;
-                }
-            }
-            if (is_array($child)) {
-                $this->collectHistoryPoints($child, $points);
-            }
-        }
-    }
-
-    private function firstScalar(array $values, array $keys): mixed
-    {
-        foreach ($keys as $wanted) {
-            foreach ($values as $key => $value) {
-                if (strtolower((string) $key) === strtolower($wanted) && !is_array($value)) {
-                    return $value;
-                }
-            }
-        }
-        return null;
-    }
-
-    private function normalizeTimestamp(mixed $value): ?string
-    {
-        if (is_numeric($value)) {
-            $timestamp = (int) $value;
-            if ($timestamp > 20_000_000_000) {
-                $timestamp = intdiv($timestamp, 1000);
-            }
-            return $timestamp > 0 ? date(DATE_ATOM, $timestamp) : null;
-        }
-
-        try {
-            return (new \DateTimeImmutable((string) $value))->format(DATE_ATOM);
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-    private function numericValue(mixed $value): mixed
-    {
-        if (is_string($value) && preg_match('/^[^|]*\|\s*([+-]?[0-9.,]+)/', $value, $matches)) {
-            $value = $matches[1];
-        }
-        if (is_string($value) && preg_match('/^\s*([+-]?[0-9.,]+)/', $value, $matches)) {
-            $value = $matches[1];
-        }
-        return is_numeric(str_replace(',', '.', (string) $value))
-            ? (float) str_replace(',', '.', (string) $value)
-            : $value;
+        return $value;
     }
 }

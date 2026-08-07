@@ -93,7 +93,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'sensorActive' => [
-            'label'     => ['Aktiv', 'Deaktivierte Sensoren bleiben erhalten, werden aber nicht angezeigt und nicht zum Raspberry Ã¼bertragen.'],
+            'label'     => ['Aktiv', 'Deaktivierte Sensoren bleiben erhalten, werden aber nicht angezeigt und nicht zum Raspberry uebertragen.'],
             'inputType' => 'checkbox',
             'filter'    => true,
             'eval'      => ['tl_class'=>'w50'],
@@ -103,7 +103,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'sensorEinheit' => [
             'label' => ['Einheit'],
             'inputType' => 'select',
-            'options'   => ['-','kWh','W','kW','°C','Datum','Zeit','DatumZeit','Text','OK','%'],
+            'options'   => ['-','kWh','W','kW',"\u{00B0}C",'Datum','Zeit','DatumZeit','Text','OK','%'],
             'eval'      => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
@@ -136,7 +136,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'sensorComment' => [
-            'label'     => ['Kommentar', 'Interne Notiz dazu, was der Sensor misst oder wofÃ¼r er verwendet wird.'],
+            'label'     => ['Kommentar', 'Interne Notiz dazu, was der Sensor misst oder wofuer er verwendet wird.'],
             'inputType' => 'textarea',
             'eval'      => ['tl_class'=>'clr', 'rows'=>4],
             'sql'       => "text NULL",
@@ -222,7 +222,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'label' => ['Speichern'],
             'inputType' => 'select',
             'options'   => [0,1,2,3,4,5],
-            'reference' => ['Nein','Polltime','StÃ¼ndlich','TÃ¤glich','WÃ¶chentlich','Monatlich'],
+            'reference' => ['Nein','Polltime','Stuendlich','Taeglich','Woechentlich','Monatlich'],
             'eval'      => ['tl_class'=>'w50'],
             'sql'       => "tinyint(1) NOT NULL default '0'",
         ],

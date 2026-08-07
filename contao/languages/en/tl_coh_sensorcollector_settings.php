@@ -1,9 +1,15 @@
 <?php
 
-$GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector settings', 'Manage IQBox and heating rod credentials'];
+$GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector settings', 'Manage local device access'];
 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['general_legend'] = 'General';
-$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_legend'] = 'Ampere.IQ cloud';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storagepro_legend'] = 'AMPERE.StoragePro (Modbus TCP)';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_cl_legend'] = 'Ampere.IQ cloud (IQBoxCL fallback)';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClUsername'] = ['Cloud username', 'Ampere.IQ email address for IQBoxCL.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClPassword'] = ['Cloud password', 'Ampere.IQ password for IQBoxCL.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClRetries'] = ['Cloud retries', 'Maximum number of requests.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClRetryDelay'] = ['Cloud retry delay', 'Delay between requests in seconds.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClLifetimeCacheSeconds'] = ['Cloud lifetime cache', 'Lifetime value validity in seconds.'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_legend'] = 'Heating rod access';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmota_legend'] = 'Tasmota access';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserleckage_legend'] = 'Water leakage access';
@@ -11,6 +17,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry status API';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['title'] = ['Label', 'Label for this settings record'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProHost'] = ['StoragePro host', 'Local host name or IP address.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProPort'] = ['Modbus TCP port', 'Default: 502'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProUnitId'] = ['Modbus unit ID', 'Default: 1'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProTimeout'] = ['Modbus timeout', 'Wait time in seconds. Default: 3'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereUsername'] = ['Ampere.IQ username', 'Email address used to sign in'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['amperePassword'] = ['Ampere.IQ password', 'Password used to sign in'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereRetries'] = ['Maximum attempts', 'Number of cloud request attempts'];

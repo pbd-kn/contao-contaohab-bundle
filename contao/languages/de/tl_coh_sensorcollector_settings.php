@@ -1,9 +1,15 @@
 <?php
 
-$GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector-Einstellungen', 'IQBox- und Heizstab-Zugangsdaten verwalten'];
+$GLOBALS['TL_LANG']['MOD']['sensorcollector_settings'] = ['Sensorcollector-Einstellungen', 'Lokale Geraetezugriffe verwalten'];
 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['general_legend'] = 'Allgemein';
-$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_legend'] = 'Ampere.IQ-Cloud';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storagepro_legend'] = 'AMPERE.StoragePro (Modbus TCP)';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampere_cl_legend'] = 'Ampere.IQ-Cloud (Fallback IQBoxCL)';
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClUsername'] = ['Cloud-Benutzername', 'Ampere.IQ-E-Mail-Adresse fuer IQBoxCL.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClPassword'] = ['Cloud-Passwort', 'Ampere.IQ-Passwort fuer IQBoxCL.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClRetries'] = ['Cloud-Versuche', 'Maximale Anzahl der Abrufversuche.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClRetryDelay'] = ['Cloud-Wartezeit', 'Pause zwischen Versuchen in Sekunden.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereClLifetimeCacheSeconds'] = ['Cloud-Lifetime-Cache', 'Gueltigkeit der Lifetime-Werte in Sekunden.'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_legend'] = 'Heizstabzugriff';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['tasmota_legend'] = 'Tasmota-Zugriff';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['wasserleckage_legend'] = 'Wasserleckage-Zugriff';
@@ -11,6 +17,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_local_legend'] 
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['heizstab_cloud_legend'] = 'my-PV-Cloud';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['raspberry_api_legend'] = 'Raspberry-Status-API';
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['title'] = ['Bezeichnung', 'Bezeichnung dieses Einstellungssatzes'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProHost'] = ['StoragePro-Host', 'Lokaler Hostname oder IP-Adresse.'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProPort'] = ['Modbus-TCP-Port', 'Standard: 502'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProUnitId'] = ['Modbus Unit-ID', 'Standard: 1'];
+$GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['storageProTimeout'] = ['Modbus-Timeout', 'Wartezeit in Sekunden. Standard: 3'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereUsername'] = ['Ampere.IQ-Benutzername', 'E-Mail-Adresse der Ampere.IQ-Anmeldung'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['amperePassword'] = ['Ampere.IQ-Passwort', 'Passwort der Ampere.IQ-Anmeldung'];
 $GLOBALS['TL_LANG']['tl_coh_sensorcollector_settings']['ampereRetries'] = ['Maximale Versuche', 'Anzahl der Cloud-Abrufversuche'];

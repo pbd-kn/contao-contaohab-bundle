@@ -16,7 +16,7 @@ services:
 
     PbdKn\ContaoContaohabBundle\:
         resource: '../../../src/'
-        exclude: '../../{DependencyInjection,Resources,public,Tests,Service/Sensors/RaspberryExecScripts}'
+        exclude: '../../{DependencyInjection,Resources,public,Tests,Service/Sensors/RaspberryExecScripts,Service/Sensors/AmpereStorageProModbus.php}'
 
     PbdKn\ContaoContaohabBundle\Controller\:
         resource: '../../Controller/'
@@ -48,3 +48,11 @@ services:
     PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager:
         arguments:
           $fetchers: !tagged_iterator sensor.fetcher
+    PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorServiceCloud:
+        arguments:
+          $ampereClParamsFile: '%coh_sensors.ampere_iq_cl_params_file%'
+          $ampereClUsername: '%coh_sensors.ampere_iq_cl_username%'
+          $ampereClPassword: '%coh_sensors.ampere_iq_cl_password%'
+          $ampereClRetries: '%coh_sensors.ampere_iq_cl_retries%'
+          $ampereClRetryDelay: '%coh_sensors.ampere_iq_cl_retry_delay%'
+          $ampereClLifetimeCacheSeconds: '%coh_sensors.ampere_iq_cl_lifetime_cache_seconds%'

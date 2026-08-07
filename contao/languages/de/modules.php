@@ -22,3 +22,6 @@ $GLOBALS['TL_LANG']['MOD']['contao_hab'] = 'ContaoHab';
  * Frontend modules
  */
 $GLOBALS['TL_LANG']['FMD']['contao_hab'] = 'ContaoHab';
+
+$GLOBALS['TL_LANG']['MOD']['Sensor'] = ['Sensoren', 'Sensoren definieren und verwalten.'];
+$GLOBALS['TL_LANG']['MOD']['SensorValues'] = ['Sensorwerte', 'Erfasste Sensorwerte anzeigen.'];

@@ -51,3 +51,7 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['title'] = ["Titel", "Geben Sie den Namen 
  * Buttons
  */
 $GLOBALS['TL_LANG']['tl_coh_sensors']['customButton'] = "Custom Routine starten";
+
+$GLOBALS['TL_LANG']['tl_coh_sensors']['base_legend'] = 'Basic settings';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['calc_legend'] = 'Calculation and components';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['history_legend'] = 'History';
