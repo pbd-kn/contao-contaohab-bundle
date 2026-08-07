@@ -133,7 +133,8 @@ final class IQBoxSensorService implements SensorFetcherInterface
         $response = $this->httpClient->request('GET', $baseUrl . $path, [
             'headers' => [
                 'Accept' => 'application/json',
-                'X-COH-TOKEN' => (string) ($settings['storageProRaspberryToken'] ?? ''),
+                'X-COH-TOKEN' => trim((string) ($settings['storageProRaspberryToken'] ?? ''))
+                    ?: (string) ($settings['tasmotaRaspberryToken'] ?? ''),
             ],
             'query' => [
                 'host' => trim((string) ($settings['storageProHost'] ?? '')) ?: self::DEFAULT_HOST,
@@ -143,9 +144,22 @@ final class IQBoxSensorService implements SensorFetcherInterface
             ],
             'timeout' => max(1, (int) ($settings['storageProRaspberryTimeout'] ?? 15)),
         ]);
-        $payload = $response->toArray(false);
-        if ($response->getStatusCode() !== 200 || empty($payload['ok']) || !is_array($payload['snapshot'] ?? null)) {
-            throw new \RuntimeException('UngÃ¼ltige Raspberry-IQBox-Antwort: ' . json_encode($payload, JSON_UNESCAPED_UNICODE));
+        $status = $response->getStatusCode();
+        $body = $response->getContent(false);
+        $payload = json_decode($body, true);
+        if (!is_array($payload)) {
+            throw new \RuntimeException(sprintf(
+                'Raspberry-IQBox-Endpunkt lieferte HTTP %d und kein gueltiges JSON: %s',
+                $status,
+                mb_substr(trim(strip_tags($body)), 0, 500),
+            ));
+        }
+        if ($status !== 200 || empty($payload['ok']) || !is_array($payload['snapshot'] ?? null)) {
+            throw new \RuntimeException(sprintf(
+                'Raspberry-IQBox-Endpunkt lieferte HTTP %d: %s',
+                $status,
+                (string) ($payload['error'] ?? json_encode($payload, JSON_UNESCAPED_UNICODE)),
+            ));
         }
         return $payload['snapshot'];
     }

@@ -21,7 +21,8 @@ final class IQBoxRaspberryApiTest extends TestCase
             'storageProAccess' => 'raspberry',
             'storageProRaspberryBaseUrl' => 'https://raspberry.example',
             'storageProRaspberryPath' => '/api/coh/iqbox-modbus.php',
-            'storageProRaspberryToken' => 'test-token',
+            'storageProRaspberryToken' => '',
+            'tasmotaRaspberryToken' => 'test-token',
             'storageProRaspberryTimeout' => 15,
             'storageProHost' => 'storage.local',
             'storageProPort' => 502,
@@ -30,10 +31,10 @@ final class IQBoxRaspberryApiTest extends TestCase
         ]);
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
-        $response->method('toArray')->willReturn(['ok' => true, 'snapshot' => [
+        $response->method('getContent')->with(false)->willReturn(json_encode(['ok' => true, 'snapshot' => [
             'data' => ['battery' => ['soc' => 88.5], 'pv' => ['power' => 1234]],
             'aliases' => ['batterySoc' => 88.5, 'pvPower' => 1234],
-        ]]);
+        ]], JSON_THROW_ON_ERROR));
         $http = $this->createMock(HttpClientInterface::class);
         $http->expects(self::once())->method('request')->with(
             'GET',

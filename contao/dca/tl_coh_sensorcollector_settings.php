@@ -44,7 +44,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensorcollector_settings'] = [
             'sql' => "varchar(16) NOT NULL default 'local'",
         ],
         'storageProRaspberryBaseUrl' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'http://p1pu92iv4i9yh2m2.myfritz.net'"],
-        'storageProRaspberryToken' => ['inputType' => 'text', 'eval' => ['hideInput' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default ''"],
+        'storageProRaspberryToken' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'COH_CODE'"],
         'storageProRaspberryPath' => ['inputType' => 'text', 'eval' => ['maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default '/api/coh/iqbox-modbus.php'"],
         'storageProRaspberryTimeout' => ['inputType' => 'text', 'eval' => ['rgxp' => 'natural', 'minval' => 1, 'tl_class' => 'w50'], 'sql' => "smallint(5) unsigned NOT NULL default 15"],
         'storageProHost' => ['inputType' => 'text', 'eval' => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'], 'sql' => "varchar(255) NOT NULL default 'ASP-HSR2103J2311E08738.local'"],
