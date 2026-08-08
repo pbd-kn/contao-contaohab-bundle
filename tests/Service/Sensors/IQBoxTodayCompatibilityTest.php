@@ -20,8 +20,9 @@ final class IQBoxTodayCompatibilityTest extends TestCase
             public function readSnapshot(): array
             {
                 return ['data' => ['energy' => [
-                    'pv' => ['today' => 10.0],
-                    'house' => ['calculatedToday' => 9.5],
+                    'pv' => ['today' => 10.5],
+                    'inverter' => ['today' => 10.0],
+                    'house' => ['today' => 9.5, 'calculatedToday' => 9.5],
                     'battery' => ['chargeToday' => 0.5, 'dischargeToday' => 1.0],
                     'grid' => ['sellToday' => 3.0, 'feedInToday' => 2.0],
                 ]], 'aliases' => []];

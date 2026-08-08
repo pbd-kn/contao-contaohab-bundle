@@ -244,7 +244,7 @@ gridDraw	aus dem Stromnetz bezogen
                     <div class="coh-mini-grid">
                         <?= renderMinibox ('','☀️ Solar heute',coh_teile ($IQTodayWorkAll['generation'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','☀️ Autarkie',$IQselfSufficiencyValue  .' % ')?>
-                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQTodayWorkAll['consumption'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','🏠 Hausverbrauch',coh_teile($IQTodayWorkAll['consumption'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','🔋️ Akku ','geladen '.coh_teile($IQTodayWorkAll['batteryFeed'] ?? null) .' kWh<br>'
                                                             .'entnommen '.coh_teile($IQTodayWorkAll['batteryDraw'] ?? null) .' kWh') 
                         ?>

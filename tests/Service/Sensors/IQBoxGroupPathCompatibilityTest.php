@@ -22,8 +22,9 @@ final class IQBoxGroupPathCompatibilityTest extends TestCase
                 return ['data' => [
                     'grid' => ['power' => -500, 'l1' => ['voltage' => 230.1]],
                     'energy' => [
-                        'pv' => ['today' => 4.0],
-                        'house' => ['calculatedToday' => 3.5],
+                        'pv' => ['today' => 4.5],
+                        'inverter' => ['today' => 4.0],
+                        'house' => ['today' => 3.5, 'calculatedToday' => 3.5],
                         'battery' => ['chargeToday' => 0.2, 'dischargeToday' => 0.3],
                         'grid' => ['sellToday' => 1.0, 'feedInToday' => 0.4],
                     ],

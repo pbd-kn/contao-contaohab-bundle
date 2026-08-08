@@ -243,12 +243,12 @@ final class IQBoxSensorService implements SensorFetcherInterface
     private function compatibleTodayData(array $data): array
     {
         $e = $data['energy'] ?? [];
-        $generation = round((float) ($e['pv']['today'] ?? 0) * 1000, 2);
+        $generation = round((float) ($e['inverter']['today'] ?? $e['pv']['today'] ?? 0) * 1000, 2);
         $consumption = round((float) ($e['house']['calculatedToday'] ?? 0) * 1000, 2);
         $charge = round((float) ($e['battery']['chargeToday'] ?? 0) * 1000, 2);
         $discharge = round((float) ($e['battery']['dischargeToday'] ?? 0) * 1000, 2);
-        $sell = round((float) ($e['grid']['sellToday'] ?? 0) * 1000, 2);
-        $import = round((float) ($e['grid']['feedInToday'] ?? 0) * 1000, 2);
+        $sell = round((float) ($e['grid']['sumSellToday'] ?? $e['grid']['sellToday'] ?? 0) * 1000, 2);
+        $import = round((float) ($e['grid']['sumFeedInToday'] ?? $e['grid']['feedInToday'] ?? 0) * 1000, 2);
         $autarky = $consumption <= 0 ? null : round(max(0.0, min(100.0, ($consumption - $import) / $consumption * 100)), 2);
         $own = $generation <= 0 ? null : round(max(0.0, min(100.0, ($generation - $sell) / $generation * 100)), 2);
         return [
