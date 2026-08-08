@@ -263,7 +263,7 @@ final class IQBoxSensorService implements SensorFetcherInterface
         $batteryPower = (float) ($data['battery']['power'] ?? 0);
         return [
             'pvPower' => $data['pv']['power'] ?? null, 'housePower' => -abs((float) ($data['house']['power'] ?? 0)),
-            'gridPower' => $data['grid']['power'] ?? null, 'batteryPower' => $batteryPower == 0.0 ? 0 : -$batteryPower,
+            'gridPower' => $data['grid']['power'] ?? null, 'batteryPower' => $batteryPower == 0.0 ? 0 : $batteryPower,
             'heatingRodPower' => null, 'batterySoc' => $data['battery']['soc'] ?? null,
             'inverter' => $data['inverter'] ?? [], 'grid' => $data['grid'] ?? [], 'battery' => $data['battery'] ?? [],
             'pv' => $data['pv'] ?? [], 'house' => $data['house'] ?? [],

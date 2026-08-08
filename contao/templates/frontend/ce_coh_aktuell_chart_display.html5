@@ -93,6 +93,7 @@
         } elseif (!is_array($live)) {
             $live = [];
         }
+        $liveBattery= $live['battery'] ?? [];
 //var_dump($live);
 //        renderArray($live);
         $raspberryAll = coh_v($d, 'Raspberry_All', []);    // Raspberry daten
@@ -125,11 +126,10 @@
         
         $batteryPercent = $live['batterySoc'] ?? 0;
         $batteryPower   = coh_num($live['batteryPower'] ?? 0);
-        $batteryPowerLabel = $batteryPower < 0
-            ? 'Laden'
-            : ($batteryPower > 0 ? 'Entladen' : 'Ruhezustand');
+        $batteryPowerLabel = $batteryPower < 0 ? 'Laden' : ($batteryPower > 0 ? 'Entladen' : ' ');
         $boostValue     = coh_num(coh_v($d, 'ELaktboostactive', 0), 0);
-        $IQTodayWorkAll = coh_v($d, 'IQ_Today_work', []);    // 
+        $IQToday = coh_v($d, 'IQ_Today', []);    // 
+        $IQTodayWorkAll = $IQToday['work'];    // 
         if (is_string($IQTodayWorkAll)) {
             $decodedToday = json_decode($IQTodayWorkAll, true);
             $IQTodayWorkAll = is_array($decodedToday) ? $decodedToday : [];
@@ -137,6 +137,7 @@
             $IQTodayWorkAll = [];
         }
 //        renderArray($IQTodayWorkAll);
+        $IQselfSufficiencyValue = $IQToday['selfSufficiency']['value'];    // 
         $IQliveTime = coh_v($d, 'IQ_Lifetime', []);   // liveTime Daten Iq_box
         if (is_string($IQliveTime)) {
             $decodedLifetime = json_decode($IQliveTime, true);
@@ -213,9 +214,15 @@ gridDraw	aus dem Stromnetz bezogen
                     ?>
                     <div class="coh-mini-grid">
                     
-                        <?= renderMinibox ('','🔋️Akku',' Füllstand '.($live['batterySoc'] ?? '-')  .' %<br>'.$batteryPowerLabel.' '.coh_teile(abs($batteryPower))  .' kW ') ?>
+                        <?= renderMinibox ('','🔋️Akku',' Füllstand '.($live['batterySoc'] ?? '-')  
+                                                    .' %<br>'.$batteryPowerLabel.' '.coh_teile(abs($batteryPower))  .' kW<br>'
+                                                    .' Temperatur '.($liveBattery['temperature'] ?? '-') .  ' °C') 
+                        ?>
                         <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'] ?? 0)  .' kW ')?>
-                        <?= renderMinibox ('','🏠  Haus ','Eigenverbrauch '.coh_teile(abs(coh_num($live['housePower'] ?? 0)))  .' kW <br>'.'Netzeinspeisung '. coh_teile(abs(coh_num($live['gridPower'] ?? 0)))  .' kW ') ?>
+                        <?= renderMinibox ('','🏠  Haus ','Eigenverbrauch '
+                                                    .coh_teile(abs(coh_num($live['housePower'] ?? 0)))  .' kW <br>'
+                                                    .'Netzeinspeisung '. coh_teile(abs(coh_num($live['gridPower'] ?? 0)))  .' kW ') 
+                        ?>
                         <?= renderMinibox ('','⚡💦️Heizstab Leistung',     coh_teile(abs(coh_num($live['heatingRodPower'] ?? 0)))  .' kW ') ?>
                         <?= renderMinibox ('','🌡️ Heizstab ','Temp1 '.coh_v($d, 'ELaktTemp1') . ' °C<br>'.'Temp2 '.coh_v($d, 'ELaktTemp2') . ' °C') ?>
                     </div>
@@ -236,9 +243,14 @@ gridDraw	aus dem Stromnetz bezogen
                     ?>
                     <div class="coh-mini-grid">
                         <?= renderMinibox ('','☀️ Solar heute',coh_teile ($IQTodayWorkAll['generation'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','☀️ Autarkie',$IQselfSufficiencyValue  .' % ')?>
                         <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQTodayWorkAll['consumption'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋️ Akku ','geladen '.coh_teile($IQTodayWorkAll['batteryFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQTodayWorkAll['batteryDraw'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','⚡️ Netz ','eingespeist '.coh_teile($IQTodayWorkAll['gridFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQTodayWorkAll['gridDraw'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','🔋️ Akku ','geladen '.coh_teile($IQTodayWorkAll['batteryFeed'] ?? null) .' kWh<br>'
+                                                            .'entnommen '.coh_teile($IQTodayWorkAll['batteryDraw'] ?? null) .' kWh') 
+                        ?>
+                        <?= renderMinibox ('','⚡️ Netz ','eingespeist '.coh_teile($IQTodayWorkAll['gridFeed'] ?? null) .' kWh<br>'
+                                                            .'entnommen '.coh_teile($IQTodayWorkAll['gridDraw'] ?? null) .' kWh') 
+                        ?>
                     </div>
                 </div>
             </div>
@@ -255,9 +267,15 @@ gridDraw	aus dem Stromnetz bezogen
                     <div class="coh-mini-grid">
                         <?= renderMinibox ('','☀️ Solar',coh_teile ($IQliveTime['generation'] ?? null) .' kWh') ?>
                         <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQliveTime['consumption'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋️ Akku','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','⚡️ Netz IQox','eingespeist '.coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh<br>'.'entnommen '.coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile($tasmotaM60['TS_E_out_208'] ?? 0, 1) . ' kWh' . '<br>entnommen ' . coh_teile($tasmotaM60['TS_E_in_108'] ?? 0, 1) . ' kWh') ?>
+                        <?= renderMinibox ('','🔋️ Akku','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'
+                                                        .'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh') 
+                        ?>
+                        <?= renderMinibox ('','⚡️ Netz IQox','eingespeist '.coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh<br>'
+                                                        .'entnommen '.coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') 
+                        ?>
+                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile($tasmotaM60['TS_E_out_208'] ?? 0, 1) . ' kWh' 
+                                                                . '<br>entnommen ' . coh_teile($tasmotaM60['TS_E_in_108'] ?? 0, 1) . ' kWh') 
+                        ?>
                     </div>
                 </div>
             </div>

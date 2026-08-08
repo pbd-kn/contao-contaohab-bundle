@@ -36,7 +36,8 @@ final class IQBoxLiveCompatibilityTest extends TestCase
 
         self::assertSame(1497, $live['pvPower']);
         self::assertSame(-318.0, $live['housePower']);
-        self::assertSame(-1005.0, $live['batteryPower']);
+        // StoragePro: positiv = Entladen, negativ = Laden.
+        self::assertSame(1005.0, $live['batteryPower']);
         self::assertSame(54.4, $live['inverter']['temperature']);
         self::assertSame(237.3, $live['grid']['l1']['voltage']);
         self::assertSame(97.5, $live['battery']['soh']);
