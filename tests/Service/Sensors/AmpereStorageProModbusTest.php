@@ -15,6 +15,16 @@ final class AmpereStorageProModbusTest extends TestCase
         self::assertSame(12.34, AmpereStorageProModbus::decode([1234], 0, 'uint16', 0.01));
     }
 
+    public function testInverterSettingsRegistersArePartOfCatalog(): void
+    {
+        $catalog = AmpereStorageProModbus::catalog();
+
+        self::assertSame('0x4023', $catalog['inverter.dischargePowerSetpoint']['addressHex']);
+        self::assertSame('int16', $catalog['battery.chargeCurrentSetpoint']['type']);
+        self::assertSame(0.1, $catalog['battery.chargeCurrentSetpoint']['scale']);
+        self::assertSame('0x4030', $catalog['meter.mode']['addressHex']);
+    }
+
     public function testHouseConsumptionFormulaUsesCorrectImportAndExportCounters(): void
     {
         $values = [

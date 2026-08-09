@@ -63,7 +63,7 @@ final class TasmotaSensorService implements SensorFetcherInterface
                 $localId = trim((string) $sensor->sensorLokalId);
                 $access = $localId !== '' ? $localId : $sensorId;
 
-                if (strcasecmp($sensorId, 'tasmota.akt') === 0 || strcasecmp($access, 'tasmota.akt') === 0) {
+                if ($this->isSnapshotSensor($sensorId) || $this->isSnapshotSensor($access)) {
                     $value = $data;
                     $unit = (string) $sensor->sensorEinheit;
                 } else {
@@ -172,6 +172,13 @@ final class TasmotaSensorService implements SensorFetcherInterface
         $found = true;
 
         return $cursor;
+    }
+
+    private function isSnapshotSensor(string $id): bool
+    {
+        $id = strtolower(trim($id));
+
+        return $id === 'tasmota.akt' || $id === 'tasmota.alltasmota.akt';
     }
 
     private function tskWh(mixed $value): array

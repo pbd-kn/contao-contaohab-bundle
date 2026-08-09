@@ -171,6 +171,10 @@
             $tasmotaAll = [];
         }
         $tasmotaM60 = is_array($tasmotaAll['StatusSNS']['M60'] ?? null) ? $tasmotaAll['StatusSNS']['M60']: [];
+        // Beim Zugriff ueber die Raspberry-API kann der Roh-Snapshot fehlen,
+        // obwohl die beiden einzeln konfigurierten Tasmota-Sensoren vorliegen.
+        $tasmotaFeed = $tasmotaM60['TS_E_out_208'] ?? coh_v($d, 'TS_E_out_208', 0);
+        $tasmotaDraw = $tasmotaM60['TS_E_in_108'] ?? coh_v($d, 'TS_E_in_108', 0);
 
 
         
@@ -219,6 +223,7 @@ gridDraw	aus dem Stromnetz bezogen
                                                     .' Temperatur '.($liveBattery['temperature'] ?? '-') .  ' °C') 
                         ?>
                         <?= renderMinibox ('','☀️ Solar Leistung',coh_teile ($live['pvPower'] ?? 0)  .' kW ')?>
+                        <?= renderMinibox ('','🌡️ Inverter Temp ',($live['inverter']['temperature'] ?? 0)  .' °C')?>
                         <?= renderMinibox ('','🏠  Haus ','Eigenverbrauch '
                                                     .coh_teile(abs(coh_num($live['housePower'] ?? 0)))  .' kW <br>'
                                                     .'Netzeinspeisung '. coh_teile(abs(coh_num($live['gridPower'] ?? 0)))  .' kW ') 
@@ -273,8 +278,8 @@ gridDraw	aus dem Stromnetz bezogen
                         <?= renderMinibox ('','⚡️ Netz IQox','eingespeist '.coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh<br>'
                                                         .'entnommen '.coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') 
                         ?>
-                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile($tasmotaM60['TS_E_out_208'] ?? 0, 1) . ' kWh' 
-                                                                . '<br>entnommen ' . coh_teile($tasmotaM60['TS_E_in_108'] ?? 0, 1) . ' kWh') 
+                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile($tasmotaFeed, 1) . ' kWh'
+                                                                . '<br>entnommen ' . coh_teile($tasmotaDraw, 1) . ' kWh')
                         ?>
                     </div>
                 </div>
