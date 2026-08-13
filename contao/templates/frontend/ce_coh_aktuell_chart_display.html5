@@ -261,24 +261,13 @@ gridDraw	aus dem Stromnetz bezogen
             </div>
             <div class="coh-hero coh-hero-today">
                 <div class="coh-hero-text">
-                    <?php 
-                        $years = is_array($IQliveTime['years'] ?? null)
-                            ? $IQliveTime['years']
-                            : [];
-                        $erstesJahr = $years !== [] ? array_key_first($years) : '-';
-                        $letzterJahr = $years !== [] ? array_key_last($years) : '-';
-                    ?>
-                    <div class="coh-hero-label">Werte gesamt <?= $erstesJahr ?> - <?= $letzterJahr?></div>
+                    <div class="coh-hero-label">Gesamtwerte aus Modbus und Stromzähler</div>
                     <div class="coh-mini-grid">
-                        <?= renderMinibox ('','☀️ Solar',coh_teile ($IQliveTime['generation'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🏠  Eigenverbrauch',coh_teile($IQliveTime['consumption'] ?? null) .' kWh') ?>
-                        <?= renderMinibox ('','🔋️ Akku','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'
-                                                        .'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh') 
+                        <?= renderMinibox ('','☀️ Solar Modbus',coh_teile ($IQliveTime['generation'] ?? null) .' kWh') ?>
+                        <?= renderMinibox ('','🔋️ Akku Modbus','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'
+                                                        .'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh')
                         ?>
-                        <?= renderMinibox ('','⚡️ Netz IQox','eingespeist '.coh_teile($IQliveTime['gridFeed'] ?? null) .' kWh<br>'
-                                                        .'entnommen '.coh_teile($IQliveTime['gridDraw'] ?? null) .' kWh') 
-                        ?>
-                        <?= renderMinibox ('','📊  Tasmota Zähler','eingespeist '.coh_teile($tasmotaFeed, 1) . ' kWh'
+                        <?= renderMinibox ('','📊 Netz Tasmota-Zähler','eingespeist '.coh_teile($tasmotaFeed, 1) . ' kWh'
                                                                 . '<br>entnommen ' . coh_teile($tasmotaDraw, 1) . ' kWh')
                         ?>
                     </div>
@@ -289,9 +278,9 @@ gridDraw	aus dem Stromnetz bezogen
                     <div class="coh-hero-label">Syr Wasserzähler</div>
                     <div class="coh-mini-grid">
                         <?= renderMinibox ($Syr_ventilClass,'🚰 ️Ventil'," Zustand ($Syr_ventilWert) $Syr_ventilText") ?>
-                        <?= renderMinibox ('','🔋 ️Batterie'," $Syr_batPercent % $Syr_batVolt V") ?>
-                        <?= renderMinibox ('','📊  Gesamtverbrauch',($Syr_small["VOL"] ?? 0).' l') ?>
-                        <?= renderMinibox ('','💧  Akt. Durchfluss',($Syr_small["FLO"] ?? 0).' l') ?>
+                        <?= renderMinibox ('','🔋 Batterie'," $Syr_batPercent % $Syr_batVolt V") ?>
+                        <?= renderMinibox ('','📊 Gesamtverbrauch',($Syr_small["VOL"] ?? 0).' l') ?>
+                        <?= renderMinibox ('','💧 Akt. Durchfluss',($Syr_small["FLO"] ?? 0).' l/h') ?>
                         <?= renderMinibox('', '🧭 Druck', number_format((float) ($Syr_small['BAR'] ?? 0) / 1000, 2) . ' bar') ?>
                     </div>
                 </div>

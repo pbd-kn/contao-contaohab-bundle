@@ -229,17 +229,20 @@ final class IQBoxSensorService implements SensorFetcherInterface
         $generation = (float) ($e['pv']['total'] ?? 0);
         $charge = (float) ($e['battery']['chargeTotal'] ?? 0);
         $discharge = (float) ($e['battery']['dischargeTotal'] ?? 0);
-        $sell = (float) ($e['grid']['sellTotal'] ?? 0);
-        $import = (float) ($e['grid']['feedInTotal'] ?? 0);
-        $consumption = round($generation + $import + $discharge - $sell - $charge, 2);
+
         return ['pvProduction' => round($generation * 1000, 2), 'work' => [
-            'generation' => round($generation * 1000, 2), 'consumption' => round($consumption * 1000, 2),
-            'batteryFeed' => round($charge * 1000, 2), 'batteryDraw' => round($discharge * 1000, 2),
-            'gridFeed' => round($sell * 1000, 2), 'gridDraw' => round($import * 1000, 2),
-            'unit' => 'Wh', 'throughDate' => date('Y-m-d'), 'source' => 'StoragePro-Modbus-Gesamtzaehler',
+            'generation' => round($generation * 1000, 2),
+            'consumption' => null,
+            'batteryFeed' => round($charge * 1000, 2),
+            'batteryDraw' => round($discharge * 1000, 2),
+            'gridFeed' => null,
+            'gridDraw' => null,
+            'unit' => 'Wh',
+            'throughDate' => date('Y-m-d'),
+            'source' => 'StoragePro-Modbus-Teilzaehler',
+            '_notice' => 'Netz-Gesamtwerte und Gesamtverbrauch sind per Modbus nicht verlaesslich; dafuer Tasmota verwenden.',
         ]];
     }
-
     private function compatibleTodayData(array $data): array
     {
         $e = $data['energy'] ?? [];
