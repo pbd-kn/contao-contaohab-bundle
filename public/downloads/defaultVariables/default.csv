@@ -57,6 +57,8 @@ ZWZZaehlerTotalPVEnergieExport;ZWZZaehlerTotalPVEnergieExport;IQBox;sajhybrid_po
 ZWZZaehlerTotalPVEnergieImport;ZWZZaehlerTotalPVEnergieImport;IQBox;sajhybrid_powermeter_94_HSR2103J2311E08738_powermeter_totalImport;IQkWh;kwh
 TS_E_in_108;TS_E_in_108;Tasmota;TS_E_in_108;tskWh;kwh
 TS_E_out_208;TS_E_out_208;Tasmota;TS_E_out_208;tskWh;kwh
+TS_E_in_today;Tasmota Bezug heute;Tasmota;StatusSNS.Verbrauch_heute;tskWh;kwh
+TS_E_out_today;Tasmota Einspeisung heute;Tasmota;StatusSNS.Einspeisung_heute;tskWh;kwh
 TS_Power;TS_Power;Tasmota;TS_Power;tsWatt;W
 TS_Power_L1;TS_Power_L1;Tasmota;TS_Power_L1;tsWatt;W
 TS_Power_L2;TS_Power_L2;Tasmota;TS_Power_L2;tsWatt;W

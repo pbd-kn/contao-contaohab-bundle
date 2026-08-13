@@ -170,11 +170,19 @@
         } elseif (!is_array($tasmotaAll)) {
             $tasmotaAll = [];
         }
-        $tasmotaM60 = is_array($tasmotaAll['StatusSNS']['M60'] ?? null) ? $tasmotaAll['StatusSNS']['M60']: [];
+        $tasmotaStatus = is_array($tasmotaAll['StatusSNS'] ?? null)
+            ? $tasmotaAll['StatusSNS']
+            : [];
+        $tasmotaM60 = is_array($tasmotaStatus['M60'] ?? null)
+            ? $tasmotaStatus['M60']
+            : [];
         // Beim Zugriff ueber die Raspberry-API kann der Roh-Snapshot fehlen,
         // obwohl die beiden einzeln konfigurierten Tasmota-Sensoren vorliegen.
         $tasmotaFeed = $tasmotaM60['TS_E_out_208'] ?? coh_v($d, 'TS_E_out_208', 0);
         $tasmotaDraw = $tasmotaM60['TS_E_in_108'] ?? coh_v($d, 'TS_E_in_108', 0);
+        // Tageswerte
+        $tasmotaFeedToday = $tasmotaStatus['Einspeisung_heute'] ?? coh_v($d, 'TS_E_out_today', 0);
+        $tasmotaDrawToday = $tasmotaStatus['Verbrauch_heute'] ?? coh_v($d, 'TS_E_in_today', 0);
 
 
         
@@ -255,6 +263,13 @@ gridDraw	aus dem Stromnetz bezogen
                         ?>
                         <?= renderMinibox ('','⚡️ Netz ','eingespeist '.coh_teile($IQTodayWorkAll['gridFeed'] ?? null) .' kWh<br>'
                                                             .'entnommen '.coh_teile($IQTodayWorkAll['gridDraw'] ?? null) .' kWh') 
+                        ?>
+                        <?= renderMinibox(
+                            '',
+                            '📊 Netz Tasmota-Zähler',
+                            'Einsp heute: ' . htmlspecialchars((string) $tasmotaFeedToday) . ' kWh<br>'
+                                . 'Verbrauch heute: ' . htmlspecialchars((string) $tasmotaDrawToday) . ' kWh'
+                        )
                         ?>
                     </div>
                 </div>

@@ -56,6 +56,7 @@ final class TasmotaSensorService implements SensorFetcherInterface
             $data = $mode === 'raspberry'
                 ? $this->requestViaRaspberry($settings, $deviceUrl)
                 : $this->requestLocal($deviceUrl);
+            $data = $this->addMissingDailyValues($data, $deviceUrl);
 
             $result = [];
             foreach ($sensors as $sensor) {
@@ -113,6 +114,40 @@ final class TasmotaSensorService implements SensorFetcherInterface
         }
 
         return $data;
+    }
+
+    private function addMissingDailyValues(array $data, string $deviceUrl): array
+    {
+        $variables = [
+            'Verbrauch_heute' => 'bez_tag',
+            'Einspeisung_heute' => 'einsp_tag',
+        ];
+
+        foreach ($variables as $jsonName => $scriptVariable) {
+            if (array_key_exists($jsonName, $data['StatusSNS'] ?? [])) {
+                continue;
+            }
+
+            try {
+                $data['StatusSNS'][$jsonName] = $this->requestScriptValue($deviceUrl, $scriptVariable);
+            } catch (\Throwable $error) {
+                $this->logger->debugMe("Tasmota-Tageswert '$jsonName' konnte nicht direkt nachgeladen werden: {$error->getMessage()}");
+            }
+        }
+
+        return $data;
+    }
+
+    private function requestScriptValue(string $deviceUrl, string $variable): mixed
+    {
+        $url = rtrim($deviceUrl, '/') . '/cm?cmnd=' . rawurlencode('script?' . $variable);
+        $response = $this->httpClient->request('GET', $url, ['timeout' => 15]);
+        $payload = $response->toArray(false);
+        if ($response->getStatusCode() !== 200 || !array_key_exists($variable, $payload['script'] ?? [])) {
+            throw new \RuntimeException("Tasmota-Scriptwert '$variable' fehlt.");
+        }
+
+        return $payload['script'][$variable];
     }
 
     private function requestViaRaspberry(array $settings, string $deviceUrl): array
