@@ -236,6 +236,33 @@
     white-space: normal;
 }
 
+.coh-disk-table-wrap {
+    overflow-x: auto;
+}
+
+.coh-disk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.coh-disk-table th,
+.coh-disk-table td {
+    padding: 6px 10px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--coh-border);
+}
+
+.coh-disk-table th {
+    font-weight: 700;
+    color: var(--coh-muted);
+}
+
+.coh-disk-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 /* Die von renderArray() erzeugten Intervalle links nebeneinander anzeigen. */
 .coh-toggle-body > .coh-row + .coh-row .coh-pre {
     display: flex;

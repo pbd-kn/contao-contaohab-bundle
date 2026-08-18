@@ -282,8 +282,8 @@ gridDraw	aus dem Stromnetz bezogen
                         <?= renderMinibox ('','🔋️ Akku Modbus','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'
                                                         .'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh')
                         ?>
-                        <?= renderMinibox ('','📊 Netz Tasmota-Zähler','eingespeist '.coh_teile($tasmotaFeed, 1) . ' kWh'
-                                                                . '<br>entnommen ' . coh_teile($tasmotaDraw, 1) . ' kWh')
+                        <?= renderMinibox ('','📊 Netz Tasmota-Zähler','eingespeist (208) '.coh_teile($tasmotaFeed, 1) . ' kWh'
+                                                                . '<br>entnommen (108) ' . coh_teile($tasmotaDraw, 1) . ' kWh')
                         ?>
                     </div>
                 </div>
@@ -296,6 +296,7 @@ gridDraw	aus dem Stromnetz bezogen
                         <?= renderMinibox ('','🔋 Batterie'," $Syr_batPercent % $Syr_batVolt V") ?>
                         <?= renderMinibox ('','📊 Gesamtverbrauch',($Syr_small["VOL"] ?? 0).' l') ?>
                         <?= renderMinibox ('','💧 Akt. Durchfluss',($Syr_small["FLO"] ?? 0).' l/h') ?>
+                        <?= renderMinibox ('','💦 letzte Entnahme',($Syr_small["LTV"] ?? 0).' l') ?>
                         <?= renderMinibox('', '🧭 Druck', number_format((float) ($Syr_small['BAR'] ?? 0) / 1000, 2) . ' bar') ?>
                     </div>
                 </div>
@@ -342,45 +343,53 @@ gridDraw	aus dem Stromnetz bezogen
         </details>
         <details class="coh-toggle">
             <?php
-                        $plattendiskUsageProzent = ($raspberrySystem['diskUsage'] ?? 0) . '%';
-                        $plattendiskAll = is_array($raspberrySystem['diskCheckResult'] ?? null)
-                            ? $raspberrySystem['diskCheckResult']
-                            : [];
-                        $plattenFS = $raspberrySystem['diskFilesystem'] ?? '-';
-                        $plattendiskUsageTotal = $raspberrySystem['diskTotalHuman'] ?? '-';
-                        $plattendiskUsageFS = $raspberrySystem['diskUsedHuman'] ?? '-';
-/*
-                        diskUsage: 24.49
-                        diskCheckResult:
-                        0:
-                            Partition: /dev/mmcblk0p2
-                            value: 22
-                            einheit: %
-                        diskFilesystem: /dev/mmcblk0p2
-                        diskTotalHuman: 56.13 GiB
-                        diskUsedHuman: 13.75 GiB
-*/                       
+                $plattendiskAll = is_array($raspberrySystem['diskCheckResult'] ?? null) ? $raspberrySystem['diskCheckResult'] : [];
             ?>
             <summary>🖥️ Raspberry Systemdaten</summary>
             <div class="coh-toggle-body">
                 <div class="coh-row" style="margin-top:8px;">
                     <div class="coh-icon">💾</div>
-                    <div class="coh-label">filesysteme mit df</div>
-                    <div class="coh-value"><?= renderArray($plattendiskAll); ?></div>
-                </div>
-                <div class="coh-row">
-                    <div class="coh-icon">💾</div>
-                    <div class="coh-label"> Filesystem </div>
-                    <div class="coh-value"><?= $plattenFS ?></div>
-                </div>
-                <div class="coh-row">
-                    <div class="coh-icon">💾</div>
-                    <div class="coh-label">
-                        Plattenbelegung
+                    <div class="coh-label">Dateisysteme</div>
+                    <div class="coh-value coh-disk-table-wrap">
+                        <?php if ($plattendiskAll === []): ?>
+                            <span>Keine Dateisysteminformationen vorhanden</span>
+                        <?php else: ?>
+                            <table class="coh-disk-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dateisystem</th>
+                                        <th>Belegung</th>
+                                        <th>Gesamt</th>
+                                        <th>Belegt</th>
+                                        <th>Frei</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($plattendiskAll as $disk): ?>
+                                        <?php
+                                            $name = (string) ($disk['Partition'] ?? 'Unbekannt');
+                                            $status = (string) ($disk['status'] ?? 'OK');
+                                            $usage = $disk['value'] ?? null;
+                                            $unit = (string) ($disk['einheit'] ?? '%');
+                                            $total = $disk['totalHuman'] ?? null;
+                                            $used = $disk['usedHuman'] ?? null;
+                                            $available = $disk['availableHuman'] ?? null;
+                                            $hasError = $usage === null || $status !== 'OK';
+                                        ?>
+                                        <tr class="<?= $hasError ? 'is-red' : '' ?>">
+                                            <td><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></td>
+                                            <td> <?= $usage === null ? '-' : htmlspecialchars(number_format((float) $usage, 2, ',', '.') . ' ' . $unit, ENT_QUOTES, 'UTF-8') ?> </td>
+                                            <td><?= htmlspecialchars((string) ($total ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                                            <td><?= htmlspecialchars((string) ($used ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                                            <td><?= htmlspecialchars((string) ($available ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                                            <td><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
                     </div>
-                    <div class="coh-value"><?= 'Belegung: ' . $plattendiskUsageProzent  ?></div>
-                    <div class="coh-value"><?= 'Total:    ' . $plattendiskUsageTotal  ?></div>
-                    <div class="coh-value"><?= 'Belegt:   ' . $plattendiskUsageFS ?></div>
                 </div>
                 <div class="coh-row" style="margin-top:8px;">
                     <div class="coh-icon">😩</div>
