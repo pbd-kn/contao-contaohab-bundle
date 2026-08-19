@@ -236,7 +236,7 @@ gridDraw	aus dem Stromnetz bezogen
                                                     .coh_teile(abs(coh_num($live['housePower'] ?? 0)))  .' kW <br>'
                                                     .'Netzeinspeisung '. coh_teile(abs(coh_num($live['gridPower'] ?? 0)))  .' kW ') 
                         ?>
-                        <?= renderMinibox ('','⚡💦️Heizstab Leistung',     coh_teile(abs(coh_num($live['heatingRodPower'] ?? 0)))  .' kW ') ?>
+                        <?= renderMinibox ('','⚡💦️Heizstab Leistung','gesamt '.coh_v($d, 'ELaktPwr')  .' kW<br>'.'solar '.coh_v($d, 'ELaktPwr_Solar')  .' kW<br>'.'netz/boost '.coh_v($d, 'ELaktPwr_Grid')  .' kW<br>') ?>
                         <?= renderMinibox ('','🌡️ Heizstab ','Temp1 '.coh_v($d, 'ELaktTemp1') . ' °C<br>'.'Temp2 '.coh_v($d, 'ELaktTemp2') . ' °C') ?>
                     </div>
                 </div>
