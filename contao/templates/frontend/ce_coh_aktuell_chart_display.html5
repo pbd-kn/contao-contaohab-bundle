@@ -227,6 +227,7 @@ gridDraw	aus dem Stromnetz bezogen
                     <div class="coh-mini-grid">
                     
                         <?= renderMinibox ('','🔋️Akku',' Füllstand '.($live['batterySoc'] ?? '-')  
+                                                    .' %<br>'.' Status '.($liveBattery['soh'] ?? '-')
                                                     .' %<br>'.$batteryPowerLabel.' '.coh_teile(abs($batteryPower))  .' kW<br>'
                                                     .' Temperatur '.($liveBattery['temperature'] ?? '-') .  ' °C') 
                         ?>
