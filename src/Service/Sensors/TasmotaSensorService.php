@@ -56,7 +56,7 @@ final class TasmotaSensorService implements SensorFetcherInterface
             $data = $mode === 'raspberry'
                 ? $this->requestViaRaspberry($settings, $deviceUrl)
                 : $this->requestLocal($deviceUrl);
-            $data = $this->addMissingDailyValues($data, $deviceUrl);
+            $data = $this->addMissingScriptValues($data, $deviceUrl);
 
             $result = [];
             foreach ($sensors as $sensor) {
@@ -116,11 +116,17 @@ final class TasmotaSensorService implements SensorFetcherInterface
         return $data;
     }
 
-    private function addMissingDailyValues(array $data, string $deviceUrl): array
+    private function addMissingScriptValues(array $data, string $deviceUrl): array
     {
         $variables = [
             'Verbrauch_heute' => 'bez_tag',
             'Einspeisung_heute' => 'einsp_tag',
+            'Jahr_aktuell' => 'akt_jahr',
+            'Verbrauch_Jahr' => 'bez_jahr',
+            'Einspeisung_Jahr' => 'einsp_jahr',
+            'Jahr_Vorjahr' => 'vor_jahr',
+            'Verbrauch_Vorjahr' => 'bez_vjahr',
+            'Einspeisung_Vorjahr' => 'einsp_vjahr',
         ];
 
         foreach ($variables as $jsonName => $scriptVariable) {
@@ -131,7 +137,7 @@ final class TasmotaSensorService implements SensorFetcherInterface
             try {
                 $data['StatusSNS'][$jsonName] = $this->requestScriptValue($deviceUrl, $scriptVariable);
             } catch (\Throwable $error) {
-                $this->logger->debugMe("Tasmota-Tageswert '$jsonName' konnte nicht direkt nachgeladen werden: {$error->getMessage()}");
+                $this->logger->debugMe("Tasmota-Scriptwert '$jsonName' konnte nicht direkt nachgeladen werden: {$error->getMessage()}");
             }
         }
 

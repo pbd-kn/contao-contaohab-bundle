@@ -170,12 +170,8 @@
         } elseif (!is_array($tasmotaAll)) {
             $tasmotaAll = [];
         }
-        $tasmotaStatus = is_array($tasmotaAll['StatusSNS'] ?? null)
-            ? $tasmotaAll['StatusSNS']
-            : [];
-        $tasmotaM60 = is_array($tasmotaStatus['M60'] ?? null)
-            ? $tasmotaStatus['M60']
-            : [];
+        $tasmotaStatus = is_array($tasmotaAll['StatusSNS'] ?? null) ? $tasmotaAll['StatusSNS'] : [];
+        $tasmotaM60 = is_array($tasmotaStatus['M60'] ?? null) ? $tasmotaStatus['M60'] : [];
         // Beim Zugriff ueber die Raspberry-API kann der Roh-Snapshot fehlen,
         // obwohl die beiden einzeln konfigurierten Tasmota-Sensoren vorliegen.
         $tasmotaFeed = $tasmotaM60['TS_E_out_208'] ?? coh_v($d, 'TS_E_out_208', 0);
@@ -186,14 +182,14 @@
 
 
         
-/*
-generation	erzeugte Solarenergie	
-consumption	Verbrauch	
-batteryFeed	in die Batterie geladen	
-batteryDraw	aus der Batterie entnommen	
-gridFeed	ins Stromnetz eingespeist	
-gridDraw	aus dem Stromnetz bezogen
-*/
+        /*
+            generation	erzeugte Solarenergie	
+            consumption	Verbrauch
+            batteryFeed	in die Batterie geladen	
+            batteryDraw	aus der Batterie entnommen	
+            gridFeed	ins Stromnetz eingespeist	
+            gridDraw	aus dem Stromnetz bezogen
+        */
         $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
         $boostClass = 'is-gray';
         if ($boostValue < 0) { $boostClass = 'is-red';
