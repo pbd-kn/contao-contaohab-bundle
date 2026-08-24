@@ -136,8 +136,21 @@
         } elseif (!is_array($IQTodayWorkAll)) {
             $IQTodayWorkAll = [];
         }
+
+        
+        /*
+        $IQTodayWorkAll
+            generation	erzeugte Solarenergie	
+            consumption	Verbrauch
+            batteryFeed	in die Batterie geladen	
+            batteryDraw	aus der Batterie entnommen	
+            gridFeed	ins Stromnetz eingespeist	
+            gridDraw	aus dem Stromnetz bezogen
+        */
+        
 //        renderArray($IQTodayWorkAll);
         $IQselfSufficiencyValue = $IQToday['selfSufficiency']['value'];    // 
+
         $IQliveTime = coh_v($d, 'IQ_Lifetime', []);   // liveTime Daten Iq_box
         if (is_string($IQliveTime)) {
             $decodedLifetime = json_decode($IQliveTime, true);
@@ -172,24 +185,9 @@
         }
         $tasmotaStatus = is_array($tasmotaAll['StatusSNS'] ?? null) ? $tasmotaAll['StatusSNS'] : [];
         $tasmotaM60 = is_array($tasmotaStatus['M60'] ?? null) ? $tasmotaStatus['M60'] : [];
-        // Beim Zugriff ueber die Raspberry-API kann der Roh-Snapshot fehlen,
-        // obwohl die beiden einzeln konfigurierten Tasmota-Sensoren vorliegen.
-        $tasmotaFeed = $tasmotaM60['TS_E_out_208'] ?? coh_v($d, 'TS_E_out_208', 0);
-        $tasmotaDraw = $tasmotaM60['TS_E_in_108'] ?? coh_v($d, 'TS_E_in_108', 0);
-        // Tageswerte
-        $tasmotaFeedToday = $tasmotaStatus['Einspeisung_heute'] ?? coh_v($d, 'TS_E_out_today', 0);
-        $tasmotaDrawToday = $tasmotaStatus['Verbrauch_heute'] ?? coh_v($d, 'TS_E_in_today', 0);
+//        var_dump($d['tasmota.alltasmota.akt']);
+//        renderArray($tasmotaStatus);
 
-
-        
-        /*
-            generation	erzeugte Solarenergie	
-            consumption	Verbrauch
-            batteryFeed	in die Batterie geladen	
-            batteryDraw	aus der Batterie entnommen	
-            gridFeed	ins Stromnetz eingespeist	
-            gridDraw	aus dem Stromnetz bezogen
-        */
         $akkuPowerClass = $batteryPower >= 0 ? 'is-green' : 'is-red';
         $boostClass = 'is-gray';
         if ($boostValue < 0) { $boostClass = 'is-red';
@@ -264,8 +262,8 @@
                         <?= renderMinibox(
                             '',
                             '📊 Netz Tasmota-Zähler',
-                            'Einsp heute: ' . htmlspecialchars((string) $tasmotaFeedToday) . ' kWh<br>'
-                                . 'Verbrauch heute: ' . htmlspecialchars((string) $tasmotaDrawToday) . ' kWh'
+                            'Einsp heute: ' . htmlspecialchars((string) $tasmotaStatus['Einspeisung_heute']) . ' kWh<br>'
+                                . 'Verbrauch heute: ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_heute']) . ' kWh'
                         )
                         ?>
                     </div>
@@ -279,12 +277,18 @@
                         <?= renderMinibox ('','🔋️ Akku Modbus','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'
                                                         .'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh')
                         ?>
-                        <?= renderMinibox ('','📊 Netz Tasmota-Zähler','eingespeist (208) '.coh_teile($tasmotaFeed, 1) . ' kWh'
-                                                                . '<br>entnommen (108) ' . coh_teile($tasmotaDraw, 1) . ' kWh')
+                        <?= renderMinibox ('','📊 Netz Tasmota-Zähler','Ges Einspeisung (208) '.$tasmotaM60['TS_E_out_208'] . ' kWh' 
+                                                                . '<br>Ges Bezug (108) ' . $tasmotaM60['TS_E_in_108'] . ' kWh'
+                                                                . '<br> akt Jahr Einspeisung (208) '.htmlspecialchars((string) $tasmotaStatus['Einspeisung_Jahr']) . ' kWh'
+                                                                . '<br>akt Jahr Bezug (108) ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_Jahr']) . ' kWh'
+                                                                . '<br>  VorJahr Einspeisung (208) '.htmlspecialchars((string) $tasmotaStatus['Einspeisung_Vorjahr']) . ' kWh'
+                                                                . '<br>  VorJahr Bezug (108) ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_Vorjahr']) . ' kWh'
+                                        )
                         ?>
                     </div>
                 </div>
             </div>
+
             <div class="coh-hero coh-hero-today">
                 <div class="coh-hero-text">
                     <div class="coh-hero-label">Syr Wasserzähler</div>
