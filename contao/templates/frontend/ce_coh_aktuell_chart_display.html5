@@ -277,12 +277,17 @@
                         <?= renderMinibox ('','🔋️ Akku Modbus','geladen '.coh_teile($IQliveTime['batteryFeed'] ?? null) .' kWh<br>'
                                                         .'entnommen '.coh_teile($IQliveTime['batteryDraw'] ?? null) .' kWh')
                         ?>
+                        <?php
+                            $jahraktuell = $tasmotaStatus['Jahr_aktuell'];
+                            $vorjahr = $tasmotaStatus['Jahr_Vorjahr'];
+                            if ($vorjahr <= 0) $vorjahr = $jahraktuell -1;
+                        ?>
                         <?= renderMinibox ('','📊 Netz Tasmota-Zähler','Ges Einspeisung (208) '.$tasmotaM60['TS_E_out_208'] . ' kWh' 
                                                                 . '<br>Ges Bezug (108) ' . $tasmotaM60['TS_E_in_108'] . ' kWh'
-                                                                . '<br> akt Jahr Einspeisung (208) '.htmlspecialchars((string) $tasmotaStatus['Einspeisung_Jahr']) . ' kWh'
-                                                                . '<br>akt Jahr Bezug (108) ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_Jahr']) . ' kWh'
-                                                                . '<br>  VorJahr Einspeisung (208) '.htmlspecialchars((string) $tasmotaStatus['Einspeisung_Vorjahr']) . ' kWh'
-                                                                . '<br>  VorJahr Bezug (108) ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_Vorjahr']) . ' kWh'
+                                                                . '<br>' .htmlspecialchars((string) $jahraktuell) . ' Einspeisung (208) '.htmlspecialchars((string) $tasmotaStatus['Einspeisung_Jahr']) . ' kWh'
+                                                                . '<br>' .htmlspecialchars((string) $jahraktuell) . ' Bezug (108) ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_Jahr']) . ' kWh'
+                                                                . '<br>' .htmlspecialchars((string) $vorjahr) . ' Einspeisung (208) '.htmlspecialchars((string) $tasmotaStatus['Einspeisung_Vorjahr']) . ' kWh'
+                                                                . '<br>' .htmlspecialchars((string) $vorjahr) . ' Bezug (108) ' . htmlspecialchars((string) $tasmotaStatus['Verbrauch_Vorjahr']) . ' kWh'
                                         )
                         ?>
                     </div>
