@@ -51,6 +51,13 @@ services:
 
     PbdKn\ContaoContaohabBundle\EventListener\RaspberryConfigPushCallback:
         public: true
+
+    PbdKn\ContaoContaohabBundle\Service\RaspberryConfigPushService:
+        arguments:
+          $baseUrl: '%coh_sensors.raspberry_api_base_url%'
+          $apiToken: '%coh_sensors.raspberry_api_token%'
+          $timeout: '%coh_sensors.raspberry_api_timeout%'
+
     PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorService:
         arguments:
           $httpClient: '@http_client'

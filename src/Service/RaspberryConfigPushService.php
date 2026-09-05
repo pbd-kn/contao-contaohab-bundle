@@ -12,13 +12,16 @@ final class RaspberryConfigPushService
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly Connection $connection,
+        private readonly string $baseUrl,
+        private readonly string $apiToken,
+        private readonly int $timeout,
     ) {
     }
 
     /** @return array{devices: int, sensors: int} */
     public function push(): array
     {
-        [$settings, $baseUrl, $token] = $this->getApiSettings();
+        [$baseUrl, $token] = $this->getApiSettings();
 
         $devices = $this->connection->fetchAllAssociative('SELECT * FROM tl_coh_geraete ORDER BY id');
         $sensors = $this->connection->fetchAllAssociative(
@@ -34,7 +37,7 @@ final class RaspberryConfigPushService
                 'devices' => $devices,
                 'sensors' => $sensors,
             ],
-            'timeout' => max(1, min(15, (int) ($settings['raspberryApiTimeout'] ?? 10))),
+            'timeout' => max(1, min(15, $this->timeout)),
         ]);
 
         $payload = $response->toArray(false);
@@ -50,14 +53,14 @@ final class RaspberryConfigPushService
     /** @return array{devices: int, sensors: int} */
     public function pull(): array
     {
-        [$settings, $baseUrl, $token] = $this->getApiSettings();
+        [$baseUrl, $token] = $this->getApiSettings();
 
         $response = $this->httpClient->request('GET', $baseUrl.'/api/coh/config_push.php', [
             'headers' => [
                 'X-COH-TOKEN' => $token,
                 'Accept' => 'application/json',
             ],
-            'timeout' => max(1, min(15, (int) ($settings['raspberryApiTimeout'] ?? 10))),
+            'timeout' => max(1, min(15, $this->timeout)),
         ]);
         $payload = $response->toArray(false);
 
@@ -90,19 +93,11 @@ final class RaspberryConfigPushService
         return ['devices' => $deviceCount, 'sensors' => $sensorCount];
     }
 
-    /** @return array{0: array<string, mixed>, 1: string, 2: string} */
+    /** @return array{0: string, 1: string} */
     private function getApiSettings(): array
     {
-        $settings = $this->connection->fetchAssociative(
-            'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-        );
-
-        if (!$settings) {
-            throw new \RuntimeException('Raspberry-API-Einstellungen fehlen.');
-        }
-
-        $baseUrl = rtrim(trim((string) ($settings['raspberryApiWanBaseUrl'] ?? '')), '/');
-        $token = trim((string) ($settings['raspberryApiToken'] ?? ''));
+        $baseUrl = rtrim(trim($this->baseUrl), '/');
+        $token = trim($this->apiToken);
 
         if (!str_starts_with(strtolower($baseUrl), 'https://')) {
             throw new \RuntimeException('Fuer die Raspberry-Konfigurationsuebertragung ist eine HTTPS-URL erforderlich.');
@@ -112,7 +107,7 @@ final class RaspberryConfigPushService
             throw new \RuntimeException('Der Raspberry-API-Token fehlt.');
         }
 
-        return [$settings, $baseUrl, $token];
+        return [$baseUrl, $token];
     }
 
     private function mergeRows(
