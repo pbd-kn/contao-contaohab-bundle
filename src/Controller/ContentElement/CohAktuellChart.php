@@ -11,7 +11,7 @@ use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
-use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
+use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 
 #[AsContentElement(CohAktuellChart::TYPE, category: 'COH')]
 class CohAktuellChart extends AbstractContentElementController
@@ -23,7 +23,7 @@ class CohAktuellChart extends AbstractContentElementController
 
     public function __construct(
         private readonly LoggerService $logger,
-        private readonly SensorManager $sensorManager
+        private readonly RaspberrySensorApiClient $sensorApi
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -57,7 +57,7 @@ class CohAktuellChart extends AbstractContentElementController
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
         if (!empty($selectedSensors)) {
-            $rows = $this->sensorManager->fetchAll($selectedSensors);
+            $rows = $this->sensorApi->fetchLatest($selectedSensors);
             foreach ($rows as $row) {
                 $sensorID = $row['sensorID'];   // ✅ DAS ist dein Key
                 //$ts = date('d.m.Y H:i', (int) $row['sensorvalue_tstamp']);

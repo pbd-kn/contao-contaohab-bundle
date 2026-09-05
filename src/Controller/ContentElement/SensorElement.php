@@ -13,7 +13,7 @@ use Doctrine\DBAL\Connection;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
-use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
+use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 
 #[AsContentElement(SensorElement::TYPE, category: 'COH', template: 'ce_coh_sensorelement')]
 class SensorElement extends AbstractContentElementController
@@ -22,7 +22,7 @@ class SensorElement extends AbstractContentElementController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly SensorManager $sensorManager
+        private readonly RaspberrySensorApiClient $sensorApi
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -92,9 +92,11 @@ class SensorElement extends AbstractContentElementController
 
 
         if (!empty($selectedSensors)) {
-            $rows = $this->sensorManager->fetchAll($selectedSensors);
+            $rows = $this->sensorApi->fetchLatest($selectedSensors);
             foreach ($rows as $row) {
-                $row['date'] = date('d.m.Y H:i:s');
+                $row['date'] = !empty($row['tstamp'])
+                    ? date('d.m.Y H:i:s', (int) $row['tstamp'])
+                    : '-';
                 $sensors[] = $row;
             }
         }        

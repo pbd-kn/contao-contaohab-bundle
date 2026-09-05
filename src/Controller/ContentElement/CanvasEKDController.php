@@ -12,14 +12,14 @@ use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
+use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 
 
 #[AsContentElement('canvas_ekd', category: 'COH')]
 class CanvasEKDController extends AbstractContentElementController
 {
     public function __construct(
-        private readonly SensorManager $sensorManager
+        private readonly RaspberrySensorApiClient $sensorApi
     ) {}
     
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -46,7 +46,7 @@ class CanvasEKDController extends AbstractContentElementController
             'IQ_Today',
             'ELaktTemp2'
         ];
-        $rows = $this->sensorManager->fetchAll($selectedSensors);
+        $rows = $this->sensorApi->fetchLatest($selectedSensors);
 
         // Die ausgewählten Sensoren bleiben für alternative Canvas-Templates
         // in der bisherigen, vollständig befüllten Struktur verfügbar.

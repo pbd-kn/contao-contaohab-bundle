@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Contao\BackendTemplate;
 use Contao\StringUtil;
 use Contao\System;
-use PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager;
+use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 
 #[AsContentElement(CohHistoryChart::TYPE, category: 'COH')]
 class CohHistoryChart extends AbstractContentElementController
@@ -18,7 +18,7 @@ class CohHistoryChart extends AbstractContentElementController
     public const TYPE = 'coh_history_chart';
 
     public function __construct(
-        private readonly SensorManager $sensorManager
+        private readonly RaspberrySensorApiClient $sensorApi
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -91,23 +91,11 @@ class CohHistoryChart extends AbstractContentElementController
 
         if (!empty($selectedSensors)) {
 
-            $rows = [];
-            foreach ($this->sensorManager->fetchAll($selectedSensors, $currentValue) as $row) {
-                $row['sensorTitle'] ??= $row['sensorID'] ?? '';
-                $row['outputMode'] ??= 'absolute';
-                if (!empty($row['historyPoints'])) {
-                    foreach ($row['historyPoints'] as $point) {
-                        $historyRow = $row;
-                        $historyRow['tstamp'] = (new \DateTimeImmutable($point['x']))->getTimestamp();
-                        $historyRow['sensorValue'] = $point['y'];
-                        unset($historyRow['historyPoints']);
-                        $rows[] = $historyRow;
-                    }
-                    continue;
-                }
-                $row['tstamp'] = (new \DateTimeImmutable($currentValue))->getTimestamp();
-                $rows[] = $row;
-            }
+            $rows = $this->sensorApi->fetchRange(
+                $selectedSensors,
+                $start->getTimestamp(),
+                $end->getTimestamp()
+            );
 
             // gruppieren
             $grouped = [];
@@ -134,26 +122,7 @@ class CohHistoryChart extends AbstractContentElementController
                 // ?? IMMER eindeutige Achse pro Sensor
                 $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', strtolower($sensorID));
                 $color = $this->getSensorColor($sensorTitle);
-                if ($mode === 'daily') {
-                    $rowsArray = array_values($sensorRows);
-                    if (empty($rowsArray) || !is_numeric($rowsArray[0]['sensorValue'])) continue;
-                    $firstValue = (float) $rowsArray[0]['sensorValue'];
-                    foreach ($rowsArray as $row) {
-                        if (!is_numeric($row['sensorValue'])) continue;
-                        $ts = date('c', (int) $row['tstamp']);
-                        $current = (float) $row['sensorValue'];
-                        $val = $current >= $firstValue ? $current - $firstValue : $current;
-                        $val = round($val, 2);
-                        $timestamps[] = $ts;
-                        $datasets[$sensorTitle]['label'] ??= $sensorTitle;
-                        $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
-                        $datasets[$sensorTitle]['borderColor'] ??= $color;
-                        $datasets[$sensorTitle]['fill'] = false;
-                        $datasets[$sensorTitle]['tension'] = 0.1;
-                        $datasets[$sensorTitle]['yAxisID'] = $axisId;
-                    }
-                } else {
-                    foreach ($sensorRows as $row) {
+                foreach ($sensorRows as $row) {
 
                         $ts = date('c', (int) $row['tstamp']);
 
@@ -169,7 +138,6 @@ class CohHistoryChart extends AbstractContentElementController
                         $datasets[$sensorTitle]['fill'] = false;
                         $datasets[$sensorTitle]['tension'] = 0.1;
                         $datasets[$sensorTitle]['yAxisID'] = $axisId;
-                    }
                 }
 
                 $axes[$axisId] ??= [

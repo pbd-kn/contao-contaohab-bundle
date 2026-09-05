@@ -83,19 +83,19 @@
                 </tr>
                 <tr>
                     <td><b>Einheit</b></td>
-                    <td><?= $sensor['sensorEinheit'] ?></td>
+                    <td><?= htmlspecialchars((string) ($sensor['sensorEinheit'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                 </tr>
                 <tr>
                     <td><b>outputMode</b></td>
-                    <td><?= $sensor['outputMode'] ?></td>
+                    <td><?= htmlspecialchars((string) ($sensor['outputMode'] ?? 'absolute'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                 </tr>
                 <tr>
                     <td><b>sensorLokalId</b></td>
-                    <td><?= $sensor['sensorLokalId'] ?></td>
+                    <td><?= htmlspecialchars((string) ($sensor['sensorLokalId'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                 </tr>
                 <tr>
                     <td><b>sensorValueType</b></td>
-                    <td><?= $sensor['sensorValueType'] ?></td>
+                    <td><?= htmlspecialchars((string) ($sensor['sensorValueType'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                 </tr>
                 <tr>
                     <td><b>Zeit</b></td>
