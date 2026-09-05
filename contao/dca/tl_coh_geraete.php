@@ -33,6 +33,9 @@ $GLOBALS['TL_DCA'][$strTable] = array(
     'config'      => array(
         'dataContainer'    => DC_Table::class,
         'enableVersioning' => true,
+        'onload_callback' => array(
+            array(PbdKn\ContaoContaohabBundle\EventListener\RaspberryConfigPushCallback::class, '__invoke'),
+        ),
         'sql'              => array(
             'keys' => array(
                 'id' => 'primary'
@@ -51,7 +54,18 @@ $GLOBALS['TL_DCA'][$strTable] = array(
             'format' => '%s (GeräteId: %s URL: %s)',
         ),
         'global_operations' => array(
-        
+            'pullRaspberryConfig' => array(
+                'label'      => &$GLOBALS['TL_LANG'][$strTable]['pullRaspberryConfig'],
+                'href'       => 'key=pullRaspberryConfig',
+                'class'      => 'header_sync',
+                'attributes' => 'onclick="return confirm(\'' . ($GLOBALS['TL_LANG'][$strTable]['pullRaspberryConfigConfirm'] ?? '') . '\')"',
+            ),
+            'pushRaspberryConfig' => array(
+                'label'      => &$GLOBALS['TL_LANG'][$strTable]['pushRaspberryConfig'],
+                'href'       => 'key=pushRaspberryConfig',
+                'class'      => 'header_sync',
+                'attributes' => 'onclick="return confirm(\'' . ($GLOBALS['TL_LANG'][$strTable]['pushRaspberryConfigConfirm'] ?? '') . '\')"',
+            ),
             'all' => array(
                 'href'       => 'act=select',
                 'class'      => 'header_edit_all',

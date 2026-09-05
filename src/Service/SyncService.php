@@ -41,6 +41,15 @@ class SyncService
 
     public function sync(?OutputInterface $output = null): ?array
     {
+        // Der alte bidirektionale Sync ist stillgelegt. Insbesondere duerfen
+        // Sensorwerte nicht mehr in die Contao-Datenbank kopiert werden.
+        $msg = 'Der alte SyncService ist deaktiviert. Bitte den manuellen Raspberry-Konfigurationsbutton verwenden.';
+        $this->logger->Error($msg);
+        $output?->writeln('<error>'.$msg.'</error>');
+
+        return ['status' => 'NOK', 'msg' => $msg];
+
+        /* @deprecated Alter Synchronisationscode; wird nicht mehr ausgefuehrt. */
         $resarray = [];
         $output?->writeln("<info>Starte Synchronisation</info>");
         $this->logger->debugMe("Start Synchronisation");

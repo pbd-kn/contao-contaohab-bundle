@@ -21,11 +21,13 @@ class SyncController extends AbstractController
     {
         $this->logger->debugMe('SyncController: manueller Sync gestartet');
 
-        $error = $this->syncService->sync();
+        $result = $this->syncService->sync();
 
-        if ($error !== null) {
-            $this->logger->Error('SyncController Fehler: '.$error);
-            return new Response($error, 500);
+        if (($result['status'] ?? 'NOK') !== 'OK') {
+            $message = (string) ($result['msg'] ?? 'Synchronisation fehlgeschlagen.');
+            $this->logger->Error('SyncController Fehler: '.$message);
+
+            return new Response($message, 410);
         }
 
         return new Response('OK');

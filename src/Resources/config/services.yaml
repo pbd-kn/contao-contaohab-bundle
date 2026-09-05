@@ -48,6 +48,9 @@ services:
     PbdKn\ContaoContaohabBundle\Service\Sensors\SensorManager:
         arguments:
           $fetchers: !tagged_iterator sensor.fetcher
+
+    PbdKn\ContaoContaohabBundle\EventListener\RaspberryConfigPushCallback:
+        public: true
     PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorService:
         arguments:
           $httpClient: '@http_client'

@@ -14,6 +14,9 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'oncopy_callback'  => [
             ['tl_coh_sensors', 'setUniqueSensorIDOnCopy'],
         ],
+        'onload_callback' => [
+            [PbdKn\ContaoContaohabBundle\EventListener\RaspberryConfigPushCallback::class, '__invoke'],
+        ],
         'sql' => [
             'keys' => [
                 'id'       => 'primary',
@@ -32,6 +35,25 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'label' => [
             'fields' => ['sensorID','sensorTitle','sensorEinheit','sensorActive'],
             'label_callback' => ['tl_coh_sensors', 'formatSensorLabel'],
+        ],
+        'global_operations' => [
+            'pullRaspberryConfig' => [
+                'label' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfig'],
+                'href' => 'key=pullRaspberryConfig',
+                'class' => 'header_sync',
+                'attributes' => 'onclick="return confirm(\'' . ($GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfigConfirm'] ?? '') . '\')"',
+            ],
+            'pushRaspberryConfig' => [
+                'label' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfig'],
+                'href' => 'key=pushRaspberryConfig',
+                'class' => 'header_sync',
+                'attributes' => 'onclick="return confirm(\'' . ($GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfigConfirm'] ?? '') . '\')"',
+            ],
+            'all' => [
+                'href' => 'act=select',
+                'class' => 'header_edit_all',
+                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
+            ],
         ],
         'operations' => [
             'edit'   => ['href'=>'act=edit','icon'=>'edit.svg'],

@@ -51,6 +51,10 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['title'] = ["Titel", "Geben Sie den Namen 
  * Buttons
  */
 $GLOBALS['TL_LANG']['tl_coh_sensors']['customButton'] = "Custom Routine starten";
+$GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfig'] = ['Transfer configuration to Raspberry', 'Transfers all devices and active sensors to the Raspberry via HTTPS.'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfigConfirm'] = 'Transfer devices and active sensors to the Raspberry now?';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfig'] = ['Fetch configuration from Raspberry', 'Imports devices and sensors from the Raspberry into the local database.'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfigConfirm'] = 'Fetch devices and sensors from the Raspberry now? Local records with the same ID will be updated.';
 
 $GLOBALS['TL_LANG']['tl_coh_sensors']['base_legend'] = 'Basic settings';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['calc_legend'] = 'Calculation and components';
