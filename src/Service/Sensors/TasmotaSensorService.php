@@ -15,6 +15,7 @@ final class TasmotaSensorService implements SensorFetcherInterface
         private readonly HttpClientInterface $httpClient,
         private readonly Connection $connection,
         private readonly LoggerService $logger,
+        private readonly array $settings,
     ) {
     }
 
@@ -35,12 +36,7 @@ final class TasmotaSensorService implements SensorFetcherInterface
         }
 
         try {
-            $settings = $this->connection->fetchAssociative(
-                'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-            );
-            if (!$settings) {
-                throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
-            }
+            $settings = $this->settings;
 
             $mode = (string) ($settings['tasmotaAccess'] ?? 'local');
             if ($mode === 'disabled') {

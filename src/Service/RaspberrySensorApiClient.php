@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace PbdKn\ContaoContaohabBundle\Service;
 
-use Doctrine\DBAL\Connection;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 final class RaspberrySensorApiClient
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly Connection $connection,
+        private readonly array $settings,
     ) {}
 
     public function fetchLatest(array $sensorIds): array
@@ -38,23 +38,40 @@ final class RaspberrySensorApiClient
 
     private function requestRows(array $wanted, array $query): array
     {
-        $settings = $this->connection->fetchAssociative(
-            'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-        );
-        if (!$settings) throw new \RuntimeException('Raspberry-API-Einstellungen fehlen.');
+        $settings = $this->settings;
         $base = rtrim(trim((string)($settings['raspberryApiWanBaseUrl'] ?? '')), '/');
         if ($base === '') $base = rtrim(trim((string)($settings['raspberryApiBaseUrl'] ?? '')), '/');
         if (!str_starts_with(strtolower($base), 'https://')) {
-            throw new \RuntimeException('Die Sensorwerte-API muss ueber HTTPS aufgerufen werden.');
+            throw new \RuntimeException('Die Raspberry-Adresse fehlt oder beginnt nicht mit HTTPS. In der .env.local muss COH_RASPBERRY_API_BASE_URL=https://… eingetragen sein.');
         }
-        $response = $this->httpClient->request('GET', $base . '/api/coh/sensorvalues.php', [
-            'headers' => ['X-COH-TOKEN' => (string)($settings['raspberryApiToken'] ?? '')],
-            'query' => $query + ['sensorIDs' => implode(',', array_keys($wanted))],
-            'timeout' => max(1, (int)($settings['raspberryApiTimeout'] ?? 15)),
-        ]);
-        $payload = $response->toArray(false);
-        if ($response->getStatusCode() !== 200 || empty($payload['ok']) || !is_array($payload['rows'] ?? null)) {
-            throw new \RuntimeException('Ungueltige Antwort der Raspberry-Sensorwerte-API.');
+        $token = trim((string)($settings['raspberryApiToken'] ?? ''));
+        if ($token === '') {
+            throw new \RuntimeException('Der Raspberry-API-Token fehlt. Bitte COH_RASPBERRY_API_TOKEN in der .env.local eintragen.');
+        }
+
+        try {
+            $response = $this->httpClient->request('GET', $base . '/api/coh/sensorvalues.php', [
+                'headers' => ['X-COH-TOKEN' => $token],
+                'query' => $query + ['sensorIDs' => implode(',', array_keys($wanted))],
+                'timeout' => max(1, (int)($settings['raspberryApiTimeout'] ?? 15)),
+            ]);
+            $status = $response->getStatusCode();
+            $payload = $response->toArray(false);
+        } catch (TransportExceptionInterface $exception) {
+            throw new \RuntimeException('Der Raspberry ist über die eingetragene HTTPS-Adresse nicht erreichbar. Bitte MyFRITZ-/Portfreigabe, DNS und TLS-Zertifikat prüfen.', 0, $exception);
+        }
+
+        if ($status === 401 || $status === 403) {
+            throw new \RuntimeException('Der Raspberry hat den Zugriff abgelehnt. COH_RASPBERRY_API_TOKEN beim Hoster und COH_API_TOKEN auf dem Raspberry müssen identisch sein.');
+        }
+        if ($status === 404) {
+            throw new \RuntimeException('Die Sensorwerte-API wurde auf dem Raspberry nicht gefunden. Bitte prüfen, ob /api/coh/sensorvalues.php installiert und über die HTTPS-Adresse erreichbar ist.');
+        }
+        if ($status >= 500) {
+            throw new \RuntimeException(sprintf('Die Sensorwerte-API auf dem Raspberry meldet einen Serverfehler (HTTP %d).', $status));
+        }
+        if ($status !== 200 || empty($payload['ok']) || !is_array($payload['rows'] ?? null)) {
+            throw new \RuntimeException(sprintf('Der Raspberry lieferte keine gültigen Sensorwerte (HTTP %d).', $status));
         }
         $result = [];
         foreach ($payload['rows'] as $row) {

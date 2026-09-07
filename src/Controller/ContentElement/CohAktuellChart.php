@@ -16,6 +16,8 @@ use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 #[AsContentElement(CohAktuellChart::TYPE, category: 'COH')]
 class CohAktuellChart extends AbstractContentElementController
 {
+    use RaspberryApiErrorResponseTrait;
+
     public const TYPE = 'ce_coh_aktuell_chart';
 
     private string $baseGet = "http://192.168.178.65:5333/trio/get/";
@@ -57,7 +59,11 @@ class CohAktuellChart extends AbstractContentElementController
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
         if (!empty($selectedSensors)) {
-            $rows = $this->sensorApi->fetchLatest($selectedSensors);
+            try {
+                $rows = $this->sensorApi->fetchLatest($selectedSensors);
+            } catch (\Throwable $exception) {
+                return $this->raspberryApiErrorResponse($exception);
+            }
             foreach ($rows as $row) {
                 $sensorID = $row['sensorID'];   // ✅ DAS ist dein Key
                 //$ts = date('d.m.Y H:i', (int) $row['sensorvalue_tstamp']);
@@ -75,8 +81,6 @@ class CohAktuellChart extends AbstractContentElementController
 
         $template->chartId = 'chart_' . $model->id;
         $template->data = $data;
-        $template->ajaxToken = 'COH_CODE';
-
         // --- Sync Info ---
         $result = false;
 

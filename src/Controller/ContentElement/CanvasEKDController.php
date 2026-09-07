@@ -18,6 +18,8 @@ use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 #[AsContentElement('canvas_ekd', category: 'COH')]
 class CanvasEKDController extends AbstractContentElementController
 {
+    use RaspberryApiErrorResponseTrait;
+
     public function __construct(
         private readonly RaspberrySensorApiClient $sensorApi
     ) {}
@@ -46,7 +48,11 @@ class CanvasEKDController extends AbstractContentElementController
             'IQ_Today',
             'ELaktTemp2'
         ];
-        $rows = $this->sensorApi->fetchLatest($selectedSensors);
+        try {
+            $rows = $this->sensorApi->fetchLatest($selectedSensors);
+        } catch (\Throwable $exception) {
+            return $this->raspberryApiErrorResponse($exception);
+        }
 
         // Die ausgewählten Sensoren bleiben für alternative Canvas-Templates
         // in der bisherigen, vollständig befüllten Struktur verfügbar.

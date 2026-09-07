@@ -9,6 +9,55 @@ parameters:
     coh_sensors.raspberry_api_base_url: '%env(default:coh_sensors.raspberry_api_base_url_default:COH_RASPBERRY_API_BASE_URL)%'
     coh_sensors.raspberry_api_token: '%env(default:coh_sensors.raspberry_api_token_default:COH_RASPBERRY_API_TOKEN)%'
     coh_sensors.raspberry_api_timeout: 10
+    coh_sensors.api_token_default: ''
+    coh_sensors.api_token: '%env(default:coh_sensors.api_token_default:COH_API_TOKEN)%'
+    coh_sensors.access_local_default: 'local'
+    coh_sensors.access_http_default: 'http'
+    coh_sensors.access_raspberry_default: 'raspberry'
+    coh_sensors.disabled_default: 'disabled'
+    coh_sensors.empty_default: ''
+    coh_sensors.heizstab_cloud_url_default: 'https://api.my-pv.com/api/v1'
+    coh_sensors.heizstab_login_path_default: '/auth.jsn'
+    coh_sensors.heizstab_password_field_default: 'pw'
+    coh_sensors.storage_host_default: 'ASP-HSR2103J2311E08738.local'
+    coh_sensors.runtime_settings:
+        raspberryAccess: '%env(default:coh_sensors.access_http_default:COH_RASPBERRY_ACCESS)%'
+        raspberryApiWanBaseUrl: '%coh_sensors.raspberry_api_base_url%'
+        raspberryApiBaseUrl: '%coh_sensors.raspberry_api_base_url%'
+        raspberryApiToken: '%coh_sensors.raspberry_api_token%'
+        raspberryApiPath: '/api/coh/raspberry-status.php'
+        raspberryApiTimeout: 10
+        raspberryApiCacheSeconds: 15
+        tasmotaAccess: '%env(default:coh_sensors.access_raspberry_default:COH_TASMOTA_ACCESS)%'
+        tasmotaRaspberryBaseUrl: '%coh_sensors.raspberry_api_base_url%'
+        tasmotaRaspberryToken: '%coh_sensors.raspberry_api_token%'
+        tasmotaRaspberryPath: '/api/coh/tasmota.php'
+        tasmotaRequestTimeout: 15
+        wasserLeckageAccess: '%env(default:coh_sensors.access_raspberry_default:COH_WASSERLECKAGE_ACCESS)%'
+        wasserLeckageRaspberryBaseUrl: '%coh_sensors.raspberry_api_base_url%'
+        wasserLeckageRaspberryToken: '%coh_sensors.raspberry_api_token%'
+        wasserLeckageRaspberryPath: '/api/coh/wasserleckage.php'
+        wasserLeckageRequestTimeout: 15
+        storageProAccess: '%env(default:coh_sensors.access_raspberry_default:COH_STORAGEPRO_ACCESS)%'
+        storageProRaspberryBaseUrl: '%coh_sensors.raspberry_api_base_url%'
+        storageProRaspberryToken: '%coh_sensors.raspberry_api_token%'
+        storageProRaspberryPath: '/api/coh/iqbox-modbus.php'
+        storageProRaspberryTimeout: 15
+        storageProHost: '%env(default:coh_sensors.storage_host_default:COH_STORAGEPRO_HOST)%'
+        storageProPort: 502
+        storageProUnitId: 1
+        storageProTimeout: 3
+        heizstabAccess: '%env(default:coh_sensors.disabled_default:COH_HEIZSTAB_ACCESS)%'
+        heizstabUrl: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_URL)%'
+        heizstabAuthEnabled: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_AUTH_ENABLED)%'
+        heizstabLoginPath: '%env(default:coh_sensors.heizstab_login_path_default:COH_HEIZSTAB_LOGIN_PATH)%'
+        heizstabPassword: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_PASSWORD)%'
+        heizstabPasswordField: '%env(default:coh_sensors.heizstab_password_field_default:COH_HEIZSTAB_PASSWORD_FIELD)%'
+        heizstabCookieFile: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_COOKIE_FILE)%'
+        heizstabInsecureTls: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_INSECURE_TLS)%'
+        heizstabCloudBaseUrl: '%env(default:coh_sensors.heizstab_cloud_url_default:COH_HEIZSTAB_CLOUD_BASE_URL)%'
+        heizstabCloudSerial: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_CLOUD_SERIAL)%'
+        heizstabCloudApiToken: '%env(default:coh_sensors.empty_default:COH_HEIZSTAB_CLOUD_API_TOKEN)%'
     coh_sensors.heizstab:
         cloud_base_url: 'https://api.my-pv.com/api/v1'
         local_login_path: '/auth.jsn'

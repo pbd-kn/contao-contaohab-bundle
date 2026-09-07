@@ -21,9 +21,10 @@ function iqboxPrivateHost(string $host): bool
         && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
 }
 
-const COH_API_TOKEN = 'COH_CODE';
-
-$configuredToken = COH_API_TOKEN;
+$configuredToken = trim((string) getenv('COH_API_TOKEN'));
+if ($configuredToken === '') {
+    iqboxRespond(503, ['ok' => false, 'error' => 'COH_API_TOKEN is not configured']);
+}
 $requestToken = (string) ($_SERVER['HTTP_X_COH_TOKEN'] ?? ($_GET['token'] ?? ''));
 if (!hash_equals($configuredToken, $requestToken)) {
     iqboxRespond(401, ['ok' => false, 'error' => 'unauthorized']);

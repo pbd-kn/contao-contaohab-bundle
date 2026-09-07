@@ -17,7 +17,8 @@ class SyrAjaxController
         // ---------------------------------------------------
         // ?? TOKEN CHECK
         // ---------------------------------------------------
-        if ($request->get('token') !== 'COH_CODE') {
+        $expectedToken = trim((string) ($_ENV['COH_API_TOKEN'] ?? $_SERVER['COH_API_TOKEN'] ?? ''));
+        if ($expectedToken === '' || !hash_equals($expectedToken, (string) $request->get('token'))) {
             return new JsonResponse(['success'=>false, 'error'=>'unauthorized'], 403);
         }
 

@@ -30,6 +30,7 @@ final class IQBoxSensorService implements SensorFetcherInterface
         private readonly Connection $connection,
         ?callable $modbusFactory = null,
         private readonly ?HttpClientInterface $httpClient = null,
+        private readonly array $settings = [],
     ) {
         $this->modbusFactory = $modbusFactory;
     }
@@ -113,11 +114,7 @@ final class IQBoxSensorService implements SensorFetcherInterface
 
     private function settings(): array
     {
-        $settings = $this->connection->fetchAssociative('SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1');
-        if (!$settings) {
-            throw new \RuntimeException('StoragePro-Modbus-Einstellungen fehlen im Contao-Backend.');
-        }
-        return $settings;
+        return $this->settings;
     }
 
     private function requestViaRaspberry(array $settings): array

@@ -79,20 +79,13 @@ final class IQBoxSensorServiceCloud implements SensorFetcherInterface
 
     private function cloud(): AmpereIqHttpAccess
     {
-        $settings = $this->connection->fetchAssociative(
-            'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-        );
-        if (!$settings) {
-            throw new \RuntimeException('Ampere.IQ-Einstellungen fehlen im Contao-Backend.');
-        }
-        $tokens = json_decode((string) ($settings['ampereClTokens'] ?? $settings['ampereTokens'] ?? ''), true);
         $parameters = ['ampereIq' => [
-            'username' => trim((string) ($settings['ampereClUsername'] ?? '')) ?: (trim((string) ($settings['ampereUsername'] ?? '')) ?: $this->ampereClUsername),
-            'password' => (string) ($settings['ampereClPassword'] ?? '') ?: ((string) ($settings['amperePassword'] ?? '') ?: $this->ampereClPassword),
-            'tokens' => is_array($tokens) ? $tokens : [],
-            'retries' => max(1, (int) ($settings['ampereClRetries'] ?? $this->ampereClRetries)),
-            'retryDelay' => max(0, (int) ($settings['ampereClRetryDelay'] ?? $this->ampereClRetryDelay)),
-            'lifetimeCacheSeconds' => max(0, (int) ($settings['ampereClLifetimeCacheSeconds'] ?? $this->ampereClLifetimeCacheSeconds)),
+            'username' => trim($this->ampereClUsername),
+            'password' => $this->ampereClPassword,
+            'tokens' => [],
+            'retries' => max(1, $this->ampereClRetries),
+            'retryDelay' => max(0, $this->ampereClRetryDelay),
+            'lifetimeCacheSeconds' => max(0, $this->ampereClLifetimeCacheSeconds),
         ]];
         // TaskAccess.php enthält auch den AmpereIqHttpAccess. Durch diesen
         // Aufruf ist die Datei geladen, bevor die Access-Klasse erzeugt wird.
@@ -104,12 +97,7 @@ final class IQBoxSensorServiceCloud implements SensorFetcherInterface
             $logger,
             $parameters['ampereIq']['lifetimeCacheSeconds'],
             $parameters,
-            function (array $newTokens) use ($settings): void {
-                $this->connection->update('tl_coh_sensorcollector_settings', [
-                    'ampereClTokens' => json_encode($newTokens, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-                    'tstamp' => time(),
-                ], ['id' => (int) $settings['id']]);
-            },
+            null,
         );
     }
 

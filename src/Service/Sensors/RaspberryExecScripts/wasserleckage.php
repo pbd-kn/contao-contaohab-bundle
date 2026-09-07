@@ -84,8 +84,13 @@ function singleValue(array $payload, string $key): mixed
     return count($payload) === 1 ? reset($payload) : null;
 }
 
-$expectedToken = (string) (getenv('COH_API_TOKEN') ?: 'COH_CODE');
+$expectedToken = trim((string) getenv('COH_API_TOKEN'));
 $providedToken = requestHeader('X-COH-TOKEN');
+if ($expectedToken === '') {
+    http_response_code(503);
+    echo json_encode(['ok' => false, 'error' => 'COH_API_TOKEN is not configured']);
+    exit;
+}
 if ($expectedToken === '' || $providedToken === '' || !hash_equals($expectedToken, $providedToken)) {
     respond(401, ['ok' => false, 'error' => 'Unauthorized']);
 }

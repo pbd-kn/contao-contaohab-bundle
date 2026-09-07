@@ -58,9 +58,30 @@ services:
           $apiToken: '%coh_sensors.raspberry_api_token%'
           $timeout: '%coh_sensors.raspberry_api_timeout%'
 
+    PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient:
+        arguments:
+          $settings: '%coh_sensors.runtime_settings%'
+
+    PbdKn\ContaoContaohabBundle\Service\Sensors\RaspberryService:
+        arguments:
+          $settings: '%coh_sensors.runtime_settings%'
+
+    PbdKn\ContaoContaohabBundle\Service\Sensors\TasmotaSensorService:
+        arguments:
+          $settings: '%coh_sensors.runtime_settings%'
+
+    PbdKn\ContaoContaohabBundle\Service\Sensors\WasserLeckageService:
+        arguments:
+          $settings: '%coh_sensors.runtime_settings%'
+
     PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorService:
         arguments:
+          $settings: '%coh_sensors.runtime_settings%'
           $httpClient: '@http_client'
+
+    PbdKn\ContaoContaohabBundle\Service\Sensors\HeizstabSensorService:
+        arguments:
+          $settings: '%coh_sensors.runtime_settings%'
 
     PbdKn\ContaoContaohabBundle\Service\Sensors\IQBoxSensorServiceCloud:
         arguments:

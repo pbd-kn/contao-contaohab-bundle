@@ -15,6 +15,8 @@ use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 #[AsContentElement(CohHistoryChart::TYPE, category: 'COH')]
 class CohHistoryChart extends AbstractContentElementController
 {
+    use RaspberryApiErrorResponseTrait;
+
     public const TYPE = 'coh_history_chart';
 
     public function __construct(
@@ -91,11 +93,15 @@ class CohHistoryChart extends AbstractContentElementController
 
         if (!empty($selectedSensors)) {
 
-            $rows = $this->sensorApi->fetchRange(
-                $selectedSensors,
-                $start->getTimestamp(),
-                $end->getTimestamp()
-            );
+            try {
+                $rows = $this->sensorApi->fetchRange(
+                    $selectedSensors,
+                    $start->getTimestamp(),
+                    $end->getTimestamp()
+                );
+            } catch (\Throwable $exception) {
+                return $this->raspberryApiErrorResponse($exception);
+            }
 
             // gruppieren
             $grouped = [];

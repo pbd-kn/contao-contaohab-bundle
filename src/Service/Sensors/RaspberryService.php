@@ -18,6 +18,7 @@ final class RaspberryService implements SensorFetcherInterface
         private readonly LoggerService $logger,
         private readonly Connection $connection,
         private readonly HttpClientInterface $httpClient,
+        private readonly array $settings,
     ) {
     }
 
@@ -71,12 +72,7 @@ final class RaspberryService implements SensorFetcherInterface
 
     private function snapshot(): array
     {
-        $settings = $this->connection->fetchAssociative(
-            'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-        );
-        if (!$settings) {
-            throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
-        }
+        $settings = $this->settings;
         $mode = (string) ($settings['raspberryAccess'] ?? '');
         if (!in_array($mode, ['disabled', 'local', 'http'], true)) {
             $mode = !empty($settings['raspberryApiEnabled']) ? 'local' : 'disabled';

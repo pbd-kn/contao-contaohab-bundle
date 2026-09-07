@@ -18,6 +18,8 @@ use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
 #[AsContentElement(SensorElement::TYPE, category: 'COH', template: 'ce_coh_sensorelement')]
 class SensorElement extends AbstractContentElementController
 {
+    use RaspberryApiErrorResponseTrait;
+
     public const TYPE = 'coh_sensorelement';
 
     public function __construct(
@@ -92,7 +94,11 @@ class SensorElement extends AbstractContentElementController
 
 
         if (!empty($selectedSensors)) {
-            $rows = $this->sensorApi->fetchLatest($selectedSensors);
+            try {
+                $rows = $this->sensorApi->fetchLatest($selectedSensors);
+            } catch (\Throwable $exception) {
+                return $this->raspberryApiErrorResponse($exception);
+            }
             foreach ($rows as $row) {
                 $row['date'] = !empty($row['tstamp'])
                     ? date('d.m.Y H:i:s', (int) $row['tstamp'])

@@ -27,7 +27,7 @@ class SyncService
     private array $raspiApi = [
         'lanBase'  => 'http://192.168.178.49',
         'wanBase'  => 'https://p1pu92iv4i9yh2m2.myfritz.net',
-        'token'    => 'COH_CODE',
+        'token'    => '',
         'pullPath' => '/api/coh/sensorvalues.php',
         'pushPath' => '/api/coh/config_push.php',
     ];
@@ -333,7 +333,6 @@ private function runPull(mysqli $db, string $raspiBase): ?array
             'tl_coh_sensors',
             'tl_coh_cfgcollect',
             'tl_coh_geraete',
-            'tl_coh_sensorcollector_settings',
         ];
         foreach ($tables as $table) {
             $this->logger->debugMe("Push Tabelle: $table");

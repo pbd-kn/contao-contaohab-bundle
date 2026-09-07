@@ -15,7 +15,11 @@ class HeizstabSensorService implements SensorFetcherInterface
     private ?array $setupData  = null;
     
 
-    public function __construct(LoggerService $logger, private readonly Connection $connection)
+    public function __construct(
+        LoggerService $logger,
+        private readonly Connection $connection,
+        private readonly array $settings = [],
+    )
     {
         $this->logger = $logger;
     }
@@ -121,12 +125,7 @@ class HeizstabSensorService implements SensorFetcherInterface
     }
     private function getDataFromDevice() {
         try {
-            $settings = $this->connection->fetchAssociative(
-                'SELECT * FROM tl_coh_sensorcollector_settings ORDER BY id ASC LIMIT 1'
-            );
-            if (!$settings) {
-                throw new \RuntimeException('Keine Sensorcollector-Einstellungen vorhanden.');
-            }
+            $settings = $this->settings;
             $mode = (string) ($settings['heizstabAccess'] ?? '');
             if (!in_array($mode, ['disabled', 'local', 'cloud'], true)) {
                 // Bei der frueher moeglichen Doppelauswahl hat Cloud Vorrang.
