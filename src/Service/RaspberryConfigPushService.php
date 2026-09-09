@@ -18,7 +18,7 @@ final class RaspberryConfigPushService
     ) {
     }
 
-    /** @return array{devices: int, sensors: int} */
+    /** @return array{devices: int, sensors: int, collectorConfig: int} */
     public function push(): array
     {
         [$baseUrl, $token] = $this->getApiSettings();
@@ -26,6 +26,9 @@ final class RaspberryConfigPushService
         $devices = $this->connection->fetchAllAssociative('SELECT * FROM tl_coh_geraete ORDER BY id');
         $sensors = $this->connection->fetchAllAssociative(
             "SELECT * FROM tl_coh_sensors WHERE sensorActive = '1' ORDER BY id"
+        );
+        $collectorConfig = $this->connection->fetchAllAssociative(
+            'SELECT * FROM tl_coh_cfgcollect ORDER BY id'
         );
 
         $response = $this->httpClient->request('POST', $baseUrl.'/api/coh/config_push.php', [
@@ -36,6 +39,7 @@ final class RaspberryConfigPushService
             'json' => [
                 'devices' => $devices,
                 'sensors' => $sensors,
+                'collectorConfig' => $collectorConfig,
             ],
             'timeout' => max(1, min(15, $this->timeout)),
         ]);
@@ -47,10 +51,14 @@ final class RaspberryConfigPushService
             throw new \RuntimeException(sprintf('Raspberry meldet: %s', $error));
         }
 
-        return ['devices' => count($devices), 'sensors' => count($sensors)];
+        return [
+            'devices' => count($devices),
+            'sensors' => count($sensors),
+            'collectorConfig' => count($collectorConfig),
+        ];
     }
 
-    /** @return array{devices: int, sensors: int} */
+    /** @return array{devices: int, sensors: int, collectorConfig: int} */
     public function pull(): array
     {
         [$baseUrl, $token] = $this->getApiSettings();
@@ -69,6 +77,7 @@ final class RaspberryConfigPushService
             || empty($payload['ok'])
             || !is_array($payload['devices'] ?? null)
             || !is_array($payload['sensors'] ?? null)
+            || !is_array($payload['collectorConfig'] ?? null)
         ) {
             $error = is_string($payload['error'] ?? null) ? $payload['error'] : 'ungueltige API-Antwort';
             throw new \RuntimeException(sprintf('Raspberry meldet: %s', $error));
@@ -84,13 +93,22 @@ final class RaspberryConfigPushService
                 $payload['sensors'],
                 ['historycount', 'lastUpdated', 'pollInterval', 'lastValue', 'lastError']
             );
+            $collectorConfigCount = $this->mergeRows(
+                'tl_coh_cfgcollect',
+                'cfgID',
+                $payload['collectorConfig']
+            );
             $this->connection->commit();
         } catch (\Throwable $exception) {
             $this->connection->rollBack();
             throw $exception;
         }
 
-        return ['devices' => $deviceCount, 'sensors' => $sensorCount];
+        return [
+            'devices' => $deviceCount,
+            'sensors' => $sensorCount,
+            'collectorConfig' => $collectorConfigCount,
+        ];
     }
 
     /** @return array{0: string, 1: string} */

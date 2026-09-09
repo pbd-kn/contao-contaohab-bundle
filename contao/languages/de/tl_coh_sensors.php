@@ -67,9 +67,9 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['history_options'] = [
  * Buttons
  */
 $GLOBALS['TL_LANG']['tl_coh_sensors']['customButton'] = "Custom Routine starten";
-$GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfig'] = ['Konfiguration zum Raspberry übertragen', 'Überträgt alle Geräte und aktiven Sensoren per HTTPS zum Raspberry.'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfig'] = ['Konfiguration zum Raspberry übertragen', 'Überträgt alle Geräte, aktiven Sensoren und Collector-Einstellungen per HTTPS zum Raspberry.'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['pushRaspberryConfigConfirm'] = 'Geräte und aktive Sensoren jetzt zum Raspberry übertragen?';
-$GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfig'] = ['Konfiguration vom Raspberry holen', 'Übernimmt Geräte und Sensoren vom Raspberry in die lokale Datenbank.'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfig'] = ['Konfiguration vom Raspberry holen', 'Übernimmt Geräte, Sensoren und Collector-Einstellungen vom Raspberry in die lokale Datenbank.'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfigConfirm'] = 'Geräte und Sensoren jetzt vom Raspberry holen? Lokale Datensätze mit gleicher ID werden aktualisiert.';
 
 $GLOBALS['TL_LANG']['tl_coh_sensors']['base_legend'] = 'Basis-Einstellungen';
