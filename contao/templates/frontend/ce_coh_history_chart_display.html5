@@ -14,6 +14,20 @@
   height: clamp(300px, 50vh, 600px);
 }
 
+.chart-periods, .chart-series-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1rem;
+  margin: .75rem 0;
+}
+
+.chart-series-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  cursor: pointer;
+}
+
 </style>
 
 <?php
@@ -29,21 +43,26 @@ if (is_string($headline)) {
 
 <form method="get">               
   <?php foreach ($_GET as $key => $value): ?>
-    <?php if (str_starts_with($key, 'unit_chart_') || str_starts_with($key, 'value_chart_')): ?>
-      <?php if ($key !== $this->unitField && $key !== $this->valueField): ?>
-        <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
+    <?php if (str_starts_with($key, 'unit_chart_') || str_starts_with($key, 'value_chart_') || str_starts_with($key, 'periods_chart_')): ?>
+      <?php if ($key !== $this->unitField && $key !== $this->valueField && $key !== $this->periodsField): ?>
+        <?php foreach ((array) $value as $hiddenValue): ?>
+          <input type="hidden" name="<?= htmlspecialchars($key) ?><?= is_array($value) ? '[]' : '' ?>" value="<?= htmlspecialchars($hiddenValue) ?>">
+        <?php endforeach; ?>
       <?php endif; ?>
     <?php endif; ?>
   <?php endforeach; ?>
 
-  <div style="display:flex">
+  <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center">
     <select class="button button-tonal-md" style="margin-right: 10px;" name="<?= $this->unitField ?>" onchange="this.form.submit()">
       <option value="day" <?= $this->currentUnit === 'day' ? 'selected' : '' ?>>Tag</option>
+      <option value="week" <?= $this->currentUnit === 'week' ? 'selected' : '' ?>>Woche</option>
+      <option value="month" <?= $this->currentUnit === 'month' ? 'selected' : '' ?>>Monat</option>
+      <option value="year" <?= $this->currentUnit === 'year' ? 'selected' : '' ?>>Jahr</option>
     </select>
 
     <button class="button button-tonal-md" type="submit"
       name="<?= $this->valueField ?>"
-      value="<?= (new DateTime($this->currentValue))->modify('-1 ' . $this->currentUnit)->format('Y-m-d') ?>">
+      value="<?= htmlspecialchars($this->previousValue) ?>">
       ←
     </button>
 
@@ -53,10 +72,20 @@ if (is_string($headline)) {
 
     <button class="button button-tonal-md" type="submit"
       name="<?= $this->valueField ?>"
-      value="<?= (new DateTime($this->currentValue))->modify('+1 ' . $this->currentUnit)->format('Y-m-d') ?>">
+      value="<?= htmlspecialchars($this->nextValue) ?>">
       →
     </button>
   </div>
+  <fieldset class="chart-periods">
+    <legend><?= ['day' => 'Tag', 'week' => 'Woche', 'month' => 'Monat', 'year' => 'Jahr'][$this->currentUnit] ?> auswählen</legend>
+    <select class="button button-tonal-md" name="<?= htmlspecialchars($this->periodsField) ?>[]" onchange="this.form.submit()">
+      <?php foreach ($this->periodOptions as $option): ?>
+        <option value="<?= htmlspecialchars($option['value']) ?>" <?= $option['checked'] ? 'selected' : '' ?>>
+          <?= htmlspecialchars($option['label']) ?>
+        </option>
+      <?php endforeach; ?>
+    </select>
+  </fieldset>
 </form>
 
 <?php if ($chartdataRaw = $this->chartdata): ?>
@@ -64,6 +93,7 @@ if (is_string($headline)) {
   <div class="chart-container">
     <canvas id="<?= $this->chartId ?>"></canvas>
   </div>
+  <div id="<?= $this->chartId ?>_series" class="chart-series-controls" aria-label="Messwerte auswählen"></div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -71,17 +101,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const chartData = <?= $chartdataRaw ?>;
   const ctx = document.getElementById("<?= $this->chartId ?>").getContext("2d");
+  const chartType = chartData.xUnit === 'day' ? 'line' : 'bar';
+  if (chartType === 'bar') {
+    chartData.datasets.forEach(dataset => {
+      dataset.maxBarThickness = 36;
+      dataset.barPercentage = 0.85;
+      dataset.categoryPercentage = 0.8;
+    });
+  }
 
   function getTimeConfig(unit) {
+    if (chartData.xDisplayUnit === 'hour') {
+      return { unit: 'hour', displayFormats: { hour: 'HH:mm' }, tooltipFormat: 'ccc dd.MM.yyyy HH:mm' };
+    }
+
     switch (unit) {
       case 'day':
-        return { unit: 'hour', displayFormats: { hour: 'HH:mm' }, tooltipFormat: 'HH:mm' };
       case 'week':
-        return { unit: 'day', displayFormats: { day: 'ccc dd.MM' }, tooltipFormat: 'cccc dd.MM.yyyy' };
+        return { unit: 'day', displayFormats: { day: 'ccc dd.MM' }, tooltipFormat: 'cccc dd.MM.yyyy HH:mm' };
       case 'month':
         return { unit: 'day', displayFormats: { day: 'dd.MM' }, tooltipFormat: 'dd.MM.yyyy' };
       case 'year':
-        return { unit: 'month', displayFormats: { month: 'MM.yyyy' }, tooltipFormat: 'LLLL yyyy' };
+        return { unit: 'month', displayFormats: { month: 'MMM yyyy' }, tooltipFormat: 'LLLL yyyy' };
       default:
         return { unit: 'day' };
     }
@@ -90,8 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const scales = {
     x: {
       type: 'time',
+      min: chartData.rangeMin,
+      max: chartData.rangeMax,
       time: getTimeConfig(chartData.xUnit),
-      title: { display: true, text: 'Zeit' }
+      title: { display: true, text: 'Zeit' },
+      ticks: { autoSkip: true, maxTicksLimit: 12 }
     }
   };
 
@@ -108,6 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
       type: 'linear',
       position: position,
       display: true,
+
+      title: {
+        display: unit !== '',
+        text: unit,
+        color: color
+      },
 
       ticks: {
         color: color,
@@ -129,8 +179,18 @@ document.addEventListener('DOMContentLoaded', () => {
     axisIndex++;
   }
 
-  new Chart(ctx, {
-    type: 'line',
+  function syncAxisVisibility(chartInstance) {
+    for (const axisId of Object.keys(chartData.axes ?? {})) {
+      chartInstance.options.scales[axisId].display = chartInstance.data.datasets.some(
+        (dataset, index) => dataset.yAxisID === axisId && chartInstance.isDatasetVisible(index)
+      );
+    }
+  }
+
+  const chart = new Chart(ctx, {
+    // Tag: zeitlicher Linienverlauf. Woche, Monat und Jahr:
+    // senkrechte Balken entlang der Zeitachse.
+    type: chartType,
     data: {
       datasets: chartData.datasets
     },
@@ -144,12 +204,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       elements: {
         line: { borderWidth: 1 },
+        bar: {
+          borderWidth: 1,
+          borderSkipped: false
+        },
         point: {
-          radius: 1,
+          radius: 0.75,
           pointStyle: 'circle',
           backgroundColor: '#fff',
           borderColor: '#333',
-          borderWidth: 2
+          borderWidth: 1,
+          hoverRadius: 4
         }
       },
 
@@ -157,7 +222,21 @@ document.addEventListener('DOMContentLoaded', () => {
         legend: {
           display: true,
           position: 'top',
-          align: 'start'
+          align: 'start',
+          onClick: (event, legendItem, legend) => {
+            const chartInstance = legend.chart;
+            const index = legendItem.datasetIndex;
+            chartInstance.setDatasetVisibility(index, !chartInstance.isDatasetVisible(index));
+            syncAxisVisibility(chartInstance);
+            chartInstance.update();
+
+            const checkbox = document.querySelector(
+              '#<?= $this->chartId ?>_series input[data-dataset-index="' + index + '"]'
+            );
+            if (checkbox) {
+              checkbox.checked = chartInstance.isDatasetVisible(index);
+            }
+          }
         },
 
         title: {
@@ -178,6 +257,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
+  });
+
+  const seriesControls = document.getElementById("<?= $this->chartId ?>_series");
+  chart.data.datasets.forEach((dataset, index) => {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    const text = document.createElement('span');
+    checkbox.type = 'checkbox';
+    checkbox.dataset.datasetIndex = index;
+    checkbox.checked = chart.isDatasetVisible(index);
+    checkbox.addEventListener('change', () => {
+      chart.setDatasetVisibility(index, checkbox.checked);
+      syncAxisVisibility(chart);
+      chart.update();
+    });
+    text.textContent = dataset.label;
+    text.style.color = dataset.borderColor;
+    label.append(checkbox, text);
+    seriesControls.append(label);
   });
 
 });

@@ -35,6 +35,9 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
     'config'      => array(
         'dataContainer'    => DC_Table::class,
         'enableVersioning' => true,
+        'onload_callback'  => array(
+            array(PbdKn\ContaoContaohabBundle\EventListener\RaspberryConfigPushCallback::class, '__invoke'),
+        ),
         'sql'              => array(
             'keys' => array(
                 'id' => 'primary'
@@ -55,6 +58,18 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
             'format' => '%s (Type: %s Value: %s)',
         ),
         'global_operations' => array(
+            'pullRaspberryConfig' => array(
+                'label'      => &$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pullRaspberryConfig'],
+                'href'       => 'key=pullRaspberryConfig',
+                'class'      => 'header_sync',
+                'attributes' => 'onclick="return confirm(\'' . ($GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pullRaspberryConfigConfirm'] ?? '') . '\')"',
+            ),
+            'pushRaspberryConfig' => array(
+                'label'      => &$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pushRaspberryConfig'],
+                'href'       => 'key=pushRaspberryConfig',
+                'class'      => 'header_sync',
+                'attributes' => 'onclick="return confirm(\'' . ($GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pushRaspberryConfigConfirm'] ?? '') . '\')"',
+            ),
             'all' => array(
                 'href'       => 'act=select',
                 'class'      => 'header_edit_all',

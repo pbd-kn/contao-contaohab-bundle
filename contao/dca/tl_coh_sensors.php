@@ -125,7 +125,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'sensorEinheit' => [
             'label' => ['Einheit'],
             'inputType' => 'select',
-            'options'   => ['-','kWh','W','kW',"\u{00B0}C",'Datum','Zeit','DatumZeit','Text','OK','%'],
+            'options'   => ['-','kWh','Wh','W','kW',"\u{00B0}C",'Datum','Zeit','DatumZeit','Text','OK','%'],
             'eval'      => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
@@ -241,12 +241,19 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'history' => [
-            'label' => ['Speichern'],
+            'label' => ['Speichern', 'Änderungen werden sofort gespeichert. Optional wird bei unverändertem Wert regelmäßig ein Kontrollpunkt angelegt.'],
             'inputType' => 'select',
-            'options'   => [0,1,2,3,4,5],
-            'reference' => ['Nein','Polltime','Stuendlich','Taeglich','Woechentlich','Monatlich'],
+            'options'   => [1,2,3,4,5],
+            'reference' => [
+                1 => 'Nur bei Änderung',
+                2 => 'Bei Änderung + Kontrollpunkt stündlich (empfohlen)',
+                3 => 'Bei Änderung + Kontrollpunkt täglich',
+                4 => 'Bei Änderung + Kontrollpunkt wöchentlich',
+                5 => 'Bei Änderung + Kontrollpunkt monatlich',
+            ],
             'eval'      => ['tl_class'=>'w50'],
-            'sql'       => "tinyint(1) NOT NULL default '0'",
+            'default'   => 2,
+            'sql'       => "tinyint(1) NOT NULL default '2'",
         ],
 
         'historycount' => [

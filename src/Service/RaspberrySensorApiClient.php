@@ -25,7 +25,7 @@ final class RaspberrySensorApiClient
         return $result;
     }
 
-    public function fetchRange(array $sensorIds, int $from, int $to): array
+    public function fetchRange(array $sensorIds, int $from, int $to, int $maxPoints = 100): array
     {
         $wanted = array_fill_keys(array_map('strval', $sensorIds), true);
         if ($wanted === []) return [];
@@ -33,7 +33,13 @@ final class RaspberrySensorApiClient
             throw new \InvalidArgumentException('Ungueltiger Sensorwerte-Zeitraum.');
         }
 
-        return $this->requestRows($wanted, ['from' => $from, 'to' => $to, 'bulk' => 1]);
+        $maxPoints = max(10, min(500, $maxPoints));
+
+        return $this->requestRows($wanted, [
+            'from' => $from,
+            'to' => $to,
+            'maxPoints' => $maxPoints,
+        ]);
     }
 
     private function requestRows(array $wanted, array $query): array
