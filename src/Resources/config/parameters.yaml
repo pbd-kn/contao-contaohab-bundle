@@ -28,6 +28,7 @@ parameters:
         raspberryApiPath: '/api/coh/raspberry-status.php'
         raspberryApiTimeout: 10
         raspberryApiCacheSeconds: 15
+        km271CommandPath: '/api/coh/km271-command.php'
         tasmotaAccess: '%env(default:coh_sensors.access_raspberry_default:COH_TASMOTA_ACCESS)%'
         tasmotaRaspberryBaseUrl: '%coh_sensors.raspberry_api_base_url%'
         tasmotaRaspberryToken: '%coh_sensors.raspberry_api_token%'

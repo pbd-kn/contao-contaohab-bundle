@@ -62,6 +62,10 @@ services:
         arguments:
           $settings: '%coh_sensors.runtime_settings%'
 
+    PbdKn\ContaoContaohabBundle\Service\Km271WriteApiClient:
+        arguments:
+          $settings: '%coh_sensors.runtime_settings%'
+
     PbdKn\ContaoContaohabBundle\Service\Sensors\RaspberryService:
         arguments:
           $settings: '%coh_sensors.runtime_settings%'

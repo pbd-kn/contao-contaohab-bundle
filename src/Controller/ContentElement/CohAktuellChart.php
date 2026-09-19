@@ -25,7 +25,7 @@ class CohAktuellChart extends AbstractContentElementController
 
     public function __construct(
         private readonly LoggerService $logger,
-        private readonly RaspberrySensorApiClient $sensorApi
+        private readonly RaspberrySensorApiClient $sensorApi,
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -103,7 +103,6 @@ class CohAktuellChart extends AbstractContentElementController
 
         return $template->getResponse();
     }
-
 
     private function addCssOnce(string $file): void
     {

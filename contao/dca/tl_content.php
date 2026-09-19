@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 use PbdKn\ContaoContaohabBundle\Controller\ContentElement\CohHistoryChart;
 use PbdKn\ContaoContaohabBundle\Controller\ContentElement\CohAktuellChart;
+use PbdKn\ContaoContaohabBundle\Controller\ContentElement\CohBuderusKm271Chart;
 use Contao\Controller;
 use Contao\System;
 
@@ -108,6 +109,16 @@ $GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_leg
  * Content elements CohAktuellChart
  */
 $GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,selectedSensors;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohBuderusKm271Chart::TYPE] = '{type_legend},type,headline,selectedSensors;{km271_legend:hide},coh_km271_write_preview;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_km271_write_preview'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_km271_write_preview'],
+    'exclude' => true,
+    'inputType' => 'checkbox',
+    'eval' => ['tl_class' => 'clr'],
+    'sql' => "char(1) NOT NULL default ''",
+];
 
 // Felder für Template-Auswahl definieren
 $GLOBALS['TL_DCA']['tl_content']['fields']['coh_history_template'] = [

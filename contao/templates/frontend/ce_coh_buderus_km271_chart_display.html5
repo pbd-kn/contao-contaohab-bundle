@@ -1,0 +1,179 @@
+<?php
+$escape = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$catalog = is_array($this->writeCatalog ?? null) ? $this->writeCatalog : [];
+$executable = is_array($this->executableIds ?? null) ? $this->executableIds : [];
+$selected = (string) ($this->writeSelected ?? '');
+$preview = is_array($this->writePreview ?? null) ? $this->writePreview : null;
+$result = is_array($this->writeResult ?? null) ? $this->writeResult : null;
+$descriptions = is_array($this->valueDescriptions ?? null) ? $this->valueDescriptions : [];
+$dialogActive = $selected !== '' || $preview !== null || $result !== null || !empty($this->writeError);
+$formatValue = static function (array $item) use ($escape): string {
+    $value = $item['Wert'] ?? '-';
+    $unit = trim((string) ($item['Einheit'] ?? ''));
+    return $escape($value) . ($unit !== '' ? ' <span class="km271-unit">' . $escape($unit) . '</span>' : '');
+};
+$localIdFor = static function (string $key) use ($catalog): ?string {
+    if (isset($catalog[$key])) {
+        return $key;
+    }
+    $aliases = ['Frostschutz_ab' => 'HK1_Frostschutz_ab'];
+    return isset($aliases[$key], $catalog[$aliases[$key]]) ? $aliases[$key] : null;
+};
+$renderCards = static function (array $items) use ($escape, $formatValue, $localIdFor, $executable, $descriptions): void {
+    foreach ($items as $key => $item):
+        $localId = $localIdFor((string) $key);
+        $editable = $localId !== null && in_array($localId, $executable, true);
+        $description = $descriptions[(string) $key] ?? (str_starts_with((string) $key, 'Störung_') ? 'Statusmeldung der Buderus-Regelung. Der Wert 0 bedeutet keine Störung; ein anderer Wert weist auf eine aktive oder gespeicherte Störung hin.' : '');
+?>
+        <article class="coh-mini-box km271-card<?= $editable ? ' is-editable' : '' ?>">
+            <div class="km271-card-heading">
+                <span<?= $description !== '' ? ' class="km271-tooltip" tabindex="0" title="' . $escape($description) . '" data-tooltip="' . $escape($description) . '"' : '' ?>><?= $escape($item['Name'] ?? str_replace('_', ' ', (string) $key)) ?><?php if ($description !== ''): ?> <span class="km271-info" aria-hidden="true">ⓘ</span><?php endif; ?></span>
+                <?php if ($editable): ?>
+                    <button type="button" class="km271-edit" data-km271-edit
+                        data-local-id="<?= $escape($localId) ?>"
+                        data-label="<?= $escape($item['Name'] ?? $localId) ?>"
+                        data-current="<?= $escape($item['Wert'] ?? '') ?>"
+                        aria-label="<?= $escape($item['Name'] ?? $localId) ?> ändern" title="Wert ändern">✎</button>
+                <?php endif; ?>
+            </div>
+            <div class="km271-card-value"><?= $formatValue($item) ?></div>
+            <?php if (!empty($item['Datum'])): ?><time><?= $escape($item['Datum']) ?></time><?php endif; ?>
+        </article>
+<?php
+    endforeach;
+};
+?>
+
+<section class="coh-panel km271-panel" id="km271-panel-<?= $escape($this->id) ?>">
+    <div class="coh-stack">
+    <?php if (!empty($this->headline)): ?>
+        <<?= $escape($this->hl ?: 'h2') ?>><?= $escape($this->headline) ?></<?= $escape($this->hl ?: 'h2') ?>>
+    <?php endif; ?>
+
+    <?php if ($this->sensorError): ?>
+        <p class="km271-message is-error"><?= $escape($this->sensorError) ?></p>
+    <?php elseif (($this->hk1Values ?? []) === [] && ($this->generalValues ?? []) === []): ?>
+        <p class="km271-message">Noch keine KM271-Werte empfangen.</p>
+    <?php else: ?>
+        <section class="coh-card km271-section">
+            <h3 class="coh-card-title">Heizkreis 1</h3>
+            <div class="coh-mini-grid km271-grid"><?php $renderCards($this->hk1Values ?? []); ?></div>
+        </section>
+
+        <section class="coh-card km271-section">
+            <h3 class="coh-card-title">Allgemeine Heizungswerte</h3>
+            <div class="coh-mini-grid km271-grid"><?php $renderCards($this->generalValues ?? []); ?></div>
+        </section>
+
+        <details class="coh-toggle km271-faults<?= !empty($this->hasActiveFault) ? ' has-fault' : '' ?>">
+            <summary>Störungen<?= !empty($this->hasActiveFault) ? ' – Störung aktiv' : '' ?></summary>
+            <div class="coh-mini-grid km271-grid"><?php $renderCards($this->faultValues ?? []); ?></div>
+        </details>
+    <?php endif; ?>
+    </div>
+
+    <?php if (!empty($this->writeEnabled) && $catalog !== []): ?>
+        <dialog class="km271-dialog" id="km271-dialog-<?= $escape($this->id) ?>">
+            <button type="button" class="km271-dialog-close" data-km271-close aria-label="Dialog schließen">×</button>
+            <h3 id="km271-dialog-title-<?= $escape($this->id) ?>">KM271-Einstellung ändern</h3>
+
+            <?php if ($this->writeError): ?>
+                <p class="km271-message is-error"><?= $escape($this->writeError) ?></p>
+            <?php endif; ?>
+
+            <?php if ($result !== null): ?>
+                <div class="km271-message is-success" data-km271-result>
+                    <strong>Schreibauftrag vom KM271 bestätigt</strong>
+                    <p><?= $escape($result['LokaleId'] ?? '') ?> wurde auf <?= $escape($result['Wert'] ?? '') ?> <?= $escape($result['Einheit'] ?? '') ?> gesetzt.</p>
+                    <p>Die Anzeige des aktuellen Sensorwertes wird beim nächsten Lesezyklus aktualisiert (derzeit alle <?= (int) $this->pollTimeMinutes ?> Minuten).</p>
+                </div>
+            <?php endif; ?>
+
+            <form method="post" class="km271-dialog-form" data-km271-preview-form>
+                <input type="hidden" name="REQUEST_TOKEN" value="<?= $escape($this->requestToken ?? '') ?>">
+                <input type="hidden" name="km271_element_id" value="<?= $escape($this->id) ?>">
+                <input type="hidden" name="km271_action" value="preview">
+                <input type="hidden" name="km271_lokale_id" value="<?= $escape($selected) ?>" data-km271-local-id>
+                <p><strong data-km271-label><?= $escape($catalog[$selected]['Bezeichnung'] ?? $selected) ?></strong></p>
+                <p>Aktueller Wert: <strong data-km271-current>–</strong></p>
+                <label>
+                    <span>Neuer Wert</span>
+                    <span data-km271-input></span>
+                </label>
+                <button type="submit" class="km271-button">Auftrag prüfen</button>
+            </form>
+
+                <?php if ($preview !== null && $result === null): ?>
+                    <div class="km271-preview" data-km271-preview>
+                        <strong>Vorschau erfolgreich</strong>
+                        <dl>
+                            <dt>Einstellung</dt><dd><?= $escape($preview['LokaleId'] ?? '') ?></dd>
+                            <dt>Neuer Wert</dt><dd><?= $escape($preview['Wert'] ?? '') ?> <?= $escape($preview['Einheit'] ?? '') ?></dd>
+                            <dt>Codierung</dt><dd><code><?= $escape($preview['Hex'] ?? '') ?></code></dd>
+                        </dl>
+                        <form method="post" onsubmit="return window.confirm('Diesen Wert wirklich an das KM271 senden?');">
+                            <input type="hidden" name="REQUEST_TOKEN" value="<?= $escape($this->requestToken ?? '') ?>">
+                            <input type="hidden" name="km271_element_id" value="<?= $escape($this->id) ?>">
+                            <input type="hidden" name="km271_action" value="execute">
+                            <input type="hidden" name="km271_lokale_id" value="<?= $escape($preview['LokaleId'] ?? '') ?>">
+                            <input type="hidden" name="km271_wert" value="<?= $escape($preview['Wert'] ?? '') ?>">
+                            <label class="km271-confirm"><input type="checkbox" name="km271_confirm" value="1" required> Schreibauftrag ausdrücklich bestätigen</label>
+                            <button type="submit" class="km271-button is-danger">Jetzt an KM271 senden</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+        </dialog>
+
+        <script>
+        (() => {
+            const dialog = document.getElementById(<?= json_encode('km271-dialog-' . $this->id) ?>);
+            if (!dialog) return;
+            const catalog = <?= json_encode($catalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            const selected = <?= json_encode($selected, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            const inputValue = <?= json_encode((string) ($this->writeInput ?? ''), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            const form = dialog.querySelector('[data-km271-preview-form]');
+
+            function configure(localId, label, current, wantedValue = '') {
+                if (!form || !catalog[localId]) return;
+                const definition = catalog[localId];
+                form.querySelector('[data-km271-local-id]').value = localId;
+                form.querySelector('[data-km271-label]').textContent = label || definition.Bezeichnung || localId;
+                form.querySelector('[data-km271-current]').textContent = current || '–';
+                const host = form.querySelector('[data-km271-input]');
+                host.replaceChildren();
+                let input;
+                if (Array.isArray(definition.Auswahl)) {
+                    input = document.createElement('select');
+                    definition.Auswahl.forEach(value => input.add(new Option(value, value, false, String(value) === String(wantedValue))));
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'number';
+                    if (definition.Minimum !== undefined) input.min = definition.Minimum;
+                    if (definition.Maximum !== undefined) input.max = definition.Maximum;
+                    input.step = definition.Schrittweite ?? 1;
+                    input.value = wantedValue || String(current).replace(',', '.').match(/-?\d+(?:\.\d+)?/)?.[0] || '';
+                }
+                input.name = 'km271_wert';
+                input.required = true;
+                host.append(input);
+                if (definition.Einheit) host.append(' ' + definition.Einheit);
+            }
+
+            document.querySelectorAll('#km271-panel-<?= $escape($this->id) ?> [data-km271-edit]').forEach(button => {
+                button.addEventListener('click', () => {
+                    dialog.querySelector('[data-km271-result]')?.setAttribute('hidden', '');
+                    dialog.querySelector('[data-km271-preview]')?.setAttribute('hidden', '');
+                    configure(button.dataset.localId, button.dataset.label, button.dataset.current);
+                    if (!dialog.open) dialog.showModal();
+                });
+            });
+            dialog.querySelector('[data-km271-close]')?.addEventListener('click', () => dialog.close());
+            dialog.addEventListener('click', event => {
+                if (event.target === dialog) dialog.close();
+            });
+            if (selected) configure(selected, catalog[selected]?.Bezeichnung, '', inputValue);
+            <?php if ($dialogActive): ?>dialog.showModal();<?php endif; ?>
+        })();
+        </script>
+    <?php endif; ?>
+</section>

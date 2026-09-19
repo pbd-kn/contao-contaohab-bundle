@@ -89,6 +89,18 @@ class LoggerService
         }    
         $this->contaoLogger->error($this->addDebugInfoToText($txt));
     }
+
+    public function Info(string $txt): void
+    {
+        if ($this->streamHandler === null) {
+            $logPath = $this->projectDir . '/var/logs/' . $this->dateiname;
+            $formatter = new LineFormatter('%datetime% [Logger] %message%' . PHP_EOL, null, true, true);
+            $this->streamHandler = new StreamHandler($logPath, Logger::INFO);
+            $this->streamHandler->setFormatter($formatter);
+            $this->contaoLogger->pushHandler($this->streamHandler);
+        }
+        $this->contaoLogger->info($this->addDebugInfoToText($txt));
+    }
     public function isDebug(): bool
     {
         return $this->debug;

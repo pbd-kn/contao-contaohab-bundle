@@ -125,7 +125,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         'sensorEinheit' => [
             'label' => ['Einheit'],
             'inputType' => 'select',
-            'options'   => ['-','kWh','Wh','W','kW',"\u{00B0}C",'Datum','Zeit','DatumZeit','Text','OK','%'],
+            'options'   => ['-','h','min','kWh','Wh','W','kW',"\u{00B0}C",'Datum','Zeit','DatumZeit','Text','OK','%'],
             'eval'      => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
