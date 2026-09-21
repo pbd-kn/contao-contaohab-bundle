@@ -30,12 +30,12 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
             $description = 'Statusmeldung der Buderus-Regelung. Der Wert 0 bedeutet keine Störung; ein anderer Wert weist auf eine aktive oder gespeicherte Störung hin.';
         }
         // Zusätzliche Info anhängen oder Beschreibung ersetzen.
-        $info = trim((string) ($settings[$key]['Info'] ?? $settings[$key]['info'] ?? ''));
-        if ($info !== '') {
-            if (str_starts_with($info, '.')) {
-                $description = trim($description . ' ' . ltrim(substr($info, 1)));
+        $Tooltip = trim((string) ($settings[$key]['Tooltip'] ?? $settings[$key]['Tooltip'] ?? ''));
+        if ($Tooltip !== '') {
+            if (str_starts_with($Tooltip, '.')) {
+                $description = trim($description . ' ' . ltrim(substr($Tooltip, 1)));
             } else {
-                $description = $info;
+                $description = $Tooltip;
             }
         }
         // CSS-Klasse für bearbeitbare Werte ergänzen.
@@ -51,8 +51,8 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
         } else {
             echo '<span>';
         }
-        echo $escape($settings[$key]['name'] ?? str_replace('_', ' ', (string) $key));   // headline aus konfiguration
-        if ($description !== '') { echo '<span class="km271-info" aria-hidden="true">ⓘ</span>'; }
+        echo $escape($settings[$key]['Titel'] ?? str_replace('_', ' ', (string) $key));   // headline aus konfiguration
+        if ($description !== '') { echo '<span class="km271-tooltip" aria-hidden="true">ⓘ</span>'; }
         echo '</span>';
         // Schaltfläche zum Ändern des Wertes.
         if ($editable) {
@@ -78,61 +78,61 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
 };
 
 $Sensorwerte = [
-    "Außentemperatur" => ["name" => "Außentemperatur", "info" => ""],
-    "Außentemperatur_gedämpft" => ["name" => "Außentemperatur_gedämpft", "info" => ""],
-    "Warmwasser_eingestellte Temperatur" => ["name" => "Warmwasser_eingestellte Temperatur", "info" => ""],
-    "Warmwasser_Solltemperatur" => ["name" => "Warmwasser_Solltemperatur", "info" => ""],
-    "Warmwasser_Isttemperatur" => ["name" => "Warmwasser_Isttemperatur", "info" => ""],
-    "Warmwasser_Betriebsart" => ["name" => "Warmwasser_Betriebsart", "info" => ""],
-    "Warmwasserbereitung" => ["name" => "Warmwasserbereitung", "info" => ""],
-    "Warmwasser_Zirkulation Einstellung" => ["name" => "Warmwasser_Zirkulation Einstellung", "info" => ""],
-    "Warmwasser_Einschaltoptimierung" => ["name" => "Warmwasser_Einschaltoptimierung", "info" => ""],
-    "Warmwasser_Ladepumpe" => ["name" => "Warmwasser_Ladepumpe", "info" => ""],
-    "Warmwasser_Zirkulationspumpe" => ["name" => "Warmwasser_Zirkulationspumpe", "info" => ""],
-    "Warmwasser_Solarpumpe" => ["name" => "Warmwasser_Solarpumpe", "info" => ""],
-    "Brennerlaufzeit_Stunden" => ["name" => "Brennerlaufzeit_Stunden", "info" => ""],
-    "Brennerart" => ["name" => "Brennerart", "info" => ""],
-    "Maximale_Kesseltemperatur" => ["name" => "Maximale_Kesseltemperatur", "info" => ""],
-    "Kessel_Solltemperatur" => ["name" => "Kessel_Solltemperatur", "info" => ""],
-    "Kessel_Isttemperatur" => ["name" => "Kessel_Isttemperatur", "info" => ""],
-    "Brenner_Einschalttemperatur" => ["name" => "Brenner_Einschalttemperatur", "info" => ""],
-    "Brenner_Ausschalttemperatur" => ["name" => "Brenner_Ausschalttemperatur", "info" => ""],
-    "Abgastest" => ["name" => "Abgastest", "info" => ""],
-    "Brenner_Stufe_1" => ["name" => "Brenner_Stufe_1", "info" => ""],
-    "Kesselschutz" => ["name" => "Kesselschutz", "info" => ""],
-    "Kessel_aktiv" => ["name" => "Kessel_aktiv", "info" => ""],
-    "Brennerfreigabe" => ["name" => "Brennerfreigabe", "info" => ""],
-    "Brennerfreigabe_hohe_Leistung" => ["name" => "Brennerfreigabe_hohe_Leistung", "info" => ""],
-    "Brenner-Ansteuerung" => ["name" => "Brenner-Ansteuerung", "info" => ""],
-    "Frostschutz_ab" => ["name" => "Frostschutz_ab", "info" => ""],
-    "Pumpenlogik_Temperatur" => ["name" => "Pumpenlogik_Temperatur", "info" => ""],
-    "Störung_Brenner" => ["name" => "Störung_Brenner", "info" => ""],
-    "Störung_Kesselfühler" => ["name" => "Störung_Kesselfühler", "info" => ""],
-    "Störung_Zusatzfühler" => ["name" => "Störung_Zusatzfühler", "info" => ""],
-    "Störung_Kessel_bleibt kalt" => ["name" => "Störung_Kessel_bleibt kalt", "info" => ""],
-    "Störung_Abgasfühler" => ["name" => "Störung_Abgasfühler", "info" => ""],
-    "Störung_Abgasgrenze" => ["name" => "Störung_Abgasgrenze", "info" => ""],
-    "Störung_Sicherheitskette" => ["name" => "Störung_Sicherheitskette", "info" => ""],
-    "Externe_Störung" => ["name" => "Externe_Störung", "info" => ""],
-    "HK1_Sommergrenze" => ["name" => "HK1_Sommergrenze", "info" => ""],
-    "HK1_Nachttemperatur" => ["name" => "HK1_Nachttemperatur", "info" => ""],
-    "HK1_Tagtemperatur" => ["name" => "HK1_Tagtemperatur", "info" => ""],
-    "HK1_Betriebsart" => ["name" => "HK1_Betriebsart", "info" => ""],
-    "HK1_Urlaubstemperatur" => ["name" => "HK1_Urlaubstemperatur", "info" => ""],
-    "HK1_Maximaltemperatur" => ["name" => "HK1_Maximaltemperatur", "info" => ""],
-    "HK1_Auslegungstemperatur" => ["name" => "HK1_Auslegungstemperatur", "info" => ""],
-    "HK1_Temperatur-Offset" => ["name" => "HK1_Temperatur-Offset", "info" => ""],
-    "HK1_Fernbedienung" => ["name" => "HK1_Fernbedienung", "info" => ""],
-    "HK1_Heizprogramm" => ["name" => "HK1_Heizprogramm", "info" => ""],
-    "HK1_Ferientage" => ["name" => "HK1_Ferientage", "info" => ""],
-    "HK1_Vorlauf_Solltemperatur" => ["name" => "HK1_Vorlauf_Solltemperatur", "info" => ""],
-    "HK1_Vorlauf_Isttemperatur" => ["name" => "HK1_Vorlauf_Isttemperatur", "info" => ""],
-    "HK1_Raum_Solltemperatur" => ["name" => "HK1_Raum_Solltemperatur", "info" => ""],
-    "HK1_Raum_Isttemperatur" => ["name" => "HK1_Raum_Isttemperatur", "info" => ""],
-    "HK1_Einschaltoptimierung" => ["name" => "HK1_Einschaltoptimierung", "info" => ""],
-    "HK1_Ausschaltoptimierung" => ["name" => "HK1_Ausschaltoptimierung", "info" => ""],
-    "HK1_Pumpenleistung" => ["name" => "HK1_Pumpenleistung", "info" => ""],
-    "HK1_Mischerstellung" => ["name" => "HK1_Mischerstellung", "info" => ""],
+    "Außentemperatur" => ["Titel" => "Außentemperatur", "Tooltip" => ""],
+    "Außentemperatur_gedämpft" => ["Titel" => "Außentemperatur_gedämpft", "Tooltip" => ""],
+    "Warmwasser_eingestellte Temperatur" => ["Titel" => "Warmwasser_eingestellte Temperatur", "Tooltip" => ""],
+    "Warmwasser_Solltemperatur" => ["Titel" => "Warmwasser_Solltemperatur", "Tooltip" => ""],
+    "Warmwasser_Isttemperatur" => ["Titel" => "Warmwasser_Isttemperatur", "Tooltip" => ""],
+    "Warmwasser_Betriebsart" => ["Titel" => "Warmwasser_Betriebsart", "Tooltip" => ""],
+    "Warmwasserbereitung" => ["Titel" => "Warmwasserbereitung", "Tooltip" => ""],
+    "Warmwasser_Zirkulation Einstellung" => ["Titel" => "Warmwasser_Zirkulation Einstellung", "Tooltip" => ""],
+    "Warmwasser_Einschaltoptimierung" => ["Titel" => "Warmwasser_Einschaltoptimierung", "Tooltip" => ""],
+    "Warmwasser_Ladepumpe" => ["Titel" => "Warmwasser_Ladepumpe", "Tooltip" => ""],
+    "Warmwasser_Zirkulationspumpe" => ["Titel" => "Warmwasser_Zirkulationspumpe", "Tooltip" => ""],
+    "Warmwasser_Solarpumpe" => ["Titel" => "Warmwasser_Solarpumpe", "Tooltip" => ""],
+    "Brennerlaufzeit_Stunden" => ["Titel" => "Brennerlaufzeit_Stunden", "Tooltip" => ""],
+    "Brennerart" => ["Titel" => "Brennerart", "Tooltip" => ""],
+    "Maximale_Kesseltemperatur" => ["Titel" => "Maximale_Kesseltemperatur", "Tooltip" => ""],
+    "Kessel_Solltemperatur" => ["Titel" => "Kessel_Solltemperatur", "Tooltip" => ""],
+    "Kessel_Isttemperatur" => ["Titel" => "Kessel_Isttemperatur", "Tooltip" => ""],
+    "Brenner_Einschalttemperatur" => ["Titel" => "Brenner_Einschalttemperatur", "Tooltip" => ""],
+    "Brenner_Ausschalttemperatur" => ["Titel" => "Brenner_Ausschalttemperatur", "Tooltip" => ""],
+    "Abgastest" => ["Titel" => "Abgastest", "Tooltip" => ""],
+    "Brenner_Stufe_1" => ["Titel" => "Brenner_Stufe_1", "Tooltip" => ""],
+    "Kesselschutz" => ["Titel" => "Kesselschutz", "Tooltip" => ""],
+    "Kessel_aktiv" => ["Titel" => "Kessel_aktiv", "Tooltip" => ""],
+    "Brennerfreigabe" => ["Titel" => "Brennerfreigabe", "Tooltip" => ""],
+    "Brennerfreigabe_hohe_Leistung" => ["Titel" => "Brennerfreigabe_hohe_Leistung", "Tooltip" => ""],
+    "Brenner-Ansteuerung" => ["Titel" => "Brenner-Ansteuerung", "Tooltip" => ""],
+    "Frostschutz_ab" => ["Titel" => "Frostschutz_ab", "Tooltip" => ""],
+    "Pumpenlogik_Temperatur" => ["Titel" => "Pumpenlogik_Temperatur", "Tooltip" => ""],
+    "Störung_Brenner" => ["Titel" => "Störung_Brenner", "Tooltip" => ""],
+    "Störung_Kesselfühler" => ["Titel" => "Störung_Kesselfühler", "Tooltip" => ""],
+    "Störung_Zusatzfühler" => ["Titel" => "Störung_Zusatzfühler", "Tooltip" => ""],
+    "Störung_Kessel_bleibt kalt" => ["Titel" => "Störung_Kessel_bleibt kalt", "Tooltip" => ""],
+    "Störung_Abgasfühler" => ["Titel" => "Störung_Abgasfühler", "Tooltip" => ""],
+    "Störung_Abgasgrenze" => ["Titel" => "Störung_Abgasgrenze", "Tooltip" => ""],
+    "Störung_Sicherheitskette" => ["Titel" => "Störung_Sicherheitskette", "Tooltip" => ""],
+    "Externe_Störung" => ["Titel" => "Externe_Störung", "Tooltip" => ""],
+    "HK1_Sommergrenze" => ["Titel" => "HK1_Sommergrenze", "Tooltip" => ""],
+    "HK1_Nachttemperatur" => ["Titel" => "HK1_Nachttemperatur", "Tooltip" => ""],
+    "HK1_Tagtemperatur" => ["Titel" => "HK1_Tagtemperatur", "Tooltip" => ""],
+    "HK1_Betriebsart" => ["Titel" => "HK1_Betriebsart", "Tooltip" => ""],
+    "HK1_Urlaubstemperatur" => ["Titel" => "HK1_Urlaubstemperatur", "Tooltip" => ""],
+    "HK1_Maximaltemperatur" => ["Titel" => "HK1_Maximaltemperatur", "Tooltip" => ""],
+    "HK1_Auslegungstemperatur" => ["Titel" => "HK1_Auslegungstemperatur", "Tooltip" => ""],
+    "HK1_Temperatur-Offset" => ["Titel" => "HK1_Temperatur-Offset", "Tooltip" => ""],
+    "HK1_Fernbedienung" => ["Titel" => "HK1_Fernbedienung", "Tooltip" => ""],
+    "HK1_Heizprogramm" => ["Titel" => "HK1_Heizprogramm", "Tooltip" => ""],
+    "HK1_Ferientage" => ["Titel" => "HK1_Ferientage", "Tooltip" => ""],
+    "HK1_Vorlauf_Solltemperatur" => ["Titel" => "HK1_Vorlauf_Solltemperatur", "Tooltip" => ""],
+    "HK1_Vorlauf_Isttemperatur" => ["Titel" => "HK1_Vorlauf_Isttemperatur", "Tooltip" => ""],
+    "HK1_Raum_Solltemperatur" => ["Titel" => "HK1_Raum_Solltemperatur", "Tooltip" => ""],
+    "HK1_Raum_Isttemperatur" => ["Titel" => "HK1_Raum_Isttemperatur", "Tooltip" => ""],
+    "HK1_Einschaltoptimierung" => ["Titel" => "HK1_Einschaltoptimierung", "Tooltip" => ""],
+    "HK1_Ausschaltoptimierung" => ["Titel" => "HK1_Ausschaltoptimierung", "Tooltip" => ""],
+    "HK1_Pumpenleistung" => ["Titel" => "HK1_Pumpenleistung", "Tooltip" => ""],
+    "HK1_Mischerstellung" => ["Titel" => "HK1_Mischerstellung", "Tooltip" => ""],
 ];
 
 

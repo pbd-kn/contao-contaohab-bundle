@@ -272,7 +272,6 @@
 .km271-card { position: relative; min-width: 0; padding: 10px 12px; background: #f4f8fb; border: 1px solid #d9e5ee; border-radius: 9px; }
 .km271-card-heading { display: flex; justify-content: space-between; gap: 8px; color: #4b6479; font-size: .9rem; }
 .km271-tooltip { cursor: help; outline-offset: 3px; }
-.km271-info { color: #2455d6; font-size: .8rem; white-space: nowrap; }
 .km271-tooltip::after {
     content: attr(data-tooltip);
     position: absolute;
