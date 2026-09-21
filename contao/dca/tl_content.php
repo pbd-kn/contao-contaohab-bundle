@@ -110,7 +110,7 @@ $GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_leg
  */
 $GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,selectedSensors;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 
-$GLOBALS['TL_DCA']['tl_content']['palettes'][CohBuderusKm271Chart::TYPE] = '{type_legend},type,headline,selectedSensors;{km271_legend:hide},coh_km271_write_preview;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohBuderusKm271Chart::TYPE] = '{type_legend},type,headline,selectedSensors;{km271_legend:hide},coh_km271_write_preview;{template_legend:hide},customTpl;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['coh_km271_write_preview'] = [
     'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_km271_write_preview'],

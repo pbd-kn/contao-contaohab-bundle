@@ -43,27 +43,27 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
         if ($editable) { $cardClass .= ' is-editable'; }
         echo '<article class="' . $cardClass . '">';
         echo '<div class="km271-card-heading">';
-            // Sensorname mit optionalem Tooltip.
-            if ($description !== '') {
-                echo '<span class="km271-tooltip" tabindex="0"';
-                echo ' title="' . $escape($description) . '"';
-                echo ' data-tooltip="' . $escape($description) . '">';
-            } else {
-                echo '<span>';
-            }
-            echo $escape($settings[$key]['name'] ?? str_replace('_', ' ', (string) $key));   // headline aus konfiguration
-            if ($description !== '') { echo '<span class="km271-info" aria-hidden="true">ⓘ</span>'; }
-            echo '</span>';
-            // Schaltfläche zum Ändern des Wertes.
-            if ($editable) {
-                $label = $escape($item['Name'] ?? $localId);
-                echo '<button type="button" class="km271-edit" data-km271-edit';
-                echo ' data-local-id="' . $escape($localId) . '"';
-                echo ' data-label="' . $label . '"';
-                echo ' data-current="' . $escape($item['Wert'] ?? '') . '"';
-                echo ' aria-label="' . $label . ' ändern"';
-                echo ' title="Wert ändern">✎</button>';
-            }
+        // Sensorname mit optionalem Tooltip.
+        if ($description !== '') {
+            echo '<span class="km271-tooltip" tabindex="0"';
+            echo ' title="' . $escape($description) . '"';
+            echo ' data-tooltip="' . $escape($description) . '">';
+        } else {
+            echo '<span>';
+        }
+        echo $escape($settings[$key]['name'] ?? str_replace('_', ' ', (string) $key));   // headline aus konfiguration
+        if ($description !== '') { echo '<span class="km271-info" aria-hidden="true">ⓘ</span>'; }
+        echo '</span>';
+        // Schaltfläche zum Ändern des Wertes.
+        if ($editable) {
+            $label = $escape($item['Name'] ?? $localId);
+            echo '<button type="button" class="km271-edit" data-km271-edit';
+            echo ' data-local-id="' . $escape($localId) . '"';
+            echo ' data-label="' . $label . '"';
+            echo ' data-current="' . $escape($item['Wert'] ?? '') . '"';
+            echo ' aria-label="' . $label . ' ändern"';
+            echo ' title="Wert ändern">✎</button>';
+        }
         echo '</div>';
         // Sensorwert und Zeitpunkt ausgeben.
         echo '<div class="km271-card-value">' . $formatValue($item) . '</div>';
@@ -79,61 +79,62 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
 
 $Sensorwerte = [
     "Außentemperatur" => ["name" => "Außentemperatur", "info" => ""],
-    "Außentemperatur_gedämpft" => ["name" => "Außentemperatur gedämpft", "info" => ""],
-    "Warmwasser_eingestellte Temperatur" => ["name" => "Warmwassereingestellte Temperatur", "info" => ""],
-    "Warmwasser_Solltemperatur" => ["name" => "Warmwasser Solltemperatur", "info" => ""],
-    "Warmwasser_Isttemperatur" => ["name" => "Warmwasser Isttemperatur", "info" => ""],
-//    "Warmwasser_Betriebsart" => ["name" => "Warmwasser_Betriebsart", "info" => ""],
+    "Außentemperatur_gedämpft" => ["name" => "Außentemperatur_gedämpft", "info" => ""],
+    "Warmwasser_eingestellte Temperatur" => ["name" => "Warmwasser_eingestellte Temperatur", "info" => ""],
+    "Warmwasser_Solltemperatur" => ["name" => "Warmwasser_Solltemperatur", "info" => ""],
+    "Warmwasser_Isttemperatur" => ["name" => "Warmwasser_Isttemperatur", "info" => ""],
+    "Warmwasser_Betriebsart" => ["name" => "Warmwasser_Betriebsart", "info" => ""],
     "Warmwasserbereitung" => ["name" => "Warmwasserbereitung", "info" => ""],
     "Warmwasser_Zirkulation Einstellung" => ["name" => "Warmwasser_Zirkulation Einstellung", "info" => ""],
-//    "Warmwasser_Einschaltoptimierung" => ["name" => "Warmwasser_Einschaltoptimierung", "info" => ""],
-//    "Warmwasser_Ladepumpe" => ["name" => "Warmwasser_Ladepumpe", "info" => ""],
-//    "Warmwasser_Zirkulationspumpe" => ["name" => "Warmwasser_Zirkulationspumpe", "info" => ""],
-//    "Warmwasser_Solarpumpe" => ["name" => "Warmwasser_Solarpumpe", "info" => ""],
-    "HK1_Sommergrenze" => ["name" => "Sommergrenze", "info" => ""],
-    "HK1_Nachttemperatur" => ["name" => "Nachttemperatur", "info" => ""],
-    "HK1_Tagtemperatur" => ["name" => "Tagtemperatur", "info" => ""],
-    "HK1_Betriebsart" => ["name" => "Betriebsart", "info" => ""],
-//    "HK1_Fernbedienung" => ["name" => "HK1_Fernbedienung", "info" => ""],
-    "HK1_Vorlauf_Solltemperatur" => ["name" => "Vorlauf Solltemperatur", "info" => ""],
-    "HK1_Vorlauf_Isttemperatur" => ["name" => "Vorlauf Isttemperatur", "info" => ""],
-//    "HK1_Raum_Solltemperatur" => ["name" => "HK1_Raum_Solltemperatur", "info" => ""],
-//    "HK1_Raum_Isttemperatur" => ["name" => "HK1_Raum_Isttemperatur", "info" => ""],
-    "HK1_Mischerstellung" => ["name" => "Mischerstellung", "info" => ""],
-    "Brennerlaufzeit_Stunden" => ["name" => "Brennerlaufzeit Stunden", "info" => ""],
+    "Warmwasser_Einschaltoptimierung" => ["name" => "Warmwasser_Einschaltoptimierung", "info" => ""],
+    "Warmwasser_Ladepumpe" => ["name" => "Warmwasser_Ladepumpe", "info" => ""],
+    "Warmwasser_Zirkulationspumpe" => ["name" => "Warmwasser_Zirkulationspumpe", "info" => ""],
+    "Warmwasser_Solarpumpe" => ["name" => "Warmwasser_Solarpumpe", "info" => ""],
+    "Brennerlaufzeit_Stunden" => ["name" => "Brennerlaufzeit_Stunden", "info" => ""],
     "Brennerart" => ["name" => "Brennerart", "info" => ""],
-    "Maximale_Kesseltemperatur" => ["name" => "Max. Kesseltemperatur", "info" => ""],
-    "Kessel_Solltemperatur" => ["name" => "Kessel Solltemperatur", "info" => ""],
-    "Kessel_Isttemperatur" => ["name" => "Kessel Isttemperatur", "info" => ""],
-//    "Brenner_Einschalttemperatur" => ["name" => "Brenner_Einschalttemperatur", "info" => ""],
-//    "Brenner_Ausschalttemperatur" => ["name" => "Brenner_Ausschalttemperatur", "info" => ""],
-//    "Abgastest" => ["name" => "Abgastest", "info" => ""],
-//    "Brenner_Stufe_1" => ["name" => "Brenner_Stufe_1", "info" => ""],
-//    "Kesselschutz" => ["name" => "Kesselschutz", "info" => ""],
-//    "Kessel_aktiv" => ["name" => "Kessel_aktiv", "info" => ""],
+    "Maximale_Kesseltemperatur" => ["name" => "Maximale_Kesseltemperatur", "info" => ""],
+    "Kessel_Solltemperatur" => ["name" => "Kessel_Solltemperatur", "info" => ""],
+    "Kessel_Isttemperatur" => ["name" => "Kessel_Isttemperatur", "info" => ""],
+    "Brenner_Einschalttemperatur" => ["name" => "Brenner_Einschalttemperatur", "info" => ""],
+    "Brenner_Ausschalttemperatur" => ["name" => "Brenner_Ausschalttemperatur", "info" => ""],
+    "Abgastest" => ["name" => "Abgastest", "info" => ""],
+    "Brenner_Stufe_1" => ["name" => "Brenner_Stufe_1", "info" => ""],
+    "Kesselschutz" => ["name" => "Kesselschutz", "info" => ""],
+    "Kessel_aktiv" => ["name" => "Kessel_aktiv", "info" => ""],
     "Brennerfreigabe" => ["name" => "Brennerfreigabe", "info" => ""],
-//    "Brennerfreigabe_hohe_Leistung" => ["name" => "Brennerfreigabe_hohe_Leistung", "info" => ""],
+    "Brennerfreigabe_hohe_Leistung" => ["name" => "Brennerfreigabe_hohe_Leistung", "info" => ""],
     "Brenner-Ansteuerung" => ["name" => "Brenner-Ansteuerung", "info" => ""],
-//    "Frostschutz_ab" => ["name" => "Frostschutz_ab", "info" => ""],
-//    "Pumpenlogik_Temperatur" => ["name" => "Pumpenlogik_Temperatur", "info" => ""],
-//    "Störung_Brenner" => ["name" => "Störung_Brenner", "info" => ""],
-//    "Störung_Kesselfühler" => ["name" => "Störung_Kesselfühler", "info" => ""],
-//    "Störung_Zusatzfühler" => ["name" => "Störung_Zusatzfühler", "info" => ""],
-//    "Störung_Kessel_bleibt kalt" => ["name" => "Störung_Kessel_bleibt kalt", "info" => ""],
-//    "Störung_Abgasfühler" => ["name" => "Störung_Abgasfühler", "info" => ""],
-//    "Störung_Abgasgrenze" => ["name" => "Störung_Abgasgrenze", "info" => ""],
-//    "Störung_Sicherheitskette" => ["name" => "Störung_Sicherheitskette", "info" => ""],
-//    "Externe_Störung" => ["name" => "Externe_Störung", "info" => ""],
-//    "HK1_Urlaubstemperatur" => ["name" => "HK1_Urlaubstemperatur", "info" => ""],
-//    "HK1_Maximaltemperatur" => ["name" => "HK1_Maximaltemperatur", "info" => ""],
-//    "HK1_Auslegungstemperatur" => ["name" => "HK1_Auslegungstemperatur", "info" => ""],
-//    "HK1_Temperatur-Offset" => ["name" => "HK1_Temperatur-Offset", "info" => ""],
-//    "HK1_Heizprogramm" => ["name" => "HK1_Heizprogramm", "info" => ""],
-//    "HK1_Ferientage" => ["name" => "HK1_Ferientage", "info" => ""],
-//    "HK1_Einschaltoptimierung" => ["name" => "HK1_Einschaltoptimierung", "info" => ""],
-//    "HK1_Ausschaltoptimierung" => ["name" => "HK1_Ausschaltoptimierung", "info" => ""],
-//    "HK1_Pumpenleistung" => ["name" => "HK1_Pumpenleistung", "info" => ""],
+    "Frostschutz_ab" => ["name" => "Frostschutz_ab", "info" => ""],
+    "Pumpenlogik_Temperatur" => ["name" => "Pumpenlogik_Temperatur", "info" => ""],
+    "Störung_Brenner" => ["name" => "Störung_Brenner", "info" => ""],
+    "Störung_Kesselfühler" => ["name" => "Störung_Kesselfühler", "info" => ""],
+    "Störung_Zusatzfühler" => ["name" => "Störung_Zusatzfühler", "info" => ""],
+    "Störung_Kessel_bleibt kalt" => ["name" => "Störung_Kessel_bleibt kalt", "info" => ""],
+    "Störung_Abgasfühler" => ["name" => "Störung_Abgasfühler", "info" => ""],
+    "Störung_Abgasgrenze" => ["name" => "Störung_Abgasgrenze", "info" => ""],
+    "Störung_Sicherheitskette" => ["name" => "Störung_Sicherheitskette", "info" => ""],
+    "Externe_Störung" => ["name" => "Externe_Störung", "info" => ""],
+    "HK1_Sommergrenze" => ["name" => "HK1_Sommergrenze", "info" => ""],
+    "HK1_Nachttemperatur" => ["name" => "HK1_Nachttemperatur", "info" => ""],
+    "HK1_Tagtemperatur" => ["name" => "HK1_Tagtemperatur", "info" => ""],
+    "HK1_Betriebsart" => ["name" => "HK1_Betriebsart", "info" => ""],
+    "HK1_Urlaubstemperatur" => ["name" => "HK1_Urlaubstemperatur", "info" => ""],
+    "HK1_Maximaltemperatur" => ["name" => "HK1_Maximaltemperatur", "info" => ""],
+    "HK1_Auslegungstemperatur" => ["name" => "HK1_Auslegungstemperatur", "info" => ""],
+    "HK1_Temperatur-Offset" => ["name" => "HK1_Temperatur-Offset", "info" => ""],
+    "HK1_Fernbedienung" => ["name" => "HK1_Fernbedienung", "info" => ""],
+    "HK1_Heizprogramm" => ["name" => "HK1_Heizprogramm", "info" => ""],
+    "HK1_Ferientage" => ["name" => "HK1_Ferientage", "info" => ""],
+    "HK1_Vorlauf_Solltemperatur" => ["name" => "HK1_Vorlauf_Solltemperatur", "info" => ""],
+    "HK1_Vorlauf_Isttemperatur" => ["name" => "HK1_Vorlauf_Isttemperatur", "info" => ""],
+    "HK1_Raum_Solltemperatur" => ["name" => "HK1_Raum_Solltemperatur", "info" => ""],
+    "HK1_Raum_Isttemperatur" => ["name" => "HK1_Raum_Isttemperatur", "info" => ""],
+    "HK1_Einschaltoptimierung" => ["name" => "HK1_Einschaltoptimierung", "info" => ""],
+    "HK1_Ausschaltoptimierung" => ["name" => "HK1_Ausschaltoptimierung", "info" => ""],
+    "HK1_Pumpenleistung" => ["name" => "HK1_Pumpenleistung", "info" => ""],
+    "HK1_Mischerstellung" => ["name" => "HK1_Mischerstellung", "info" => ""],
 ];
+
 
 $allSensors = $this->allSensors ?? [];
 $orderedSensors = [];

@@ -46,7 +46,6 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         }
 
         $this->addCssOnce('bundles/pbdkncontaocontaohab/css/coh_aktuell_panel.css');
-        $template = $this->createTemplate($model, 'ce_coh_buderus_km271_chart_display');
         $headline = StringUtil::deserialize($model->headline, true);
         $template->headline = (string) ($headline['value'] ?? '');
         $template->hl = (string) ($headline['unit'] ?? 'h2');
@@ -62,6 +61,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         }
 
         [$hk1, $general, $faults] = $this->groupValues($values);
+        $template->allSensors = $values;
         $template->hk1Values = $hk1;
         $template->generalValues = $general;
         $template->faultValues = $faults;

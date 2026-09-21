@@ -269,17 +269,20 @@
 .km271-section { margin: 0 0 18px; padding: 14px; background: #fff; border: 1px solid #d6e2ec; border-radius: 12px; }
 .km271-section h3 { margin: 0 0 10px; }
 .km271-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 9px; }
-.km271-card { min-width: 0; padding: 10px 12px; background: #f4f8fb; border: 1px solid #d9e5ee; border-radius: 9px; }
+.km271-card { position: relative; min-width: 0; padding: 10px 12px; background: #f4f8fb; border: 1px solid #d9e5ee; border-radius: 9px; }
 .km271-card-heading { display: flex; justify-content: space-between; gap: 8px; color: #4b6479; font-size: .9rem; }
-.km271-tooltip { position: relative; cursor: help; outline-offset: 3px; }
+.km271-tooltip { cursor: help; outline-offset: 3px; }
 .km271-info { color: #2455d6; font-size: .8rem; white-space: nowrap; }
 .km271-tooltip::after {
     content: attr(data-tooltip);
     position: absolute;
     z-index: 20;
-    left: 0;
+    left: 4px;
     bottom: calc(100% + 7px);
-    width: min(320px, 75vw);
+    box-sizing: border-box;
+    width: calc(100% - 8px);
+    white-space: normal;
+    overflow-wrap: anywhere;
     padding: 9px 11px;
     border-radius: 8px;
     background: #17324d;
