@@ -103,7 +103,18 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['canvas_ekd_data'] = [
 /**
  * Content elements CohHistoryChart
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_legend},type,headline,selectedSensors;{template_legend:hide},coh_history_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohHistoryChart::TYPE] = '{type_legend},type,headline,selectedSensors,coh_history_default_unit;{template_legend:hide},coh_history_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_history_default_unit'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_history_default_unit'],
+    'exclude' => true,
+    'inputType' => 'select',
+    'options' => ['day', 'week', 'month', 'year'],
+    'reference' => &$GLOBALS['TL_LANG']['tl_content']['coh_history_units'],
+    'default' => 'day',
+    'eval' => ['tl_class' => 'w50', 'mandatory' => true],
+    'sql' => "varchar(5) NOT NULL default 'day'",
+];
 
 /**
  * Content elements CohAktuellChart
@@ -201,6 +212,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['selectedSensors'] = [
     },
     'sql' => "blob NULL"
 ];
+
 /**
  * Content element SensorElement
  */

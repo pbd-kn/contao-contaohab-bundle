@@ -175,10 +175,11 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
         ],
 
         'outputMode' => [
-            'label' => ['Ausgabe'],
+            'label' => ['Wertdarstellung', 'Absolut: Der Sensorwert wird unverändert ausgegeben. Zähler: Absolute Zählerstände werden gespeichert und im Displaychart angezeigt. Die Tageskurve zeigt die aufsummierte Differenz seit Tagesbeginn und beginnt bei null. Woche/Monat zeigen den Zuwachs je Tag, Jahr je Monat. Heute / 7 Tage / 30 Tage / 365 Tage: Bisherige Berechnung im Collector bleibt erhalten; der erste gespeicherte Wert seit Tagesbeginn bzw. seit Tagesbeginn vor 7/30/365 Tagen wird abgezogen und das Ergebnis gespeichert. Für neue fortlaufende Zähler bitte den Zählermodus verwenden.'],
             'inputType' => 'select',
             'options' => [
                 'absolute'=>'Absolut',
+                'counter'=>'Zähler: Differenz im Historychart',
                 'daily'=>'Heute',
                 'woche'=>'7 Tage',
                 'monat'=>'30 Tage',

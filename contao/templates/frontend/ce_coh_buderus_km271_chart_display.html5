@@ -112,7 +112,7 @@ $Sensorwerte = [
 //    "Kesselschutz" => ["Titel" => "Kesselschutz", "Tooltip" => ""],
 //    "Kessel_aktiv" => ["Titel" => "Kessel_aktiv", "Tooltip" => ""],
     "Brennerfreigabe" => ["Titel" => "Brennerfreigabe", "Tooltip" => ""],
-//    "Brennerfreigabe_hohe_Leistung" => ["Titel" => "Brennerfreigabe_hohe_Leistung", "Tooltip" => ""],
+    "Brennerfreigabe_hohe_Leistung" => ["Titel" => "Brennerfreigabe hohe Leistung", "Tooltip" => ""],
     "Brenner-Ansteuerung" => ["Titel" => "Brenner-Ansteuerung", "Tooltip" => ""],
 //    "Frostschutz_ab" => ["Titel" => "Frostschutz_ab", "Tooltip" => ""],
 //    "Pumpenlogik_Temperatur" => ["Titel" => "Pumpenlogik_Temperatur", "Tooltip" => ""],

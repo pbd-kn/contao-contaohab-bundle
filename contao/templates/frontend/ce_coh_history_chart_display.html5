@@ -107,6 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
       dataset.maxBarThickness = 36;
       dataset.barPercentage = 0.85;
       dataset.categoryPercentage = 0.8;
+      // Nullwerte bleiben als schmale, mit der Maus erreichbare Markierung
+      // sichtbar. Der Messwert selbst bleibt unveraendert bei null.
+      if (chartData.axes?.[dataset.yAxisID]?.binary) {
+        dataset.minBarLength = 6;
+      }
     });
   }
 
@@ -150,30 +155,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     scales[axisId] = {
       type: 'linear',
+      beginAtZero: info.beginAtZero === true,
       position: position,
+      weight: axisIndex,
       display: true,
+      ...(info.binary ? { min: 0, max: 1 } : {}),
 
       title: {
-        display: unit !== '',
-        text: unit,
+        display: (info.title || unit) !== '',
+        text: info.title || unit,
         color: color
       },
 
       ticks: {
         color: color,
         padding: 5,
+        ...(info.binary ? { stepSize: 1, autoSkip: false } : {}),
         callback: function(value) {
+          if (info.binary) return value === 0 ? '0 (Nein)' : value === 1 ? '1 (Ja)' : '';
           const v = Math.round(value * 100) / 100;
           return unit ? v + ' ' + unit : v;
         }
       },
 
       grid: {
-        drawOnChartArea: axisIndex === 0,
+        drawOnChartArea: axisIndex === 0 && !info.binary,
         color: 'rgba(0,0,0,0.05)'
       },
 
-      offset: true
+      offset: !info.binary
     };
 
     axisIndex++;
@@ -198,7 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
       responsive: true,
       maintainAspectRatio: false,
 
-      interaction: { mode: 'nearest', intersect: false },
+      // Bei Balken zaehlt die getroffene Flaeche, nicht der Abstand zum
+      // Mittelpunkt eines benachbarten (eventuell viel hoeheren) Balkens.
+      interaction: { mode: 'nearest', axis: 'xy', intersect: chartType === 'bar' },
 
       scales,
 
@@ -250,6 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
               const label = ctx.dataset.label || '';
               const value = ctx.parsed.y;
               const axisId = ctx.dataset.yAxisID;
+              if (chartData.axes?.[axisId]?.binary && (value === 0 || value === 1)) {
+                return `${label}: ${value} (${value === 1 ? 'Ja' : 'Nein'})`;
+              }
               const unit = chartData.axes?.[axisId]?.unit || '';
               return `${label}: ${value}${unit ? ' ' + unit : ''}`;
             }

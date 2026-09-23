@@ -55,9 +55,14 @@ class CohHistoryChart extends AbstractContentElementController
 
         $allowedUnits = ['day', 'week', 'month', 'year'];
 
-        $unit = (string) $request->query->get($unitField, 'day');
+        $defaultUnit = (string) $model->coh_history_default_unit;
+        if (!in_array($defaultUnit, $allowedUnits, true)) {
+            $defaultUnit = 'day';
+        }
+
+        $unit = (string) $request->query->get($unitField, $defaultUnit);
         if (!in_array($unit, $allowedUnits, true)) {
-            $unit = 'day';
+            $unit = $defaultUnit;
         }
 
         $currentValue = (string) $request->query->get($valueField, '');
@@ -118,7 +123,8 @@ class CohHistoryChart extends AbstractContentElementController
                         $selectedSensors,
                         $period['start']->getTimestamp(),
                         $period['end']->getTimestamp(),
-                        $pointsPerRange
+                        $pointsPerRange,
+                        $unit
                     ));
                 }
             } catch (\Throwable $exception) {
@@ -128,18 +134,23 @@ class CohHistoryChart extends AbstractContentElementController
             // gruppieren
             $grouped = [];
             foreach ($rows as $row) {
-                if (is_numeric($row['sensorValue'] ?? null)) {
+                if (is_numeric($row['sensorValue'] ?? null) || (($row['outputMode'] ?? '') === 'counter' && array_key_exists('sensorValue', $row) && $row['sensorValue'] === null)) {
                     $grouped[$row['sensorID']][] = $row;
                 }
             }
 
             foreach ($grouped as $sensorID => $sensorRows) {
                 usort($sensorRows, static fn (array $a, array $b): int => (int) $a['tstamp'] <=> (int) $b['tstamp']);
-                if ('day' !== $unit) {
+                $mode = $sensorRows[0]['outputMode'] ?? 'absolute';
+                if ('day' !== $unit && 'counter' !== $mode) {
                     $sensorRows = $this->aggregateRowsForBars($sensorRows, $unit);
                 }
                 $firstRow = reset($sensorRows);
                 $mode = $firstRow['outputMode'] ?? 'absolute';
+                $isBinary = 'counter' !== $mode && (
+                    strcasecmp((string) ($firstRow['sensorLokalId'] ?? ''), 'Brennerfreigabe') === 0
+                    || in_array(strtolower((string) ($firstRow['sensorValueType'] ?? '')), ['bool', 'boolean'], true)
+                );
                 $sensorTitle = !empty($firstRow['sensorTitle']) ? $firstRow['sensorTitle'] : $sensorID;
                 // ? EINHEIT AUS ZEITRAUM (von hinten suchen)
                 // Einheit suchen (von hinten)
@@ -171,7 +182,8 @@ class CohHistoryChart extends AbstractContentElementController
                         $datasets[$sensorTitle]['borderColor'] ??= $color;
                         $datasets[$sensorTitle]['backgroundColor'] ??= $color;
                         $datasets[$sensorTitle]['fill'] = false;
-                        $datasets[$sensorTitle]['tension'] = 0.1;
+                        $datasets[$sensorTitle]['tension'] = 'counter' === $mode ? 0 : 0.1;
+                        $datasets[$sensorTitle]['stepped'] = $isBinary && 'day' === $unit;
                         $datasets[$sensorTitle]['pointRadius'] = 0.75;
                         $datasets[$sensorTitle]['pointBorderWidth'] = 1;
                         $datasets[$sensorTitle]['pointHoverRadius'] = 4;
@@ -181,7 +193,10 @@ class CohHistoryChart extends AbstractContentElementController
 
                 $axes[$axisId] ??= [
                     'unit' => $unitLabel,
-                    'color' => $color
+                    'color' => $color,
+                    'beginAtZero' => 'counter' === $mode,
+                    'binary' => $isBinary,
+                    'title' => $isBinary ? $sensorTitle : $unitLabel,
                 ];
             }
         }

@@ -25,7 +25,7 @@ final class RaspberrySensorApiClient
         return $result;
     }
 
-    public function fetchRange(array $sensorIds, int $from, int $to, int $maxPoints = 100): array
+    public function fetchRange(array $sensorIds, int $from, int $to, int $maxPoints = 100, ?string $chartUnit = null): array
     {
         $wanted = array_fill_keys(array_map('strval', $sensorIds), true);
         if ($wanted === []) return [];
@@ -35,7 +35,12 @@ final class RaspberrySensorApiClient
 
         $maxPoints = max(10, min(500, $maxPoints));
 
-        return $this->requestRows($wanted, [
+        $chartOptions = $chartUnit === null ? [] : [
+            'chartUnit' => $chartUnit,
+            'timezone' => date_default_timezone_get(),
+        ];
+
+        return $this->requestRows($wanted, $chartOptions + [
             'from' => $from,
             'to' => $to,
             'maxPoints' => $maxPoints,
@@ -83,6 +88,9 @@ final class RaspberrySensorApiClient
         foreach ($payload['rows'] as $row) {
             $id = (string)($row['sensorID'] ?? '');
             if (!isset($wanted[$id])) continue;
+            if (isset($query['chartUnit']) && ($row['outputMode'] ?? '') === 'counter' && ($row['historyAggregation'] ?? '') !== 'counter') {
+                throw new \RuntimeException('Bitte die Sensorwerte-API auf dem Raspberry aktualisieren: Zählerdifferenzen werden noch nicht unterstützt.');
+            }
             $value = $row['sensorValue'] ?? null;
             if (($row['sensorEinheit'] ?? '') === 'json' || ($row['sensorValueType'] ?? '') === 'json') {
                 $decoded = is_string($value) ? json_decode($value, true) : null;
