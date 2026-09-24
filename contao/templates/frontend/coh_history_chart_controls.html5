@@ -1,0 +1,53 @@
+<form method="get">
+  <input type="hidden" name="<?= htmlspecialchars($this->anchorField) ?>" value="<?= htmlspecialchars($this->currentValue) ?>">
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.75rem">
+    <label for="<?= $this->chartId ?>_date">Datum:</label>
+    <input type="date" id="<?= $this->chartId ?>_date" name="<?= htmlspecialchars($this->valueField) ?>" value="<?= htmlspecialchars($this->currentValue) ?>" required>
+    <button class="button button-tonal-md" type="submit">Anzeigen</button>
+    <small>Woche: ab Montag · Monat: ab dem 1. · Jahr: ab dem 1. Januar</small>
+  </div>               
+  <?php foreach ($_GET as $key => $value): ?>
+    <?php if (str_starts_with($key, 'unit_chart_') || str_starts_with($key, 'value_chart_') || str_starts_with($key, 'periods_chart_')): ?>
+      <?php if ($key !== $this->unitField && $key !== $this->valueField && $key !== $this->periodsField): ?>
+        <?php foreach ((array) $value as $hiddenValue): ?>
+          <input type="hidden" name="<?= htmlspecialchars($key) ?><?= is_array($value) ? '[]' : '' ?>" value="<?= htmlspecialchars($hiddenValue) ?>">
+        <?php endforeach; ?>
+      <?php endif; ?>
+    <?php endif; ?>
+  <?php endforeach; ?>
+
+  <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center">
+    <select class="button button-tonal-md" style="margin-right: 10px;" name="<?= $this->unitField ?>" onchange="this.form.querySelector('[data-period-select]').disabled = true; this.form.submit()">
+      <option value="day" <?= $this->currentUnit === 'day' ? 'selected' : '' ?>>Tag</option>
+      <option value="week" <?= $this->currentUnit === 'week' ? 'selected' : '' ?>>Woche</option>
+      <option value="month" <?= $this->currentUnit === 'month' ? 'selected' : '' ?>>Monat</option>
+      <option value="year" <?= $this->currentUnit === 'year' ? 'selected' : '' ?>>Jahr</option>
+    </select>
+
+    <button class="button button-tonal-md" type="submit"
+      name="<?= $this->navigationField ?>"
+      value="<?= htmlspecialchars($this->previousValue) ?>">
+      ←
+    </button>
+
+    <span class="button button-tonal-md" style="margin: 0 0.5rem;">
+      <?= $this->rangeLabel ?>
+    </span>
+
+    <button class="button button-tonal-md" type="submit"
+      name="<?= $this->navigationField ?>"
+      value="<?= htmlspecialchars($this->nextValue) ?>">
+      →
+    </button>
+  </div>
+  <fieldset class="chart-periods">
+    <legend><?= ['day' => 'Tag', 'week' => 'Woche', 'month' => 'Monat', 'year' => 'Jahr'][$this->currentUnit] ?> auswählen</legend>
+    <select data-period-select class="button button-tonal-md" name="<?= htmlspecialchars($this->periodsField) ?>[]" onchange="this.form.submit()">
+      <?php foreach ($this->periodOptions as $option): ?>
+        <option value="<?= htmlspecialchars($option['value']) ?>" <?= $option['checked'] ? 'selected' : '' ?>>
+          <?= htmlspecialchars($option['label']) ?>
+        </option>
+      <?php endforeach; ?>
+    </select>
+  </fieldset>
+</form>

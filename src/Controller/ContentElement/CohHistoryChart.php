@@ -52,6 +52,8 @@ class CohHistoryChart extends AbstractContentElementController
         $unitField  = 'unit_chart_' . $model->id;
         $valueField = 'value_chart_' . $model->id;
         $periodsField = 'periods_chart_' . $model->id;
+        $navigationField = 'navigation_chart_' . $model->id;
+        $anchorField = 'anchor_chart_' . $model->id;
 
         $allowedUnits = ['day', 'week', 'month', 'year'];
 
@@ -65,18 +67,20 @@ class CohHistoryChart extends AbstractContentElementController
             $unit = $defaultUnit;
         }
 
-        $currentValue = (string) $request->query->get($valueField, '');
-        $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $currentValue);
+        $navigation = (string) $request->query->get($navigationField, '');
+        $currentValue = $navigation ?: (string) $request->query->get($valueField, '');
+        $dateChanged = $navigation !== '' || ($request->query->has($anchorField) && $currentValue !== (string) $request->query->get($anchorField));
+        $dt = \DateTimeImmutable::createFromFormat('!Y-m-d', $currentValue);
 
         if (!$dt || $dt->format('Y-m-d') !== $currentValue) {
             $dt = new \DateTimeImmutable('today');
             $currentValue = $dt->format('Y-m-d');
         }
 
-        $date = $dt;
+        $date = $this->periodStart($unit, $dt);
         $periodOptions = $this->createPeriodOptions($unit, $date);
         $allowedPeriods = array_column($periodOptions, null, 'value');
-        $requestedPeriods = $request->query->all($periodsField);
+        $requestedPeriods = $dateChanged ? [] : $request->query->all($periodsField);
         $requestedPeriods = is_array($requestedPeriods) ? array_map('strval', $requestedPeriods) : [];
         $selectedPeriodIds = [];
         foreach ($requestedPeriods as $requestedPeriod) {
@@ -217,8 +221,10 @@ class CohHistoryChart extends AbstractContentElementController
         $template->unitField = $unitField;
         $template->valueField = $valueField;
         $template->periodsField = $periodsField;
+        $template->navigationField = $navigationField;
+        $template->anchorField = $anchorField;
         $template->currentUnit = $unit;
-        $template->currentValue = $currentValue;
+        $template->currentValue = $rangeStart->format('Y-m-d');
         $template->periodOptions = $periodOptions;
         $template->previousValue = $this->moveAnchor($unit, $date, -1)->format('Y-m-d');
         $template->nextValue = $this->moveAnchor($unit, $date, 1)->format('Y-m-d');
@@ -352,6 +358,17 @@ class CohHistoryChart extends AbstractContentElementController
             'week' => $anchor->modify('monday this week')->format('o-\\WW'),
             'month' => $anchor->format('Y-m'),
             'year' => $anchor->format('Y'),
+        };
+    }
+
+    private function periodStart(string $unit, \DateTimeImmutable $date): \DateTimeImmutable
+    {
+        $date = $date->setTime(0, 0);
+        return match ($unit) {
+            'week' => $date->modify('monday this week'),
+            'month' => $date->modify('first day of this month'),
+            'year' => $date->setDate((int) $date->format('Y'), 1, 1),
+            default => $date,
         };
     }
 
