@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dataset.categoryPercentage = 0.8;
       // Nullwerte bleiben als schmale, mit der Maus erreichbare Markierung
       // sichtbar. Der Messwert selbst bleibt unveraendert bei null.
-      if (chartData.axes?.[dataset.yAxisID]?.binary) {
+      const axis = chartData.axes?.[dataset.yAxisID];
+      if (axis?.binary || axis?.beginAtZero) {
         dataset.minBarLength = 6;
       }
     });
