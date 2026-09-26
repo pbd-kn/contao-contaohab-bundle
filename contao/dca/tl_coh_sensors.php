@@ -33,7 +33,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             'panelLayout' => 'filter;sort,search,limit',
         ],
         'label' => [
-            'fields' => ['sensorID','sensorTitle','sensorEinheit','sensorActive'],
+            'fields' => ['sensorID','sensorTitle','sensorEinheit','sensorActive','isHistory'],
             'label_callback' => ['tl_coh_sensors', 'formatSensorLabel'],
         ],
         'global_operations' => [
@@ -272,8 +272,13 @@ class tl_coh_sensors
         $title = (string)($row['sensorTitle'] ?? $args[1] ?? '');
         $unit = (string)($row['sensorEinheit'] ?? $args[2] ?? '');
         $active = (string)($row['sensorActive'] ?? $args[3] ?? '');
+        $isHistory = (string)($row['isHistory'] ?? $args[4] ?? '');
+        $historyLabel = $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListLabel'] ?? 'History anlegen';
+        $historyStatus = $isHistory === '1'
+            ? ($GLOBALS['TL_LANG']['tl_coh_sensors']['historyListYes'] ?? 'Ja')
+            : ($GLOBALS['TL_LANG']['tl_coh_sensors']['historyListNo'] ?? 'Nein');
 
-        $label = sprintf('%s | %s (%s)', $sensorId, $title, $unit);
+        $label = sprintf('%s | %s (%s) | %s: %s', $sensorId, $title, $unit, $historyLabel, $historyStatus);
 
         if ($active === '1') {
             return $label;

@@ -111,6 +111,12 @@ class CohHistoryChart extends AbstractContentElementController
         unset($option);
 
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
+        // Die konfigurierte Auswahl bestimmt die Farben, auch wenn einzelne
+        // Sensoren im angezeigten Zeitraum keine Messwerte liefern.
+        $sensorColors = [];
+        foreach (array_values(array_unique($selectedSensors)) as $index => $sensorId) {
+            $sensorColors[$sensorId] = $this->getSensorColor($index);
+        }
 
         $datasets = [];
         $axes = [];
@@ -168,9 +174,14 @@ class CohHistoryChart extends AbstractContentElementController
                 }
                 // ?? DEFAULT wenn nichts gefunden wurde
                 //if ($unitLabel === '') { $unitLabel = 'raw'; }
-                // ?? IMMER eindeutige Achse pro Sensor
-                $axisId = 'y_' . preg_replace('/[^a-z0-9]/i', '_', strtolower($sensorID));
-                $color = $this->getSensorColor($sensorTitle);
+                // Celsiuswerte teilen eine Skala, damit gleiche Temperaturen
+                // unabhaengig vom Sensor auf derselben Hoehe liegen.
+                $isTemperature = !$isBinary && $unitLabel === '°C';
+                $axisId = $isTemperature
+                    ? 'y_temperature_celsius'
+                    : 'y_' . preg_replace('/[^a-z0-9]/i', '_', strtolower($sensorID));
+                $color = $sensorColors[$sensorID] ?? $this->getSensorColor(count($sensorColors));
+                $sensorColors[$sensorID] = $color;
                 foreach ($sensorRows as $row) {
 
                         $ts = date('c', (int) $row['tstamp']);
@@ -197,10 +208,10 @@ class CohHistoryChart extends AbstractContentElementController
 
                 $axes[$axisId] ??= [
                     'unit' => $unitLabel,
-                    'color' => $color,
+                    'color' => $isTemperature ? '#444444' : $color,
                     'beginAtZero' => 'counter' === $mode,
                     'binary' => $isBinary,
-                    'title' => $isBinary ? $sensorTitle : $unitLabel,
+                    'title' => $isTemperature ? 'Temperatur (°C)' : ($isBinary ? $sensorTitle : $unitLabel),
                 ];
             }
         }
@@ -386,10 +397,10 @@ class CohHistoryChart extends AbstractContentElementController
         return $anchor->modify(sprintf('%+d %s', $direction * $amount, $interval));
     }
 
-    private function getSensorColor(int|string $id): string
+    private function getSensorColor(int $index): string
     {
-        $colors = ['#000000','#0033A0', '#E69F00', '#00723F', '#B00020', '#6A1B9A'];
-        $idNumeric = is_numeric($id) ? (int) $id : crc32($id);
-        return $colors[$idNumeric % count($colors)];
+        $colors = ['#0033A0', '#00723F', '#B00020', '#6A1B9A', '#B87500', '#007C91', '#A84300', '#C03678', '#555555', '#657500'];
+
+        return $colors[$index % count($colors)];
     }
 }

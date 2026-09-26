@@ -59,3 +59,6 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfigConfirm'] = 'Fetch dev
 $GLOBALS['TL_LANG']['tl_coh_sensors']['base_legend'] = 'Basic settings';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['calc_legend'] = 'Calculation and components';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['history_legend'] = 'History';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyListLabel'] = 'Record history';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyListYes'] = 'Yes';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyListNo'] = 'No';

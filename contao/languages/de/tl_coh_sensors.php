@@ -75,3 +75,6 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['pullRaspberryConfigConfirm'] = 'Geräte u
 $GLOBALS['TL_LANG']['tl_coh_sensors']['base_legend'] = 'Basis-Einstellungen';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['calc_legend'] = 'Berechnung und Komponenten';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['history_legend'] = 'Historie';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyListLabel'] = 'History anlegen';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyListYes'] = 'Ja';
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyListNo'] = 'Nein';
