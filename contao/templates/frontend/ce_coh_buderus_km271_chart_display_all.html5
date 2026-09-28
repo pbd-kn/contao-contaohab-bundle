@@ -137,6 +137,11 @@ $Sensorwerte = [
 
 
 $allSensors = $this->allSensors ?? [];
+foreach ($allSensors as $key => $value) {
+    if (str_starts_with((string) $key, 'HK2_') && is_array($value)) {
+        $Sensorwerte[$key] = ['Titel' => (string) ($value['Name'] ?? $key), 'Tooltip' => ''];
+    }
+}
 $orderedSensors = [];
 foreach ($Sensorwerte as $key => $settings) {
     if (isset($allSensors[$key])) {

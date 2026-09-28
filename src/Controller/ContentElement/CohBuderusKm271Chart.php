@@ -204,7 +204,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         $general = [];
         $faults = [];
         foreach ($values as $key => $value) {
-            if (!is_array($value) || str_starts_with((string) $key, 'HK2_')) {
+            if (!is_array($value)) {
                 continue;
             }
             if ($key === 'Brenner_Einschalttemperatur') {
@@ -308,6 +308,12 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
             'HK1_Fernbedienung' => 'Zeigt, ob für Heizkreis 1 eine Raumfernbedienung erkannt beziehungsweise aktiviert ist.',
             'HK1_Pumpenleistung' => 'Aktuelle Ansteuerung der Heizkreispumpe in Prozent.',
             'HK1_Mischerstellung' => 'Aktuelle Stellung beziehungsweise Ansteuerung des Mischers von Heizkreis 1.',
+            'HK2_Vorlauf_Isttemperatur' => 'Gemeldete Vorlauftemperatur von Heizkreis 2 (Mischerkreis).',
+            'HK2_Vorlauf_Solltemperatur' => 'Von der Regelung angeforderte Vorlauftemperatur von Heizkreis 2 (Mischerkreis).',
+            'HK2_Raum_Isttemperatur' => 'Gemeldete Raumtemperatur von Heizkreis 2. Ohne aktive Raumfernbedienung kann der Wert 0 sein.',
+            'HK2_Raum_Solltemperatur' => 'Gemeldeter Raumtemperatur-Sollwert von Heizkreis 2.',
+            'HK2_Pumpenleistung' => 'Gemeldete Ansteuerung der Heizkreispumpe von Heizkreis 2 in Prozent.',
+            'HK2_Mischerstellung' => 'Vom KM271 gemeldeter Mischerwert von Heizkreis 2. Keine bestätigte Messung der mechanischen Ventilposition.',
             'HK1_Einschaltoptimierung' => 'Von der Regelung berechnete Vorlaufzeit, um die gewünschte Raumtemperatur rechtzeitig zu erreichen.',
             'HK1_Ausschaltoptimierung' => 'Von der Regelung berechnete Zeit für ein vorzeitiges Abschalten vor dem Ende der Heizphase.',
             'Außentemperatur' => 'Aktuell am Außenfühler gemessene Temperatur.',

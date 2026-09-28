@@ -14,18 +14,11 @@
   height: clamp(300px, 50vh, 600px);
 }
 
-.chart-periods, .chart-series-controls {
+.chart-periods {
   display: flex;
   flex-wrap: wrap;
   gap: .5rem 1rem;
   margin: .75rem 0;
-}
-
-.chart-series-controls label {
-  display: inline-flex;
-  align-items: center;
-  gap: .35rem;
-  cursor: pointer;
 }
 
 </style>
@@ -48,7 +41,6 @@ if (is_string($headline)) {
   <div class="chart-container">
     <canvas id="<?= $this->chartId ?>"></canvas>
   </div>
-  <div id="<?= $this->chartId ?>_series" class="chart-series-controls" aria-label="Messwerte auswählen"></div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -198,12 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
             syncAxisVisibility(chartInstance);
             chartInstance.update();
 
-            const checkbox = document.querySelector(
-              '#<?= $this->chartId ?>_series input[data-dataset-index="' + index + '"]'
-            );
-            if (checkbox) {
-              checkbox.checked = chartInstance.isDatasetVisible(index);
-            }
           }
         },
 
@@ -228,25 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-  });
-
-  const seriesControls = document.getElementById("<?= $this->chartId ?>_series");
-  chart.data.datasets.forEach((dataset, index) => {
-    const label = document.createElement('label');
-    const checkbox = document.createElement('input');
-    const text = document.createElement('span');
-    checkbox.type = 'checkbox';
-    checkbox.dataset.datasetIndex = index;
-    checkbox.checked = chart.isDatasetVisible(index);
-    checkbox.addEventListener('change', () => {
-      chart.setDatasetVisibility(index, checkbox.checked);
-      syncAxisVisibility(chart);
-      chart.update();
-    });
-    text.textContent = dataset.label;
-    text.style.color = dataset.borderColor;
-    label.append(checkbox, text);
-    seriesControls.append(label);
   });
 
 });
