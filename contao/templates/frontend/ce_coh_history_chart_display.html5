@@ -145,7 +145,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Nur die Darstellung beim Zeichnen ändern; Farben, Legende und Daten
+  // bleiben unverändert, auch nach Ausblenden oder einem Chart-Update.
+  let highlightedDataset = null;
+  let pointerOverLegend = false;
+  let originalElementOptions = [];
+  const legendHighlight = {
+    id: 'cohLegendHighlight',
+    afterEvent(chartInstance, args) {
+      const { type, x, y } = args.event;
+      if (!['mousemove', 'mouseout', 'click'].includes(type)) return;
+      const legend = chartInstance.legend;
+      const overLegend = type !== 'mouseout' && !!legend?.options.display &&
+        x >= legend.left - 2 && x <= legend.right + 2 &&
+        y >= legend.top - 2 && y <= legend.bottom + 2;
+      if (pointerOverLegend !== overLegend) {
+        pointerOverLegend = overLegend;
+        args.changed = true;
+      }
+      if (overLegend) {
+        // Chart.js kann außerhalb der Plotfläche den letzten Messpunkt
+        // aktiv lassen. Über der Legende gehört dieser Tooltip nicht dazu.
+        chartInstance.setActiveElements([]);
+        chartInstance.tooltip?.setActiveElements([], { x, y });
+        args.changed = true;
+      }
+      let next = null;
+      if (type !== 'mouseout' && legend?.options.display) {
+        // Hitbox umfasst Farbkästchen, Zwischenraum und Beschriftung.
+        // Bei jeder Bewegung prüfen, auch innerhalb desselben Eintrags.
+        const itemIndex = legend.legendHitBoxes.findIndex(box =>
+          x >= box.left - 2 && x <= box.left + box.width + 2 &&
+          y >= box.top - 2 && y <= box.top + box.height + 2
+        );
+        const index = legend.legendItems[itemIndex]?.datasetIndex;
+        if (index !== undefined && chartInstance.isDatasetVisible(index)) next = index;
+      }
+      if (highlightedDataset !== next) {
+        highlightedDataset = next;
+        args.changed = true;
+      }
+    },
+    beforeTooltipDraw() {
+      return !pointerOverLegend;
+    },
+    beforeDatasetDraw(chartInstance, args) {
+      chartInstance.ctx.save();
+      originalElementOptions = [];
+      if (highlightedDataset === null) return;
+      if (args.index !== highlightedDataset) {
+        chartInstance.ctx.globalAlpha *= 0.18;
+        return;
+      }
+      const elements = args.meta.dataset ? [args.meta.dataset] : args.meta.data;
+      elements.forEach(element => {
+        originalElementOptions.push([element, element.options]);
+        element.options = {
+          ...element.options,
+          borderWidth: Math.max(3, (Number(element.options.borderWidth) || 1) + 2)
+        };
+      });
+    },
+    afterDatasetDraw(chartInstance) {
+      originalElementOptions.forEach(([element, options]) => { element.options = options; });
+      originalElementOptions = [];
+      chartInstance.ctx.restore();
+    }
+  };
+
   const chart = new Chart(ctx, {
+    plugins: [legendHighlight],
     // Tag: zeitlicher Linienverlauf. Woche, Monat und Jahr:
     // senkrechte Balken entlang der Zeitachse.
     type: chartType,
@@ -187,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const chartInstance = legend.chart;
             const index = legendItem.datasetIndex;
             chartInstance.setDatasetVisibility(index, !chartInstance.isDatasetVisible(index));
+            highlightedDataset = chartInstance.isDatasetVisible(index) ? index : null;
             syncAxisVisibility(chartInstance);
             chartInstance.update();
 

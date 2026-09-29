@@ -185,11 +185,10 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['coh_aktuell_template'] = [
 
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['selectedSensors'] = [
-    'label' => ['Sensorvariablen', 'Wählen Sie einen Sensor aus, tippen Sie zum Suchen und wiederholen Sie dies für weitere Sensoren. Gesucht werden kann nach Quelle, Bezeichnung oder Sensor-ID.'],
-    'inputType' => 'select',
+    'label' => ['Sensorvariablen', 'Sensoren anhaken und am Griff in die gewünschte Reihenfolge ziehen. Die Reihenfolge gilt für die Diagrammlegende und allgemeine Sensorlisten. Fest gestaltete Spezialansichten behalten ihre Anordnung.'],
+    'inputType' => 'checkboxWizard',
     'eval' => [
         'multiple' => true,
-        'chosen' => true,
         'tl_class' => 'clr',
     ],
     'options_callback' => static function (): array {
@@ -205,7 +204,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['selectedSensors'] = [
         foreach ($rows as $row) {
             $source = $row['sensorSource'] ?: 'Ohne Quelle';
             $title = $row['sensorTitle'] ?: $row['sensorID'];
-            $options[$source][$row['sensorID']] = sprintf('%s - %s', $title, $row['sensorID']);
+            $options[$row['sensorID']] = sprintf('%s: %s - %s', $source, $title, $row['sensorID']);
         }
 
         return $options;

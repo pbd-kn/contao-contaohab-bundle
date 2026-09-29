@@ -149,7 +149,11 @@ class CohHistoryChart extends AbstractContentElementController
                 }
             }
 
-            foreach ($grouped as $sensorID => $sensorRows) {
+            foreach (array_unique($selectedSensors) as $sensorID) {
+                if (!isset($grouped[$sensorID])) {
+                    continue;
+                }
+                $sensorRows = $grouped[$sensorID];
                 usort($sensorRows, static fn (array $a, array $b): int => (int) $a['tstamp'] <=> (int) $b['tstamp']);
                 $mode = $sensorRows[0]['outputMode'] ?? 'absolute';
                 if ('day' !== $unit && 'counter' !== $mode) {

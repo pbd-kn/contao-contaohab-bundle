@@ -79,6 +79,8 @@ class CohAktuellChart extends AbstractContentElementController
             }        
         }
 
+        $data = array_replace(array_intersect_key(array_fill_keys($selectedSensors, null), $data), $data);
+
         $template->chartId = 'chart_' . $model->id;
         $template->data = $data;
         // --- Sync Info ---

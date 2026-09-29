@@ -78,9 +78,9 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
 };
 
 $Sensorwerte = [
-    "Außentemperatur" => ["Titel" => "Außentemperatur", "Tooltip" => ""],
+//    "Außentemperatur" => ["Titel" => "Außentemperatur", "Tooltip" => ""],
     "Außentemperatur_gedämpft" => ["Titel" => "Außentemperatur gedämpft", "Tooltip" => ""],
-    "Warmwasser_eingestellte Temperatur" => ["Titel" => "Warmwassereingestellte Temperatur", "Tooltip" => ""],
+    "Warmwasser_eingestellte_Temperatur" => ["Titel" => "Warmwasser eingestellte Temperatur", "Tooltip" => ""],
     "Warmwasser_Solltemperatur" => ["Titel" => "Warmwasser Solltemperatur", "Tooltip" => ""],
     "Warmwasser_Isttemperatur" => ["Titel" => "Warmwasser Isttemperatur", "Tooltip" => ""],
 //    "Warmwasser_Betriebsart" => ["Titel" => "Warmwasser_Betriebsart", "Tooltip" => ""],
@@ -95,11 +95,14 @@ $Sensorwerte = [
     "HK1_Tagtemperatur" => ["Titel" => "Tagtemperatur", "Tooltip" => ""],
     "HK1_Betriebsart" => ["Titel" => "Betriebsart", "Tooltip" => ""],
 //    "HK1_Fernbedienung" => ["Titel" => "HK1_Fernbedienung", "Tooltip" => ""],
-    "HK1_Vorlauf_Solltemperatur" => ["Titel" => "Vorlauf Solltemperatur", "Tooltip" => ""],
-    "HK1_Vorlauf_Isttemperatur" => ["Titel" => "Vorlauf Isttemperatur", "Tooltip" => ""],
+//    "HK1_Vorlauf_Solltemperatur" => ["Titel" => "HK1 Vorlauf Solltemperatur", "Tooltip" => ""],
+//    "HK1_Vorlauf_Isttemperatur" => ["Titel" => "HK1 Vorlauf Isttemperatur", "Tooltip" => ""],
+    "HK2_Vorlauf_Solltemperatur" => ["Titel" => "HK2 Vorlauf Solltemperatur", "Tooltip" => ""],
+    "HK2_Vorlauf_Isttemperatur" => ["Titel" => "HK2 Vorlauf Isttemperatur", "Tooltip" => ""],
 //    "HK1_Raum_Solltemperatur" => ["Titel" => "HK1_Raum_Solltemperatur", "Tooltip" => ""],
 //    "HK1_Raum_Isttemperatur" => ["Titel" => "HK1_Raum_Isttemperatur", "Tooltip" => ""],
-    "HK1_Mischerstellung" => ["Titel" => "Mischerstellung", "Tooltip" => ""],
+//    "HK1_Mischerstellung" => ["Titel" => "HK1 Mischerstellung", "Tooltip" => ""],
+    "HK2_Mischerstellung" => ["Titel" => "HK2 Mischerstellung", "Tooltip" => ""],
     "Brennerlaufzeit_Stunden" => ["Titel" => "Brennerlaufzeit Stunden", "Tooltip" => ""],
     "Brennerart" => ["Titel" => "Brennerart", "Tooltip" => ""],
     "Maximale_Kesseltemperatur" => ["Titel" => "Max. Kesseltemperatur", "Tooltip" => ""],
@@ -112,7 +115,7 @@ $Sensorwerte = [
 //    "Kesselschutz" => ["Titel" => "Kesselschutz", "Tooltip" => ""],
 //    "Kessel_aktiv" => ["Titel" => "Kessel_aktiv", "Tooltip" => ""],
     "Brennerfreigabe" => ["Titel" => "Brennerfreigabe", "Tooltip" => ""],
-    "Brennerfreigabe_hohe_Leistung" => ["Titel" => "Brennerfreigabe hohe Leistung", "Tooltip" => ""],
+//    "Brennerfreigabe_hohe_Leistung" => ["Titel" => "Brennerfreigabe hohe Leistung", "Tooltip" => ""],
     "Brenner-Ansteuerung" => ["Titel" => "Brenner-Ansteuerung", "Tooltip" => ""],
 //    "Frostschutz_ab" => ["Titel" => "Frostschutz_ab", "Tooltip" => ""],
 //    "Pumpenlogik_Temperatur" => ["Titel" => "Pumpenlogik_Temperatur", "Tooltip" => ""],
@@ -136,11 +139,13 @@ $Sensorwerte = [
 ];
 
 $allSensors = $this->allSensors ?? [];
+/*
 foreach ($allSensors as $key => $value) {
     if (str_starts_with((string) $key, 'HK2_') && is_array($value)) {
         $Sensorwerte[$key] = ['Titel' => (string) ($value['Name'] ?? $key), 'Tooltip' => ''];
     }
 }
+*/
 $orderedSensors = [];
 foreach ($Sensorwerte as $key => $settings) {
     if (isset($allSensors[$key])) {
