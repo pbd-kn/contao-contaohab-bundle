@@ -185,6 +185,7 @@ foreach ($Sensorwerte as $key => $settings) {
             echo '</details>';
     ?>
 
+    <?php $this->insert('coh_km271_schedule', $this->getData()); ?>
     <?php if (!empty($this->writeEnabled) && $catalog !== []): ?>
         <dialog class="km271-dialog" id="km271-dialog-<?= $escape($this->id) ?>">
             <button type="button" class="km271-dialog-close" data-km271-close aria-label="Dialog schließen">×</button>
@@ -257,7 +258,7 @@ foreach ($Sensorwerte as $key => $settings) {
                 let input;
                 if (Array.isArray(definition.Auswahl)) {
                     input = document.createElement('select');
-                    definition.Auswahl.forEach(value => input.add(new Option(value, value, false, String(value) === String(wantedValue))));
+                    definition.Auswahl.forEach(value => input.add(new Option(value, value, false, String(value) === String(wantedValue || current))));
                 } else {
                     input = document.createElement('input');
                     input.type = 'number';

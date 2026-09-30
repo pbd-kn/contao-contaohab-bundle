@@ -392,3 +392,12 @@
     }
 
 }
+.km271-schedule-content { padding: 1rem; }
+.km271-program-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+.km271-schedule-scroll { overflow-x: auto; margin: 1rem 0; }
+.km271-schedule-table { width: 100%; border-collapse: collapse; text-align: left; }
+.km271-schedule-table th, .km271-schedule-table td { padding: .5rem; border-bottom: 1px solid #d6e3f0; }
+.km271-schedule-table thead { background: #edf5fc; }
+.km271-schedule select, .km271-schedule input[type="time"] { padding: .4rem; border: 1px solid #a9bfd3; border-radius: .3rem; margin: .15rem; }
+.km271-schedule-table td { white-space: nowrap; }
+.km271-schedule input:disabled, .km271-schedule select:disabled { opacity: .5; }

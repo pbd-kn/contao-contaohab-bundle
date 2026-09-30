@@ -131,7 +131,7 @@ $Sensorwerte = [
 //    "HK1_Maximaltemperatur" => ["Titel" => "HK1_Maximaltemperatur", "Tooltip" => ""],
 //    "HK1_Auslegungstemperatur" => ["Titel" => "HK1_Auslegungstemperatur", "Tooltip" => ""],
 //    "HK1_Temperatur-Offset" => ["Titel" => "HK1_Temperatur-Offset", "Tooltip" => ""],
-//    "HK1_Heizprogramm" => ["Titel" => "HK1_Heizprogramm", "Tooltip" => ""],
+    "HK1_Heizprogramm" => ["Titel" => "HK1_Heizprogramm", "Tooltip" => ""],
 //    "HK1_Ferientage" => ["Titel" => "HK1_Ferientage", "Tooltip" => ""],
 //    "HK1_Einschaltoptimierung" => ["Titel" => "HK1_Einschaltoptimierung", "Tooltip" => ""],
 //    "HK1_Ausschaltoptimierung" => ["Titel" => "HK1_Ausschaltoptimierung", "Tooltip" => ""],
@@ -189,6 +189,7 @@ foreach ($Sensorwerte as $key => $settings) {
             echo '</details>';
     ?>
 
+    <?php $this->insert('coh_km271_schedule', $this->getData()); ?>
     <?php if (!empty($this->writeEnabled) && $catalog !== []): ?>
         <dialog class="km271-dialog" id="km271-dialog-<?= $escape($this->id) ?>">
             <button type="button" class="km271-dialog-close" data-km271-close aria-label="Dialog schließen">×</button>
@@ -261,7 +262,7 @@ foreach ($Sensorwerte as $key => $settings) {
                 let input;
                 if (Array.isArray(definition.Auswahl)) {
                     input = document.createElement('select');
-                    definition.Auswahl.forEach(value => input.add(new Option(value, value, false, String(value) === String(wantedValue))));
+                    definition.Auswahl.forEach(value => input.add(new Option(value, value, false, String(value) === String(wantedValue || current))));
                 } else {
                     input = document.createElement('input');
                     input.type = 'number';

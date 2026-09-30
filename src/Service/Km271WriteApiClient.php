@@ -38,6 +38,7 @@ final class Km271WriteApiClient
             'catalog' => $commands,
             'writeEnabled' => !empty($payload['Sendebereit']),
             'executable' => $executable,
+            'scheduleSupported' => ($payload['SchaltzeitenVersion'] ?? 0) === 1,
         ];
     }
 
@@ -69,6 +70,17 @@ final class Km271WriteApiClient
         return $result;
     }
 
+    public function schedule(string $action, int $circuit, ?array $base = null, ?array $intervals = null): array
+    {
+        $payload = $this->request('POST', [
+            'SchaltzeitenAktion' => $action, 'Heizkreis' => $circuit,
+            'Ausgangsstand' => $base, 'Intervalle' => $intervals,
+            'Bestaetigung' => $action === 'write' ? 'SCHREIBEN' : '',
+        ]);
+        if (!is_array($payload['Schaltzeiten'] ?? null)) throw new \RuntimeException('Der Raspberry lieferte keine Schaltzeiten.');
+        return $payload['Schaltzeiten'];
+    }
+
     private function request(string $method, ?array $json = null): array
     {
         $baseUrl = rtrim(trim((string) ($this->settings['raspberryApiBaseUrl'] ?? '')), '/');
@@ -88,6 +100,10 @@ final class Km271WriteApiClient
         ];
         if ($json !== null) {
             $options['json'] = $json;
+        }
+        if (isset($json['SchaltzeitenAktion'])) {
+            $options['timeout'] = 360;
+            $options['max_duration'] = 360;
         }
 
         try {

@@ -1,0 +1,114 @@
+<?php
+$esc = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$state = is_array($this->scheduleState ?? null) ? $this->scheduleState : [];
+$base = $state['base'] ?? null;
+$plan = $state['plan'] ?? null;
+$circuit = (int) ($state['circuit'] ?? 1);
+$days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+$fields = function (string $action) use ($esc): void { ?>
+    <input type="hidden" name="REQUEST_TOKEN" value="<?= $esc($this->requestToken ?? '') ?>">
+    <input type="hidden" name="km271_element_id" value="<?= $esc($this->id) ?>">
+    <input type="hidden" name="km271_schedule_action" value="<?= $esc($action) ?>">
+<?php };
+?>
+<?php if (!empty($this->writeEnabled)): ?>
+<details class="coh-toggle km271-schedule" id="km271-schedule-<?= $esc($this->id) ?>" <?= $state !== [] ? 'open' : '' ?>>
+    <summary>Heizprogramme und Schaltzeiten</summary>
+    <div class="km271-schedule-content">
+        <p>Alle Standardprogramme sind auswählbar. Eigene Schaltzeiten werden je Heizkreis unter <strong>Eigen</strong> gespeichert; die Buderus-Standardprogramme bleiben fest vorgegeben.</p>
+        <div class="km271-program-actions">
+        <?php foreach ([1, 2] as $hc): $id = 'HK' . $hc . '_Heizprogramm'; ?>
+            <?php if (isset($this->writeCatalog[$id]) && in_array($id, $this->executableIds ?? [], true)): ?>
+                <button type="button" class="km271-button" data-km271-edit data-local-id="<?= $esc($id) ?>" data-label="Heizkreis <?= $hc ?>: Programm" data-current="<?= $esc($this->allSensors[$id]['Wert'] ?? '') ?>">HK<?= $hc ?>: Programm auswählen</button>
+            <?php endif; ?>
+        <?php endforeach; ?>
+        </div>
+        <?php if (empty($this->scheduleSupported)): ?>
+            <p>Für den Schaltzeiten-Editor muss die neue KM271-API auf dem Raspberry installiert sein.</p>
+        <?php else: ?>
+            <?php if (!empty($state['error'])): ?><p role="alert" class="km271-message is-error"><?= $esc($state['error']) ?></p><?php endif; ?>
+            <?php if (!empty($state['result'])): ?>
+                <p class="km271-message is-success" role="status"><?= $esc($state['result']['status'] ?? '') ?> Bitte die Schaltzeiten jetzt erneut laden und kontrollieren.</p>
+            <?php endif; ?>
+            <form method="post" data-km271-schedule-load>
+                <?php $fields('read'); ?>
+                <label>Heizkreis
+                    <select name="km271_circuit">
+                        <option value="1" <?= $circuit === 1 ? 'selected' : '' ?>>Heizkreis 1</option>
+                        <option value="2" <?= $circuit === 2 ? 'selected' : '' ?>>Heizkreis 2 (falls vorhanden)</option>
+                    </select>
+                </label>
+                <button class="km271-button" type="submit">Schaltzeiten aus der Heizung laden</button>
+                <p>Das vollständige Einlesen kann bis zu zwei Minuten dauern. Erneutes Laden ersetzt den Entwurf.</p>
+            </form>
+            <?php if (is_array($base)): ?>
+                <p><strong>Heizkreis <?= $circuit ?> – eigenes Zeitprogramm</strong><br>Ausgewähltes Programm beim Lesen: <?= $esc($base['program']) ?> · Gelesen: <?= $esc($base['readAt']) ?></p>
+                <p>„Tagbetrieb ab“ und „Nachtbetrieb ab“ bilden ein Zeitintervall. Nach Beginn von Montag bis Sonntag anordnen, Uhrzeiten in 10-Minuten-Schritten. Liegt das Ende früher in der Woche, läuft das Intervall über den Wochenwechsel. Nicht markierte Zeilen werden beim Speichern gelöscht.</p>
+                <form method="post" data-km271-schedule-editor>
+                    <?php $fields('preview'); ?>
+                    <div class="km271-schedule-scroll">
+                        <table class="km271-schedule-table">
+                            <thead><tr><th>Platz</th><th>Verwenden</th><th>Tagbetrieb ab</th><th>Nachtbetrieb ab</th></tr></thead>
+                            <tbody>
+                            <?php foreach (($state['intervals'] ?? $base['intervals']) as $i => $row): ?>
+                                <tr>
+                                    <th scope="row"><?= $i + 1 ?></th>
+                                    <td><input type="hidden" name="km271_intervals[<?= $i ?>][present]" value="1"><input type="checkbox" name="km271_intervals[<?= $i ?>][enabled]" value="1" <?= $row !== null ? 'checked' : '' ?> aria-label="Intervall <?= $i + 1 ?> verwenden" data-interval-enabled></td>
+                                    <?php foreach (['on' => 'Tagbetrieb', 'off' => 'Nachtbetrieb'] as $prefix => $label): ?>
+                                        <td>
+                                            <select name="km271_intervals[<?= $i ?>][<?= $prefix ?>Day]" aria-label="<?= $label ?> Wochentag, Intervall <?= $i + 1 ?>">
+                                                <?php foreach ($days as $d => $day): ?><option value="<?= $d ?>" <?= (int) ($row[$prefix . 'Day'] ?? 0) === $d ? 'selected' : '' ?>><?= $day ?></option><?php endforeach; ?>
+                                            </select>
+                                            <input type="time" step="600" name="km271_intervals[<?= $i ?>][<?= $prefix ?>Time]" value="<?= $esc($row[$prefix . 'Time'] ?? ($prefix === 'on' ? '06:00' : '22:00')) ?>" aria-label="<?= $label ?> Uhrzeit, Intervall <?= $i + 1 ?>">
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="submit" class="km271-button">Änderungen prüfen</button>
+                </form>
+            <?php endif; ?>
+            <?php if (is_array($plan)): ?>
+                <div class="km271-preview" data-km271-schedule-preview>
+                    <strong>Vorschau: Heizkreis <?= $circuit ?>, Programm Eigen</strong>
+                    <p><?= count(array_filter($plan['intervals'], 'is_array')) ?> Zeitintervalle. <?= (int) $plan['changedBlocks'] ?> geänderte Speicherblöcke.</p>
+                    <?php if (!array_filter($plan['intervals'], 'is_array')): ?><p><strong>Alle eigenen Heizzeiten werden gelöscht.</strong></p><?php endif; ?>
+                    <?php if ($plan['activate']): ?><p>Beim Speichern wird von <?= $esc($plan['base']['program']) ?> auf <strong>Eigen</strong> umgeschaltet.</p><?php endif; ?>
+                    <p>Die Betriebsart bleibt unverändert. Der Wochenplan wirkt im Automatikbetrieb; Sommergrenze und Absenkungsart gelten weiterhin.</p>
+                    <?php if (in_array('HK' . $circuit . '_Heizprogramm', $this->executableIds ?? [], true)): ?>
+                        <form method="post">
+                            <?php $fields('write'); ?>
+                            <input type="hidden" name="km271_schedule_nonce" value="<?= $esc($state['nonce']) ?>">
+                            <label class="km271-confirm"><input type="checkbox" name="km271_confirm" value="1" required> Die geprüften Zeiten für HK<?= $circuit ?> speichern und Programm Eigen verwenden.</label>
+                            <button type="submit" class="km271-button is-danger">Schaltzeiten in der Heizung speichern</button>
+                        </form>
+                    <?php else: ?><p>Schreiben ist auf dem Raspberry gesperrt.</p><?php endif; ?>
+                </div>
+            <?php endif; ?>
+            <p data-km271-schedule-progress role="status" hidden>Auftrag läuft. Bitte warten und die Seite nicht erneut absenden.</p>
+        <?php endif; ?>
+    </div>
+</details>
+<script>
+(() => {
+    const panel = document.getElementById(<?= json_encode('km271-schedule-' . $this->id) ?>);
+    const editor = panel.querySelector('[data-km271-schedule-editor]');
+    const sync = row => {
+        const enabled = row.querySelector('[data-interval-enabled]').checked;
+        row.querySelectorAll('select, input[type="time"]').forEach(input => { input.disabled = !enabled; input.required = enabled; });
+    };
+    editor?.querySelectorAll('tbody tr').forEach(row => sync(row));
+    editor?.addEventListener('change', event => {
+        if (event.target.matches('[data-interval-enabled]')) sync(event.target.closest('tr'));
+        panel.querySelector('[data-km271-schedule-preview]')?.setAttribute('hidden', '');
+    });
+    editor?.addEventListener('input', () => panel.querySelector('[data-km271-schedule-preview]')?.setAttribute('hidden', ''));
+    panel.querySelectorAll('form').forEach(form => form.addEventListener('submit', () => {
+        panel.querySelector('[data-km271-schedule-progress]').hidden = false;
+        panel.querySelectorAll('button[type="submit"]').forEach(button => button.disabled = true);
+    }));
+})();
+</script>
+<?php endif; ?>

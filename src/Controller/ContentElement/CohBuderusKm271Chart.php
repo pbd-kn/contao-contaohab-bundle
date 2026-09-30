@@ -78,6 +78,8 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         $template->writePreview = null;
         $template->writeResult = null;
         $template->writeError = null;
+        $template->scheduleSupported = false;
+        $template->scheduleState = [];
 
         if ($template->writeEnabled) {
             $writeResponse = $this->prepareWriteDialog($template, $model, $request, $values);
@@ -95,6 +97,9 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
             $configuration = $this->km271WriteApi->configuration();
             $template->writeCatalog = $configuration['catalog'];
             $template->executableIds = $configuration['writeEnabled'] ? $configuration['executable'] : [];
+            $template->scheduleSupported = $configuration['scheduleSupported'] ?? false;
+            $scheduleResponse = $this->prepareSchedule($template, $model, $request);
+            if ($scheduleResponse !== null) return $scheduleResponse;
 
             if (!$request->isMethod('POST')) {
                 $this->restoreWriteDialogState($template, $model, $request);
@@ -163,6 +168,69 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         }
 
         return new RedirectResponse($request->getUri(), Response::HTTP_SEE_OTHER);
+    }
+
+    private function prepareSchedule(object $template, ContentModel $model, Request $request): ?Response
+    {
+        if (!$request->hasSession()) return null;
+        $key = 'coh.km271.schedule.' . $model->id;
+        $session = $request->getSession();
+        $state = $session->get($key, []);
+        if (!is_array($state)) $state = [];
+        $template->scheduleState = $state;
+        $action = (string) $request->request->get('km271_schedule_action', '');
+        if (!$request->isMethod('POST') || (string) $request->request->get('km271_element_id') !== (string) $model->id || $action === '') return null;
+        $state['error'] = null;
+        $state['result'] = null;
+        set_time_limit(360);
+        try {
+            if (!$template->scheduleSupported) throw new \RuntimeException('Bitte zuerst die Schaltzeiten-Erweiterung auf dem Raspberry installieren.');
+            if ($action === 'read') {
+                $circuit = (int) $request->request->get('km271_circuit');
+                if (!in_array($circuit, [1, 2], true)) throw new \InvalidArgumentException('Ungültiger Heizkreis.');
+                $state = ['circuit' => $circuit];
+                $state['base'] = $this->km271WriteApi->schedule('read', $circuit);
+                $state['intervals'] = $state['base']['intervals'];
+            } elseif ($action === 'preview') {
+                unset($state['plan'], $state['nonce']);
+                if (!is_array($state['base'] ?? null)) throw new \RuntimeException('Bitte zuerst die Schaltzeiten laden.');
+                $rows = $request->request->all()['km271_intervals'] ?? [];
+                if (!is_array($rows) || count($rows) !== 21) throw new \InvalidArgumentException('Die 21 Zeitintervalle fehlen.');
+                $intervals = [];
+                for ($i = 0; $i < 21; ++$i) {
+                    $row = $rows[$i] ?? null;
+                    if (!is_array($row)) throw new \InvalidArgumentException('Ungültige Intervallzeile.');
+                    if (empty($row['enabled'])) { $intervals[] = null; continue; }
+                    foreach (['onDay', 'offDay'] as $day) {
+                        if (!is_string($row[$day] ?? null) || !preg_match('/^[0-6]$/D', $row[$day])) throw new \InvalidArgumentException('Ungültiger Wochentag.');
+                    }
+                    $intervals[] = ['onDay' => (int) $row['onDay'], 'onTime' => (string) ($row['onTime'] ?? ''),
+                        'offDay' => (int) $row['offDay'], 'offTime' => (string) ($row['offTime'] ?? '')];
+                }
+                $state['intervals'] = $intervals;
+                $state['plan'] = $this->km271WriteApi->schedule('preview', $state['circuit'], $state['base'], $intervals);
+                $state['nonce'] = bin2hex(random_bytes(24));
+            } elseif ($action === 'write') {
+                if ((string) $request->request->get('km271_confirm') !== '1') throw new \InvalidArgumentException('Bitte das Speichern ausdrücklich bestätigen.');
+                if (!is_array($state['plan'] ?? null) || !is_string($state['nonce'] ?? null)
+                    || !hash_equals($state['nonce'], (string) $request->request->get('km271_schedule_nonce'))) {
+                    throw new \RuntimeException('Vorschau abgelaufen oder bereits verwendet. Bitte erneut prüfen.');
+                }
+                $plan = $state['plan'];
+                unset($state['nonce'], $state['plan'], $state['base']);
+                // Consume before I/O: a retry after a timeout must never resend an old plan.
+                $session->set($key, $state);
+                if (!in_array('HK' . $state['circuit'] . '_Heizprogramm', $template->executableIds, true)) throw new \RuntimeException('Schreiben ist nicht freigegeben.');
+                $state['result'] = $this->km271WriteApi->schedule('write', $state['circuit'], $plan['base'], $plan['intervals']);
+            } else {
+                throw new \InvalidArgumentException('Unbekannte Schaltzeiten-Aktion.');
+            }
+        } catch (\Throwable $error) {
+            $state['error'] = $error->getMessage();
+            $this->logger->Error('KM271-Schaltzeiten: ' . $error->getMessage());
+        }
+        $session->set($key, $state);
+        return new RedirectResponse($request->getUri() . '#km271-schedule-' . $model->id, Response::HTTP_SEE_OTHER);
     }
 
     private function restoreWriteDialogState(object $template, ContentModel $model, Request $request): void
