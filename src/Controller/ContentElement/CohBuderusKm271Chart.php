@@ -289,7 +289,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
             }
         }
         $hk1 = $this->sortValues($hk1, [
-            'HK1_Sommergrenze', 'HK1_Betriebsart', 'HK1_Tagtemperatur', 'HK1_Nachttemperatur',
+            'HK1_Sommerbetrieb', 'HK1_Sommergrenze', 'HK1_Betriebsart', 'HK1_Tagtemperatur', 'HK1_Nachttemperatur',
             'HK1_Vorlauf_Isttemperatur', 'HK1_Vorlauf_Solltemperatur', 'HK1_Raum_Isttemperatur',
             'HK1_Raum_Solltemperatur', 'Frostschutz_ab',
         ]);
@@ -354,6 +354,8 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
     private function valueDescriptions(): array
     {
         return [
+            'HK1_Sommerbetrieb' => 'Von der Logamatic gemeldeter Zustand (Register 8001, Bit 0): 1 = Sommerbetrieb (Schirm), 0 = Winterbetrieb.',
+            'HK2_Sommerbetrieb' => 'Von der Logamatic gemeldeter Zustand (Register 8113, Bit 0): 1 = Sommerbetrieb (Schirm), 0 = Winterbetrieb.',
             'HK1_Sommergrenze' => 'Grenzwert der gedämpften Außentemperatur, ab dem Heizkreis 1 in den Sommerbetrieb wechselt. Die Raumheizung wird dann abgeschaltet; die Warmwasserbereitung bleibt davon unberührt.',
             'HK1_Betriebsart' => 'Aktuelle Betriebsart von Heizkreis 1: Nacht, Tag oder Automatik nach dem eingestellten Zeitprogramm.',
             'HK1_Tagtemperatur' => 'Gewünschte Raumtemperatur für die Tag- beziehungsweise Komfortphasen des Heizprogramms.',

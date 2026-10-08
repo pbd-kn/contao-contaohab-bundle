@@ -7,8 +7,15 @@ $preview = is_array($this->writePreview ?? null) ? $this->writePreview : null;
 $result = is_array($this->writeResult ?? null) ? $this->writeResult : null;
 $descriptions = is_array($this->valueDescriptions ?? null) ? $this->valueDescriptions : [];    // enthält die werte für tooltipp
 $dialogActive = $selected !== '' || $preview !== null || $result !== null || !empty($this->writeError);
-$formatValue = static function (array $item) use ($escape): string {
+$formatValue = static function (array $item, string $key) use ($escape): string {
     $value = $item['Wert'] ?? '-';
+    if (in_array($key, ['HK1_Sommerbetrieb', 'HK2_Sommerbetrieb'], true)) {
+        return match ((string) $value) {
+            '1' => '☂ Sommerbetrieb',
+            '0' => 'Winterbetrieb',
+            default => $escape($value),
+        };
+    }
     $unit = trim((string) ($item['Einheit'] ?? ''));
     return $escape($value) . ($unit !== '' ? ' <span class="km271-unit">' . $escape($unit) . '</span>' : '');
 };
@@ -66,7 +73,7 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
             }
         echo '</div>';
         // Sensorwert und Zeitpunkt ausgeben.
-        echo '<div class="km271-card-value">' . $formatValue($item) . '</div>';
+        echo '<div class="km271-card-value">' . $formatValue($item, (string) $key) . '</div>';
         if (!empty($item['Datum'])) {
             $datum = new \DateTimeImmutable($item['Datum']);
             echo '<time datetime="' . $escape($datum->format('c')) . '">';
@@ -90,6 +97,8 @@ $Sensorwerte = [
 //    "Warmwasser_Ladepumpe" => ["Titel" => "Warmwasser_Ladepumpe", "Tooltip" => ""],
 //    "Warmwasser_Zirkulationspumpe" => ["Titel" => "Warmwasser_Zirkulationspumpe", "Tooltip" => ""],
 //    "Warmwasser_Solarpumpe" => ["Titel" => "Warmwasser_Solarpumpe", "Tooltip" => ""],
+    "HK1_Sommerbetrieb" => ["Titel" => "HK1 Sommer-/Winterbetrieb", "Tooltip" => ""],
+    "HK2_Sommerbetrieb" => ["Titel" => "HK2 Sommer-/Winterbetrieb", "Tooltip" => ""],
     "HK1_Sommergrenze" => ["Titel" => "Sommergrenze", "Tooltip" => ""],
     "HK1_Nachttemperatur" => ["Titel" => "Nachttemperatur", "Tooltip" => ""],
     "HK1_Tagtemperatur" => ["Titel" => "Tagtemperatur", "Tooltip" => ""],

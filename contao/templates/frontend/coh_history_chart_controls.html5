@@ -1,6 +1,6 @@
-<form method="get">
+<form method="get" class="coh-history-controls">
   <input type="hidden" name="<?= htmlspecialchars($this->anchorField) ?>" value="<?= htmlspecialchars($this->currentValue) ?>">
-  <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.75rem">
+  <div class="coh-history-date" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.75rem">
     <label for="<?= $this->chartId ?>_date">Datum:</label>
     <input type="date" id="<?= $this->chartId ?>_date" name="<?= htmlspecialchars($this->valueField) ?>" value="<?= htmlspecialchars($this->currentValue) ?>" required>
     <button class="button button-tonal-md" type="submit">Anzeigen</button>
@@ -16,25 +16,25 @@
     <?php endif; ?>
   <?php endforeach; ?>
 
-  <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center">
-    <select class="button button-tonal-md" style="margin-right: 10px;" name="<?= $this->unitField ?>" onchange="this.form.querySelector('[data-period-select]').disabled = true; this.form.submit()">
+  <div class="coh-history-navigation" style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center">
+    <select aria-label="Zeitraum" class="button button-tonal-md" name="<?= $this->unitField ?>" onchange="this.form.querySelector('[data-period-select]').disabled = true; this.form.submit()">
       <option value="day" <?= $this->currentUnit === 'day' ? 'selected' : '' ?>>Tag</option>
       <option value="week" <?= $this->currentUnit === 'week' ? 'selected' : '' ?>>Woche</option>
       <option value="month" <?= $this->currentUnit === 'month' ? 'selected' : '' ?>>Monat</option>
       <option value="year" <?= $this->currentUnit === 'year' ? 'selected' : '' ?>>Jahr</option>
     </select>
 
-    <button class="button button-tonal-md" type="submit"
+    <button class="button button-tonal-md" type="submit" aria-label="Vorheriger Zeitraum"
       name="<?= $this->navigationField ?>"
       value="<?= htmlspecialchars($this->previousValue) ?>">
       ←
     </button>
 
-    <span class="button button-tonal-md" style="margin: 0 0.5rem;">
+    <span class="coh-history-range">
       <?= $this->rangeLabel ?>
     </span>
 
-    <button class="button button-tonal-md" type="submit"
+    <button class="button button-tonal-md" type="submit" aria-label="Nächster Zeitraum"
       name="<?= $this->navigationField ?>"
       value="<?= htmlspecialchars($this->nextValue) ?>">
       →
@@ -42,7 +42,7 @@
   </div>
   <fieldset class="chart-periods">
     <legend><?= ['day' => 'Tag', 'week' => 'Woche', 'month' => 'Monat', 'year' => 'Jahr'][$this->currentUnit] ?> auswählen</legend>
-    <select data-period-select class="button button-tonal-md" name="<?= htmlspecialchars($this->periodsField) ?>[]" onchange="this.form.submit()">
+    <select aria-label="<?= ['day' => 'Tag', 'week' => 'Woche', 'month' => 'Monat', 'year' => 'Jahr'][$this->currentUnit] ?> auswählen" data-period-select class="button button-tonal-md" name="<?= htmlspecialchars($this->periodsField) ?>[]" onchange="this.form.submit()">
       <?php foreach ($this->periodOptions as $option): ?>
         <option value="<?= htmlspecialchars($option['value']) ?>" <?= $option['checked'] ? 'selected' : '' ?>>
           <?= htmlspecialchars($option['label']) ?>
