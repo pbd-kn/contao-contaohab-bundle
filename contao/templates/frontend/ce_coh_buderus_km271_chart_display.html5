@@ -10,11 +10,7 @@ $dialogActive = $selected !== '' || $preview !== null || $result !== null || !em
 $formatValue = static function (array $item, string $key) use ($escape): string {
     $value = $item['Wert'] ?? '-';
     if (in_array($key, ['HK1_Sommerbetrieb', 'HK2_Sommerbetrieb'], true)) {
-        return match ((string) $value) {
-            '1' => '☂ Sommerbetrieb',
-            '0' => 'Winterbetrieb',
-            default => $escape($value),
-        };
+        return match ((string) $value) { '1' => '☂ Sommerbetrieb (1)', '0' => '⛄Winterbetrieb (0)', default => $escape($value), };
     }
     $unit = trim((string) ($item['Einheit'] ?? ''));
     return $escape($value) . ($unit !== '' ? ' <span class="km271-unit">' . $escape($unit) . '</span>' : '');
@@ -145,6 +141,8 @@ $Sensorwerte = [
 //    "HK1_Einschaltoptimierung" => ["Titel" => "HK1_Einschaltoptimierung", "Tooltip" => ""],
 //    "HK1_Ausschaltoptimierung" => ["Titel" => "HK1_Ausschaltoptimierung", "Tooltip" => ""],
 //    "HK1_Pumpenleistung" => ["Titel" => "HK1_Pumpenleistung", "Tooltip" => ""],
+
+
 ];
 
 $allSensors = $this->allSensors ?? [];
@@ -156,13 +154,14 @@ foreach ($allSensors as $key => $value) {
 }
 */
 $orderedSensors = [];
-foreach ($Sensorwerte as $key => $settings) {
+//var_dump($allSensors);
+foreach ($Sensorwerte as $key => $settings) {    // nur wenn esw auch in all sensors enthalten ist
     if (isset($allSensors[$key])) {
         $orderedSensors[$key] = $allSensors[$key];
     }
 }
 
-
+//var_dump($orderedSensors); 
 ?>
         <?php
             echo "<section class='coh-panel km271-panel' id='km271-panel-"  . $escape($this->id) . "'>";
