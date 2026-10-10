@@ -49,13 +49,13 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
     'list'        => array(
         'sorting'           => array(
             'mode'        => 2, 
-            'fields'      => array('cfgID','cfgType'),
+            'fields'      => array('cfgID','beschreibung'),
             'flag'        => DataContainer::SORT_ASC,
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array(
-            'fields' => array('cfgID','cfgType','cfgValue'),
-            'format' => '%s (Type: %s Value: %s)',
+            'fields' => array('cfgID','beschreibung','cfgValue'),
+            'format' => '%s (Beschreibung: %s; Wert: %s)',
         ),
         'global_operations' => array(
             'pullRaspberryConfig' => array(
@@ -98,7 +98,7 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
         )
     ),
 'palettes' => [
-        'default' => '{title_legend},cfgID,cfgType,cfgValue;'
+        'default' => '{title_legend},cfgID,beschreibung,cfgValue;'
     ],    
     'fields'      => array(
         'id'             => array(
@@ -119,23 +119,14 @@ $GLOBALS['TL_DCA']['tl_coh_cfgcollect'] = array(
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
 
-        'cfgType'  => array( 
-            'label'     => &$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['cfgType'],
-            'inputType' => 'select',
+        'beschreibung'  => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['beschreibung'],
+            'inputType' => 'text',
             'exclude'   => true,
             'search'    => true,
             'filter'    => true,
             'sorting'   => true,
-            'options'   => [
-                              'pollTime' => 'pollTime',
-                              'urlremoteDB' => 'urlremoteDB',
-                              'nameremoteDB' => 'urlremoteDB',
-                              'debug' => 'debug',
-                              'text' => 'text',
-                           ],
-            'eval'      => array('mandatory' => true,'includeBlankOption' => false, 'chosen' => true, 'tl_class' => 'w50'),
-            'sql'       => "varchar(255) NOT NULL default ''",
-            'default'   => 'pollTime',
+            'eval'      => array('maxlength' => 255, 'tl_class' => 'w50'),
             'sql'       => "varchar(255) NOT NULL default ''",
         ),
         'cfgValue' => array (

@@ -345,7 +345,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
     private function pollTimeMinutes(): int
     {
         $value = $this->connection->fetchOne(
-            "SELECT cfgValue FROM tl_coh_cfgcollect WHERE cfgType='pollTime' ORDER BY id DESC LIMIT 1"
+            "SELECT cfgValue FROM tl_coh_cfgcollect WHERE cfgID='pollTime' ORDER BY id DESC LIMIT 1"
         );
         return max(1, (int) ($value ?: 15));
     }

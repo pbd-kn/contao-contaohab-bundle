@@ -87,7 +87,7 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
 $Sensorwerte = [
     "Außentemperatur" => ["Titel" => "Außentemperatur", "Tooltip" => ""],
     "Außentemperatur_gedämpft" => ["Titel" => "Außentemperatur_gedämpft", "Tooltip" => ""],
-    "Warmwasser_eingestellte Temperatur" => ["Titel" => "Warmwasser_eingestellte Temperatur", "Tooltip" => ""],
+    "Warmwasser_eingestellte_Temperatur" => ["Titel" => "Warmwasser eingestellte Temperatur", "Tooltip" => ""],
     "Warmwasser_Solltemperatur" => ["Titel" => "Warmwasser_Solltemperatur", "Tooltip" => ""],
     "Warmwasser_Isttemperatur" => ["Titel" => "Warmwasser_Isttemperatur", "Tooltip" => ""],
     "Warmwasser_Betriebsart" => ["Titel" => "Warmwasser_Betriebsart", "Tooltip" => ""],

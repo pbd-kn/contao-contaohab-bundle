@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['beschreibung'] = ['Description', 'Free description of the parameter; control uses cfgID.'];
+
 $GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pullRaspberryConfig'] = [
     'Fetch configuration from Raspberry',
     'Imports devices, sensors and collector settings from the Raspberry via HTTPS.',
