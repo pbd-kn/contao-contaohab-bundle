@@ -240,6 +240,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const differenceFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+
+  function generateIntervalLegendLabels(chartInstance) {
+    const labels = Chart.defaults.plugins.legend.labels.generateLabels(chartInstance);
+    const xScale = chartInstance.scales.x;
+    const min = Number.isFinite(xScale?.min) ? xScale.min : Date.parse(chartData.rangeMin);
+    const max = Number.isFinite(xScale?.max) ? xScale.max : Date.parse(chartData.rangeMax);
+
+    return labels.map(item => {
+      const dataset = chartInstance.data.datasets[item.datasetIndex];
+      let first = null;
+      let last = null;
+      let count = 0;
+      let total = 0;
+      let incomplete = false;
+      const sumCounterIncrements = dataset.historyAggregation === 'counter' && chartData.xUnit !== 'day';
+
+      // Nur gueltige Y-Werte im dargestellten Zeitintervall beruecksichtigen.
+      // Nach Zeit vergleichen, damit auch unsortierte Daten korrekt bleiben.
+      for (const point of dataset.data) {
+        const x = typeof point?.x === 'number' ? point.x : Date.parse(point?.x);
+        const y = point?.y;
+        if (!Number.isFinite(x) || x < min || x > max) continue;
+        if (!Number.isFinite(y)) {
+          incomplete = true;
+          continue;
+        }
+        if (first === null || x < first.x) first = { x, y };
+        if (last === null || x >= last.x) last = { x, y };
+        count++;
+        total += y;
+      }
+
+      const unit = chartData.axes?.[dataset.yAxisID]?.unit || '';
+      // Die API liefert Zaehler am Tag kumuliert ab Mitternacht, sonst
+      // bereits als Zuwachs je Tag/Monat. Deren Summe ist die Veraenderung
+      // des Zaehlerstands im gesamten Intervall, auch bei nur einem Balken.
+      const value = sumCounterIncrements
+        ? (count > 0 && !incomplete ? total : null)
+        : (count >= 2 ? last.y - first.y : null);
+      const difference = value !== null ? differenceFormat.format(value) : '–';
+      item.text = `${item.text} · Δ ${difference}${value !== null && unit ? ' ' + unit : ''}`;
+      return item;
+    });
+  }
+
   // Nur die Darstellung beim Zeichnen ändern; Farben, Legende und Daten
   // bleiben unverändert, auch nach Ausblenden oder einem Chart-Update.
   let highlightedDataset = null;
@@ -347,7 +393,10 @@ document.addEventListener('DOMContentLoaded', () => {
           display: true,
           position: 'top',
           align: 'start',
-          labels: { boxWidth: 18, boxHeight: 12, padding: 18, font: { size: 13 } },
+          labels: {
+            boxWidth: 18, boxHeight: 12, padding: 18, font: { size: 13 },
+            generateLabels: generateIntervalLegendLabels
+          },
           onClick: (event, legendItem, legend) => {
             const chartInstance = legend.chart;
             const index = legendItem.datasetIndex;

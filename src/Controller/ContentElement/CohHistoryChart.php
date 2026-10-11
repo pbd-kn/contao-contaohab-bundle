@@ -197,6 +197,7 @@ class CohHistoryChart extends AbstractContentElementController
                         $timestamps[] = $ts;
 
                         $datasets[$sensorTitle]['label'] ??= $sensorTitle;
+                        $datasets[$sensorTitle]['historyAggregation'] ??= $row['historyAggregation'] ?? 'absolute';
                         $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
                         $datasets[$sensorTitle]['borderColor'] ??= $color;
                         $datasets[$sensorTitle]['backgroundColor'] ??= $color;
