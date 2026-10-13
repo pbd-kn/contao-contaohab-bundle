@@ -93,6 +93,27 @@
   outline-offset: 2px;
 }
 .coh-history .coh-history-range { font-weight: 600; }
+.coh-history .coh-chart-zoom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-top: 1rem;
+}
+.coh-history .coh-chart-zoom button {
+  padding: .45rem .7rem;
+  border: 1px solid #b8c8d6;
+  border-radius: 6px;
+  background: #fff;
+  color: #263747;
+  font: inherit;
+  cursor: pointer;
+}
+.coh-history .coh-chart-zoom button:focus-visible {
+  outline: 2px solid #0033a0;
+  outline-offset: 2px;
+}
+.coh-history .coh-chart-zoom small { color: #586b7c; }
 .coh-history .chart-periods {
   min-width: 0;
   margin: 0;
@@ -127,6 +148,12 @@ if (is_string($headline)) {
 <?php $this->insert('coh_history_chart_controls', $this->getData()); ?>
 
 <?php if ($chartdataRaw = $this->chartdata): ?>
+  <div class="coh-chart-zoom" id="<?= $this->chartId ?>_zoom" role="group" aria-label="Diagramm-Zoom">
+    <button type="button" data-zoom="in">Vergrößern +</button>
+    <button type="button" data-zoom="out">Verkleinern −</button>
+    <button type="button" data-zoom="reset">Zoom zurücksetzen</button>
+    <small>Zeitbereich mit gedrückter linker Maustaste auswählen oder Umschalt + Mausrad verwenden.</small>
+  </div>
   <div class="coh-history-plot" role="region" aria-label="Diagramm, bei Bedarf horizontal scrollbar" tabindex="0">
   <div class="chart-container">
     <canvas id="<?= $this->chartId ?>"></canvas>
@@ -146,6 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const chartType = chartData.xUnit === 'day' ? 'line' : 'bar';
   if (chartType === 'bar') {
     chartData.datasets.forEach(dataset => {
+      dataset.data.forEach(point => {
+        const date = typeof point.x === 'number'
+          ? luxon.DateTime.fromMillis(point.x)
+          : luxon.DateTime.fromISO(point.x, { setZone: true });
+        const unit = getTimeConfig(chartData.xUnit).unit;
+        const start = date.startOf(unit);
+        const end = start.plus({ [unit]: 1 });
+        point.x = (start.toMillis() + end.toMillis()) / 2;
+      });
       dataset.maxBarThickness = 36;
       dataset.barPercentage = 0.85;
       dataset.categoryPercentage = 0.8;
@@ -182,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       min: chartData.rangeMin,
       max: chartData.rangeMax,
       time: getTimeConfig(chartData.xUnit),
+      grid: { drawOnChartArea: false },
       title: { display: true, text: 'Zeit' },
       ticks: { autoSkip: true, maxTicksLimit: 12 }
     }
@@ -244,9 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function generateIntervalLegendLabels(chartInstance) {
     const labels = Chart.defaults.plugins.legend.labels.generateLabels(chartInstance);
-    const xScale = chartInstance.scales.x;
-    const min = Number.isFinite(xScale?.min) ? xScale.min : Date.parse(chartData.rangeMin);
-    const max = Number.isFinite(xScale?.max) ? xScale.max : Date.parse(chartData.rangeMax);
+    // Der Intervallwert bleibt auch beim Hineinzoomen auf den gewaehlten
+    // Tag/die Woche/den Monat/das Jahr bezogen.
+    const min = Date.parse(chartData.rangeMin);
+    const max = Date.parse(chartData.rangeMax);
 
     return labels.map(item => {
       const dataset = chartInstance.data.datasets[item.datasetIndex];
@@ -291,6 +329,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let highlightedDataset = null;
   let pointerOverLegend = false;
   let originalElementOptions = [];
+  const periodSeparators = {
+    id: 'cohPeriodSeparators',
+    beforeDatasetsDraw(chartInstance) {
+      const axis = chartInstance.scales.x;
+      const area = chartInstance.chartArea;
+      const adapter = axis._adapter;
+      const unit = getTimeConfig(chartData.xUnit).unit;
+      let boundary = adapter.startOf(axis.min, unit);
+      const ctx = chartInstance.ctx;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
+      ctx.clip();
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(65, 85, 110, 0.35)';
+      ctx.lineWidth = 1;
+      // Alle Balken sind in der Mitte ihres Kalenderabschnitts ausgerichtet.
+      // Die Trennlinien markieren dessen tatsächliche Grenzen.
+      for (let count = 0; boundary <= axis.max && count < 2000; count++) {
+        const next = adapter.add(boundary, 1, unit);
+        const position = boundary;
+        const x = axis.getPixelForValue(position);
+        if (x > area.left && x < area.right) {
+          ctx.moveTo(x, area.top);
+          ctx.lineTo(x, area.bottom);
+        }
+        if (next <= boundary) break;
+        boundary = next;
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
   const legendHighlight = {
     id: 'cohLegendHighlight',
     afterEvent(chartInstance, args) {
@@ -355,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const chart = new Chart(ctx, {
-    plugins: [legendHighlight],
+    plugins: [periodSeparators, legendHighlight],
     // Tag: zeitlicher Linienverlauf. Woche, Monat und Jahr:
     // senkrechte Balken entlang der Zeitachse.
     type: chartType,
@@ -389,6 +460,20 @@ document.addEventListener('DOMContentLoaded', () => {
       },
 
       plugins: {
+        zoom: {
+          limits: { x: { min: 'original', max: 'original', minRange: 60000 } },
+          zoom: {
+            mode: 'x',
+            wheel: { enabled: true, modifierKey: 'shift', speed: 0.15 },
+            drag: {
+              enabled: true,
+              threshold: 10,
+              backgroundColor: 'rgba(0, 51, 160, 0.12)',
+              borderColor: '#0033a0',
+              borderWidth: 1
+            }
+          }
+        },
         legend: {
           display: true,
           position: 'top',
@@ -428,6 +513,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       }
+    }
+  });
+
+  document.getElementById("<?= $this->chartId ?>_zoom").addEventListener('click', event => {
+    const button = event.target.closest('button[data-zoom]');
+    if (!button) return;
+    if (button.dataset.zoom === 'reset') {
+      chart.resetZoom();
+    } else {
+      chart.zoom({ x: button.dataset.zoom === 'in' ? 1.5 : 1 / 1.5, y: 1 });
     }
   });
 

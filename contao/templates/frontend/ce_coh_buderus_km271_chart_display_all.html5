@@ -123,7 +123,7 @@ $Sensorwerte = [
     "Externe_Störung" => ["Titel" => "Externe_Störung", "Tooltip" => ""],
     "HK1_Sommerbetrieb" => ["Titel" => "HK1 Sommer-/Winterbetrieb", "Tooltip" => ""],
     "HK2_Sommerbetrieb" => ["Titel" => "HK2 Sommer-/Winterbetrieb", "Tooltip" => ""],
-    "HK1_Sommergrenze" => ["Titel" => "HK1_Sommergrenze", "Tooltip" => ""],
+    "Sommergrenze" => ["Titel" => "Sommergrenze", "Tooltip" => ""],
     "HK1_Nachttemperatur" => ["Titel" => "HK1_Nachttemperatur", "Tooltip" => ""],
     "HK1_Tagtemperatur" => ["Titel" => "HK1_Tagtemperatur", "Tooltip" => ""],
     "HK1_Betriebsart" => ["Titel" => "HK1_Betriebsart", "Tooltip" => ""],

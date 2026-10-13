@@ -259,7 +259,12 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         foreach ($rows as $row) {
             $value = $row['sensorValue'] ?? null;
             if (is_array($value) && is_array($value['KM271'] ?? null)) {
-                return $value['KM271'];
+                $values = $value['KM271'];
+                if (isset($values['HK1_Sommergrenze'])) {
+                    $values['Sommergrenze'] ??= $values['HK1_Sommergrenze'];
+                    unset($values['HK1_Sommergrenze']);
+                }
+                return $values;
             }
         }
         return [];
@@ -289,7 +294,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
             }
         }
         $hk1 = $this->sortValues($hk1, [
-            'HK1_Sommerbetrieb', 'HK1_Sommergrenze', 'HK1_Betriebsart', 'HK1_Tagtemperatur', 'HK1_Nachttemperatur',
+            'HK1_Sommerbetrieb', 'HK1_Betriebsart', 'HK1_Tagtemperatur', 'HK1_Nachttemperatur',
             'HK1_Vorlauf_Isttemperatur', 'HK1_Vorlauf_Solltemperatur', 'HK1_Raum_Isttemperatur',
             'HK1_Raum_Solltemperatur', 'Frostschutz_ab',
         ]);
@@ -356,7 +361,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
         return [
             'HK1_Sommerbetrieb' => 'Von der Logamatic gemeldeter Zustand (Register 8001, Bit 0): 1 = Sommerbetrieb (Schirm), 0 = Winterbetrieb.',
             'HK2_Sommerbetrieb' => 'Von der Logamatic gemeldeter Zustand (Register 8113, Bit 0): 1 = Sommerbetrieb (Schirm), 0 = Winterbetrieb.',
-            'HK1_Sommergrenze' => 'Grenzwert der gedämpften Außentemperatur, ab dem Heizkreis 1 in den Sommerbetrieb wechselt. Die Raumheizung wird dann abgeschaltet; die Warmwasserbereitung bleibt davon unberührt.',
+            'Sommergrenze' => 'Gemeinsamer Grenzwert der gedämpften Außentemperatur für die Sommer-/Winterumschaltung von HK1 und HK2. Die Warmwasserbereitung bleibt davon unberührt.',
             'HK1_Betriebsart' => 'Aktuelle Betriebsart von Heizkreis 1: Nacht, Tag oder Automatik nach dem eingestellten Zeitprogramm.',
             'HK1_Tagtemperatur' => 'Gewünschte Raumtemperatur für die Tag- beziehungsweise Komfortphasen des Heizprogramms.',
             'HK1_Nachttemperatur' => 'Gewünschte reduzierte Raumtemperatur für die Nacht- beziehungsweise Absenkphasen.',
@@ -372,6 +377,7 @@ final class CohBuderusKm271Chart extends AbstractContentElementController
             'HK1_Aussenhalt_ab' => 'Außentemperaturgrenze für die Absenkungsart Außenhalt.',
             'HK1_Absenkungsart' => 'Legt fest, wie sich Heizkreis 1 während der Absenkphase verhält.',
             'HK1_Heizprogramm' => 'Ausgewähltes Zeitprogramm für die Umschaltung zwischen Tag- und Nachtbetrieb.',
+            'HK2_Heizprogramm' => 'Ausgewähltes Zeitprogramm von Heizkreis 2 (Mischerkreis) für die Umschaltung zwischen Tag- und Nachtbetrieb.',
             'HK1_Ferientage' => 'Anzahl der noch eingestellten Ferientage.',
             'HK1_Maximaltemperatur' => 'Obere Begrenzung der Vorlauftemperatur von Heizkreis 1.',
             'HK1_Temperatur_Offset' => 'Parallelverschiebung beziehungsweise Korrektur der Heizkennlinie von Heizkreis 1.',
