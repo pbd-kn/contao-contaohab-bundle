@@ -33,7 +33,7 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
             $description = 'Statusmeldung der Buderus-Regelung. Der Wert 0 bedeutet keine Störung; ein anderer Wert weist auf eine aktive oder gespeicherte Störung hin.';
         }
         // Zusätzliche Info anhängen oder Beschreibung ersetzen.
-        $Tooltip = trim((string) ($settings[$key]['Tooltip'] ?? $settings[$key]['Tooltip'] ?? ''));
+        $Tooltip = trim((string) ($settings[$key]['Tooltip'] ?? ''));
         if ($Tooltip !== '') {
             if (str_starts_with($Tooltip, '.')) {
                 $description = trim($description . ' ' . ltrim(substr($Tooltip, 1)));
@@ -83,6 +83,8 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
 $Sensorwerte = [
 //    "Außentemperatur" => ["Titel" => "Außentemperatur", "Tooltip" => ""],
     "Außentemperatur_gedämpft" => ["Titel" => "Außentemperatur gedämpft", "Tooltip" => ""],
+    "Sommergrenze" => ["Titel" => "Sommergrenze", "Tooltip" => ""],
+    "HK2_Sommerbetrieb" => ["Titel" => "HK2 Sommer-/Winterbetrieb", "Tooltip" => ""],
     "Warmwasser_eingestellte_Temperatur" => ["Titel" => "Warmwasser eingestellte Temperatur", "Tooltip" => ""],
     "Warmwasser_Solltemperatur" => ["Titel" => "Warmwasser Solltemperatur", "Tooltip" => ""],
     "Warmwasser_Isttemperatur" => ["Titel" => "Warmwasser Isttemperatur", "Tooltip" => ""],
@@ -94,11 +96,12 @@ $Sensorwerte = [
 //    "Warmwasser_Zirkulationspumpe" => ["Titel" => "Warmwasser_Zirkulationspumpe", "Tooltip" => ""],
 //    "Warmwasser_Solarpumpe" => ["Titel" => "Warmwasser_Solarpumpe", "Tooltip" => ""],
 //    "HK1_Sommerbetrieb" => ["Titel" => "HK1 Sommer-/Winterbetrieb", "Tooltip" => ""],
-    "HK2_Sommerbetrieb" => ["Titel" => "HK2 Sommer-/Winterbetrieb", "Tooltip" => ""],
-    "Sommergrenze" => ["Titel" => "Sommergrenze", "Tooltip" => ""],
-    "HK1_Nachttemperatur" => ["Titel" => "HK1 Nachttemperatur", "Tooltip" => ""],
-    "HK1_Tagtemperatur" => ["Titel" => "HK1 Tagtemperatur", "Tooltip" => ""],
-    "HK1_Betriebsart" => ["Titel" => "HK1 Betriebsart", "Tooltip" => ""],
+    "HK2_Tagtemperatur" => ["Titel" => "HK2 Tagtemperatur", "Tooltip" => ""],
+    "HK2_Nachttemperatur" => ["Titel" => "HK2 Nachttemperatur", "Tooltip" => ""],
+    "HK2_Betriebsart" => ["Titel" => "HK2 Betriebsart", "Tooltip" => ""],
+//    "HK1_Tagtemperatur" => ["Titel" => "HK1 Tagtemperatur", "Tooltip" => ""],
+//    "HK1_Nachttemperatur" => ["Titel" => "HK1 Nachttemperatur", "Tooltip" => ""],
+//    "HK1_Betriebsart" => ["Titel" => "HK1 Betriebsart", "Tooltip" => ""],
 //    "HK1_Fernbedienung" => ["Titel" => "HK1_Fernbedienung", "Tooltip" => ""],
 //    "HK1_Vorlauf_Solltemperatur" => ["Titel" => "HK1 Vorlauf Solltemperatur", "Tooltip" => ""],
 //    "HK1_Vorlauf_Isttemperatur" => ["Titel" => "HK1 Vorlauf Isttemperatur", "Tooltip" => ""],
@@ -119,7 +122,7 @@ $Sensorwerte = [
 //    "Brenner_Stufe_1" => ["Titel" => "Brenner_Stufe_1", "Tooltip" => ""],
 //    "Kesselschutz" => ["Titel" => "Kesselschutz", "Tooltip" => ""],
 //    "Kessel_aktiv" => ["Titel" => "Kessel_aktiv", "Tooltip" => ""],
-    "Brennerfreigabe" => ["Titel" => "Brennerfreigabe", "Tooltip" => ""],
+//    "Brennerfreigabe" => ["Titel" => "Brennerfreigabe", "Tooltip" => ""],
 //    "Brennerfreigabe_hohe_Leistung" => ["Titel" => "Brennerfreigabe hohe Leistung", "Tooltip" => ""],
     "Brenner-Ansteuerung" => ["Titel" => "Brenner-Ansteuerung", "Tooltip" => ""],
 //    "Frostschutz_ab" => ["Titel" => "Frostschutz_ab", "Tooltip" => ""],

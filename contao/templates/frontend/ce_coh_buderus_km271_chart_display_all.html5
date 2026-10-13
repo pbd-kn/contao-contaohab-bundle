@@ -37,7 +37,7 @@ $renderCards = static function (array $items, array $settings = []) use ($escape
             $description = 'Statusmeldung der Buderus-Regelung. Der Wert 0 bedeutet keine Störung; ein anderer Wert weist auf eine aktive oder gespeicherte Störung hin.';
         }
         // Zusätzliche Info anhängen oder Beschreibung ersetzen.
-        $Tooltip = trim((string) ($settings[$key]['Tooltip'] ?? $settings[$key]['Tooltip'] ?? ''));
+        $Tooltip = trim((string) ($settings[$key]['Tooltip'] ?? ''));
         if ($Tooltip !== '') {
             if (str_starts_with($Tooltip, '.')) {
                 $description = trim($description . ' ' . ltrim(substr($Tooltip, 1)));
@@ -123,6 +123,9 @@ $Sensorwerte = [
     "Externe_Störung" => ["Titel" => "Externe_Störung", "Tooltip" => ""],
     "HK1_Sommerbetrieb" => ["Titel" => "HK1 Sommer-/Winterbetrieb", "Tooltip" => ""],
     "HK2_Sommerbetrieb" => ["Titel" => "HK2 Sommer-/Winterbetrieb", "Tooltip" => ""],
+    "HK2_Nachttemperatur" => ["Titel" => "HK2 Nachttemperatur", "Tooltip" => ""],
+    "HK2_Tagtemperatur" => ["Titel" => "HK2 Tagtemperatur", "Tooltip" => ""],
+    "HK2_Betriebsart" => ["Titel" => "HK2 Betriebsart", "Tooltip" => ""],
     "Sommergrenze" => ["Titel" => "Sommergrenze", "Tooltip" => ""],
     "HK1_Nachttemperatur" => ["Titel" => "HK1_Nachttemperatur", "Tooltip" => ""],
     "HK1_Tagtemperatur" => ["Titel" => "HK1_Tagtemperatur", "Tooltip" => ""],
@@ -148,7 +151,7 @@ $Sensorwerte = [
 $allSensors = $this->allSensors ?? [];
 foreach ($allSensors as $key => $value) {
     if (str_starts_with((string) $key, 'HK2_') && is_array($value)) {
-        $Sensorwerte[$key] = ['Titel' => (string) ($value['Name'] ?? $key), 'Tooltip' => ''];
+        $Sensorwerte[$key] ??= ['Titel' => (string) ($value['Name'] ?? $key), 'Tooltip' => ''];
     }
 }
 $orderedSensors = [];
