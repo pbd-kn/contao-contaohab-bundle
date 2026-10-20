@@ -288,36 +288,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return labels.map(item => {
       const dataset = chartInstance.data.datasets[item.datasetIndex];
-      let first = null;
-      let last = null;
-      let count = 0;
-      let total = 0;
-      let incomplete = false;
-      const sumCounterIncrements = dataset.historyAggregation === 'counter' && chartData.xUnit !== 'day';
+      let minimum = null;
+      let maximum = null;
 
       // Nur gueltige Y-Werte im dargestellten Zeitintervall beruecksichtigen.
-      // Nach Zeit vergleichen, damit auch unsortierte Daten korrekt bleiben.
       for (const point of dataset.data) {
         const x = typeof point?.x === 'number' ? point.x : Date.parse(point?.x);
         const y = point?.y;
-        if (!Number.isFinite(x) || x < min || x > max) continue;
-        if (!Number.isFinite(y)) {
-          incomplete = true;
-          continue;
-        }
-        if (first === null || x < first.x) first = { x, y };
-        if (last === null || x >= last.x) last = { x, y };
-        count++;
-        total += y;
+        if (!Number.isFinite(x) || x < min || x > max || !Number.isFinite(y)) continue;
+        minimum = minimum === null ? y : Math.min(minimum, y);
+        maximum = maximum === null ? y : Math.max(maximum, y);
       }
 
       const unit = chartData.axes?.[dataset.yAxisID]?.unit || '';
-      // Die API liefert Zaehler am Tag kumuliert ab Mitternacht, sonst
-      // bereits als Zuwachs je Tag/Monat. Deren Summe ist die Veraenderung
-      // des Zaehlerstands im gesamten Intervall, auch bei nur einem Balken.
-      const value = sumCounterIncrements
-        ? (count > 0 && !incomplete ? total : null)
-        : (count >= 2 ? last.y - first.y : null);
+      // Delta beschreibt die Spannweite der Werte im gewaehlten Intervall.
+      const value = minimum !== null ? maximum - minimum : null;
       const difference = value !== null ? differenceFormat.format(value) : '–';
       item.text = `${item.text} · Δ ${difference}${value !== null && unit ? ' ' + unit : ''}`;
       return item;
