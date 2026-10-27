@@ -1,6 +1,6 @@
 pbdkn_coh.controller:
     resource: ../../Controller
-    type: annotation
+    type: attribute
     
 api_coh_items:
     path: /api/coh_items

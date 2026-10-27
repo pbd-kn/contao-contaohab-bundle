@@ -4,7 +4,7 @@ namespace PbdKn\ContaoContaohabBundle\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Contao\Database;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class CohApiController extends AbstractController

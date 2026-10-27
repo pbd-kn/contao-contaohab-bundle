@@ -4,7 +4,7 @@ namespace PbdKn\ContaoContaohabBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 class SyrAjaxController
 {
@@ -178,7 +178,7 @@ class SyrAjaxController
         }
 
         // ===================================================
-        // ?? OPTIONAL: GET ALL (für späteres Auto-Refresh)
+        // ?? OPTIONAL: GET ALL (fï¿½r spï¿½teres Auto-Refresh)
         // ===================================================
         if ($action === 'getAll') {
 
