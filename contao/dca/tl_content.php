@@ -119,7 +119,14 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['coh_history_default_unit'] = [
 /**
  * Content elements CohAktuellChart
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,selectedSensors;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][CohAktuellChart::TYPE] = '{type_legend},type,headline,selectedSensors,coh_modbus_write;{template_legend:hide},coh_aktuell_template;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+
+$GLOBALS['TL_DCA']['tl_content']['fields']['coh_modbus_write'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_content']['coh_modbus_write'],
+    'inputType' => 'checkbox',
+    'eval' => ['tl_class' => 'w50'],
+    'sql' => "char(1) NOT NULL default ''",
+];
 
 $GLOBALS['TL_DCA']['tl_content']['palettes'][CohBuderusKm271Chart::TYPE] = '{type_legend},type,headline,selectedSensors;{km271_legend:hide},coh_km271_write_preview;{template_legend:hide},customTpl;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 

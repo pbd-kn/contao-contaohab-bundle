@@ -309,6 +309,7 @@
                 </div>
             </div>
         </div>
+        <?php $this->insert('coh_modbus_control', $this->getData()); ?>
         <?php if (!$raspberryAvailable): ?>
             <div class="coh-card">
                 <div class="coh-card-title">🖥️ Raspberry</div>

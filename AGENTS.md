@@ -28,3 +28,11 @@
 - ECS ist in `ecs.php` konfiguriert. `composer cs-fixer` verändert Dateien in `src/` und `tests/`; nicht als pauschalen Check verwenden. Wenn ECS verfügbar ist, zunächst ohne `--fix` prüfen und Änderungen auf den Auftrag begrenzen.
 - `npm run build` ist derzeit unvollständig: Es ruft nicht definierte Scripts `copyf7:*` und `copyyaml` auf. Für benötigte Bibliotheken vorhandene einzelne Kopierscripts prüfen; den Gesamtbuild nicht als erfolgreiche Validierung angeben. Dateien in `node_modules/` und kopierte Bibliotheksdateien nicht manuell bearbeiten.
 - Bei Änderungen an der Schnittstelle erforderliche Dateien auf beiden Projekten, Cache-/Asset-Aktualisierung und Raspberry-Neustart benennen. Lokale Prüfung ersetzt keine Installation oder Hardwareprüfung; solche Aktionen nur im beauftragten Umfang ausführen.
+
+## Raspberry-Zugang für beide Projekte
+
+- Für beauftragte Raspberry-Arbeiten direkt `peter@192.168.178.49` mit dem vorhandenen SSH-Schlüssel `C:/Users/pbd/.ssh/id_ed25519_codex_raspi` verwenden. Der Name `raspberrypi` war lokal nicht auflösbar; der Schlüssel wird ohne ausdrückliche Angabe nicht automatisch verwendet.
+- PowerShell-Aufruf: `ssh -i "$env:USERPROFILE/.ssh/id_ed25519_codex_raspi" -o BatchMode=yes peter@192.168.178.49 "BEFEHL"`. Bei `scp` denselben Schlüssel mit `-i` angeben. Nur den Schlüsselpfad dokumentieren, niemals den privaten Schlüsselinhalt.
+- Collector-Ziel: `/home/peter/scripts/coh/sensorcollect/` (auf Linux kleingeschrieben). Dienst: `collect.service`; Neustart bei entsprechendem Auftrag mit `sudo -n systemctl restart collect.service`, anschließend Status prüfen.
+- Vor Übertragungen betroffene Zieldateien sichern. Bei der Umbenennung eines Sensorservices die alte PHP-Datei aus `Sensor/` entfernen, da der Collector die Dateien dort automatisch lädt.
+- Eigenständige Tasks und Loop-PHP-Dateien aus `execScripts/` gehören nach `/home/peter/scripts/coh/execScripts/` (Groß-/Kleinschreibung erhalten). Zielpfad und gegebenenfalls zuständigen Dienst je Datei prüfen; dafür nicht pauschal `sensorcollect/` oder `collect.service` verwenden.

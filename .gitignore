@@ -9,3 +9,5 @@
 /.env.*.local
 /.php-cs-fixer.cache
 /tools/phpunit/.phpunit.result.cache
+/tmp/
+/tests/

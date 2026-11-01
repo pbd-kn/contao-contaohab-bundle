@@ -1,0 +1,145 @@
+<?php
+$devices = $this->modbusDevices ?? [];
+$state = $this->modbusState ?? [];
+$escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$preview = $state['preview'] ?? null;
+$dialogId = 'coh-modbus-dialog-' . $this->id;
+foreach ($devices as &$device) {
+    foreach ($device['catalog'] as $setting => &$definition) {
+        $definition['description'] = \PbdKn\ContaoContaohabBundle\Service\ModbusSettingDescriptions::describe((string) $setting);
+    }
+    unset($definition);
+}
+unset($device);
+?>
+<?php if ($devices !== [] || isset($state['error'])): ?>
+<details class="coh-toggle" data-modbus-control <?= !empty($state['open']) ? 'open' : '' ?>>
+  <summary class="coh-row">⚙️ Wechselrichter / IQBox – Einstellungen</summary>
+  <div class="coh-toggle-body">
+  <p>Einstellungen nach Themen geordnet. Vor jeder Änderung werden Ausgangswert und Zielwert geprüft und ausdrücklich bestätigt.</p>
+  <?php foreach ($devices as $deviceId => $device): ?>
+    <h3><?= $escape($device['label']) ?></h3>
+    <?php
+    $groups = [];
+    foreach ($device['catalog'] as $setting => $definition) $groups[$definition['group'] ?? 'Betriebssteuerung'][$setting] = $definition;
+    ?>
+    <?php foreach ($groups as $group => $definitions): ?>
+    <details class="coh-modbus-group" <?= count($definitions) <= 3 && in_array($group, ['Betrieb', 'Betriebssteuerung', 'Batteriegrenzen'], true) ? 'open' : '' ?>>
+      <summary><?= $escape($group) ?> <span>(<?= count($definitions) ?>)</span></summary>
+      <div class="coh-modbus-grid">
+      <?php foreach ($definitions as $setting => $definition): ?>
+        <?php $writable = ($definition['writable'] ?? true) !== false; ?>
+        <article class="coh-modbus-card">
+          <h4><?= $escape($definition['label']) ?></h4>
+          <p class="coh-modbus-current">Aktueller Wert: <strong>Noch nicht gelesen</strong></p>
+          <p><?= $escape(explode('. ', $definition['description'], 2)[0]) ?>.</p>
+          <?php if (!$writable): ?><p class="coh-modbus-status">Noch nicht zum Schreiben freigegeben</p><?php endif; ?>
+          <button type="button" data-modbus-edit data-device="<?= $escape($deviceId) ?>" data-setting="<?= $escape($setting) ?>" aria-haspopup="dialog" aria-controls="<?= $escape($dialogId) ?>"><?= $writable ? '✎ Bearbeiten' : 'ⓘ Beschreibung' ?></button>
+        </article>
+      <?php endforeach; ?>
+      </div>
+    </details>
+    <?php endforeach; ?>
+  <?php endforeach; ?>
+  <?php if (isset($state['error']) && $devices === []): ?><p role="alert"><?= $escape($state['error']) ?></p><?php endif; ?>
+  </div>
+  <dialog id="<?= $escape($dialogId) ?>" aria-labelledby="<?= $escape($dialogId) ?>-title" data-modbus-dialog>
+  <div class="coh-modbus-dialog-heading">
+    <h3 id="<?= $escape($dialogId) ?>-title">Wechselrichter / IQBox einstellen</h3>
+    <button type="button" data-modbus-close aria-label="Dialog schließen">Schließen</button>
+  </div>
+  <?php if (isset($state['error'])): ?><p role="alert"><?= $escape($state['error']) ?></p><?php endif; ?>
+  <?php if (isset($state['message'])): ?><p role="status"><?= $escape($state['message']) ?></p><?php endif; ?>
+  <h4 data-modbus-selection></h4>
+  <p data-modbus-description></p>
+  <?php if ($devices !== []): ?>
+  <form method="post" data-modbus-preview>
+    <input type="hidden" name="REQUEST_TOKEN" value="<?= $escape($this->modbusRequestToken) ?>">
+    <input type="hidden" name="modbus_element" value="<?= $escape($this->id) ?>">
+    <input type="hidden" name="modbus_action" value="preview">
+    <input type="hidden" name="modbus_device" data-device>
+    <input type="hidden" name="modbus_setting" data-setting>
+    <p><label>Neuer Wert <select name="modbus_value" required data-value></select></label></p>
+    <p data-notice></p>
+    <button type="submit">Änderung prüfen</button>
+  </form>
+  <?php endif; ?>
+  <?php if (is_array($preview)): ?>
+    <?php $confirmation = $preview['deviceLabel'] . ': ' . $preview['label'] . ' wirklich von ' . $preview['previousLabel'] . ' (' . $preview['expected'] . ') auf ' . $preview['valueLabel'] . ' (' . $preview['value'] . ') setzen?'; ?>
+    <form method="post" data-modbus-execute data-confirm="<?= $escape($confirmation) ?>">
+      <input type="hidden" name="REQUEST_TOKEN" value="<?= $escape($this->modbusRequestToken) ?>">
+      <input type="hidden" name="modbus_element" value="<?= $escape($this->id) ?>">
+      <input type="hidden" name="modbus_action" value="execute">
+      <input type="hidden" name="modbus_nonce" value="<?= $escape($preview['nonce']) ?>">
+      <p><strong><?= $escape($confirmation) ?></strong></p>
+      <p>Die Vorschau ist zwei Minuten gültig. Vor dem Schreiben wird der Ausgangswert erneut gelesen.</p>
+      <p><label><input type="checkbox" name="modbus_confirm" value="1" required> Diese Änderung ausdrücklich bestätigen</label></p>
+      <button type="submit">Jetzt schreiben</button>
+    </form>
+  <?php endif; ?>
+  </dialog>
+  <style>
+    [data-modbus-control] .coh-modbus-group { margin: .8rem 0; border: 1px solid #d9e5ef; border-radius: .5rem; padding: .7rem; }
+    [data-modbus-control] .coh-modbus-group > summary { cursor: pointer; font-weight: 600; }
+    [data-modbus-control] .coh-modbus-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .75rem; margin-top: .75rem; }
+    [data-modbus-control] .coh-modbus-card { background: #f7fafc; border: 1px solid #d9e5ef; border-radius: .5rem; padding: .85rem; }
+    [data-modbus-control] .coh-modbus-card h4 { margin: 0 0 .5rem; }
+    [data-modbus-control] .coh-modbus-card p { margin: .5rem 0; }
+    [data-modbus-control] .coh-modbus-current, [data-modbus-control] .coh-modbus-status { color: #526578; font-size: .9em; }
+    [data-modbus-dialog] { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); box-sizing: border-box; overflow: auto; border: 1px solid #aaa; border-radius: .6rem; padding: 1.25rem; }
+    [data-modbus-dialog]::backdrop { background: rgba(0, 0, 0, .5); }
+    [data-modbus-dialog] .coh-modbus-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    [data-modbus-dialog] h3 { margin: 0; }
+    [data-modbus-dialog] select { display: block; width: 100%; margin-top: .35rem; }
+  </style>
+  <script>
+  (() => {
+    const panel = document.currentScript.closest('[data-modbus-control]');
+    const dialog = panel.querySelector('[data-modbus-dialog]');
+    panel.querySelector('[data-modbus-close]').addEventListener('click', () => dialog.close());
+    const devices = <?= json_encode($devices, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?>;
+    const form = panel.querySelector('[data-modbus-preview]');
+    if (form) {
+      const device = form.querySelector('[data-device]');
+      const setting = form.querySelector('[data-setting]');
+      const value = form.querySelector('[data-value]');
+      const invalidate = () => panel.querySelector('[data-modbus-execute]')?.remove();
+      const updateValues = () => {
+        value.replaceChildren();
+        const definition = devices[device.value]?.catalog[setting.value];
+        panel.querySelector('[data-modbus-selection]').textContent = [devices[device.value]?.label, definition?.group, definition?.label].filter(Boolean).join(' · ');
+        panel.querySelector('[data-modbus-description]').textContent = definition?.description || '';
+        Object.entries(definition?.options || {}).forEach(([raw, label]) => value.add(new Option(`${label} (${raw})`, raw)));
+        const writable = definition?.writable !== false;
+        value.disabled = !writable;
+        value.closest('p').hidden = !writable;
+        form.querySelector('button[type="submit"]').disabled = !writable;
+        form.querySelector('[data-notice]').textContent = [definition?.register, definition?.range, definition?.notice].filter(Boolean).join(' · ');
+      };
+      panel.querySelectorAll('[data-modbus-edit]').forEach(button => {
+        button.addEventListener('click', () => {
+          invalidate();
+          device.value = button.dataset.device;
+          setting.value = button.dataset.setting;
+          updateValues();
+          dialog.showModal();
+        });
+      });
+      value.addEventListener('change', invalidate);
+      const selected = <?= json_encode(['device' => $preview['device'] ?? '', 'setting' => $preview['setting'] ?? '', 'value' => (string) ($preview['value'] ?? '')], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?>;
+      if (devices[selected.device]?.catalog[selected.setting]) {
+        device.value = selected.device;
+        setting.value = selected.setting;
+        updateValues();
+        value.value = selected.value;
+      }
+    }
+    panel.querySelector('[data-modbus-execute]')?.addEventListener('submit', event => {
+      if (!window.confirm(event.currentTarget.dataset.confirm)) { event.preventDefault(); return; }
+      event.currentTarget.querySelector('button[type="submit"]').disabled = true;
+    });
+    if (<?= !empty($state['open']) ? 'true' : 'false' ?>) dialog.showModal();
+  })();
+  </script>
+</details>
+<?php endif; ?>

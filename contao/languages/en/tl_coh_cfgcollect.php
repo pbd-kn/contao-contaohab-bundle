@@ -6,12 +6,12 @@ $GLOBALS['TL_LANG']['tl_coh_cfgcollect']['beschreibung'] = ['Description', 'Free
 
 $GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pullRaspberryConfig'] = [
     'Fetch configuration from Raspberry',
-    'Imports devices, sensors and collector settings from the Raspberry via HTTPS.',
+    'Imports devices, sensors and RemotCfg settings from the Raspberry via HTTPS.',
 ];
-$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pullRaspberryConfigConfirm'] = 'Fetch the configuration from the Raspberry now? Local records with the same ID will be updated.';
+$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pullRaspberryConfigConfirm'] = 'Fetch devices, sensors and RemotCfg settings from the Raspberry now? Local records with the same ID will be updated.';
 $GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pushRaspberryConfig'] = [
     'Transfer configuration to Raspberry',
-    'Transfers devices, active sensors and collector settings to the Raspberry via HTTPS.',
+    'Transfers devices, active sensors and RemotCfg settings to the Raspberry via HTTPS.',
 ];
-$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pushRaspberryConfigConfirm'] = 'Transfer the configuration to the Raspberry now? The Raspberry configuration will be updated.';
+$GLOBALS['TL_LANG']['tl_coh_cfgcollect']['pushRaspberryConfigConfirm'] = 'Transfer devices, active sensors and RemotCfg settings to the Raspberry now? The Raspberry configuration will be updated.';
 

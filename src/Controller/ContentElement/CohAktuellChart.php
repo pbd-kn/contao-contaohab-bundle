@@ -12,6 +12,7 @@ use Contao\StringUtil;
 use Contao\System;
 use PbdKn\ContaoContaohabBundle\Service\LoggerService;
 use PbdKn\ContaoContaohabBundle\Service\RaspberrySensorApiClient;
+use PbdKn\ContaoContaohabBundle\Service\ModbusWriteDialog;
 
 #[AsContentElement(CohAktuellChart::TYPE, category: 'COH')]
 class CohAktuellChart extends AbstractContentElementController
@@ -26,6 +27,7 @@ class CohAktuellChart extends AbstractContentElementController
     public function __construct(
         private readonly LoggerService $logger,
         private readonly RaspberrySensorApiClient $sensorApi,
+        private readonly ModbusWriteDialog $modbusWriteDialog,
     ) {}
 
     protected function getResponse($template, ContentModel $model, Request $request): Response
@@ -58,6 +60,12 @@ class CohAktuellChart extends AbstractContentElementController
         $template = $this->createTemplate($model, $templateName);
         $selectedSensors = StringUtil::deserialize($model->selectedSensors, true);
         $data = [];
+        $template->modbusDevices = [];
+        $template->modbusState = [];
+        if ($model->coh_modbus_write) {
+            $response = $this->modbusWriteDialog->prepare($template, (int) $model->id, $selectedSensors, $request);
+            if ($response !== null) return $response;
+        }
         if (!empty($selectedSensors)) {
             try {
                 $rows = $this->sensorApi->fetchLatest($selectedSensors);
@@ -103,7 +111,12 @@ class CohAktuellChart extends AbstractContentElementController
         $result = false;
         $template->lastPushSync = $result ? date('d.m.Y H:i', strtotime($result)) : 'Keine Sync-Info vorhanden';
 
-        return $template->getResponse();
+        $response = $template->getResponse();
+        if ($model->coh_modbus_write) {
+            $response->setPrivate();
+            $response->headers->set('Cache-Control', 'private, no-store');
+        }
+        return $response;
     }
 
     private function addCssOnce(string $file): void

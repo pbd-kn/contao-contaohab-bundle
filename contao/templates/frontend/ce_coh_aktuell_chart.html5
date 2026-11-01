@@ -1,4 +1,5 @@
 <div id="wrapper_<?= $this->chartId ?>" class="chart-wrapper " style=" padding: 1rem;">
+<?php $this->insert('coh_modbus_control', $this->getData()); ?>
 <?php
 echo "Template ce_coh_aktuell_chart <br>";
 echo "Dump der übergebenenen selectoren mit Werten<br>";

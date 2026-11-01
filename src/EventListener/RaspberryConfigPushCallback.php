@@ -29,7 +29,7 @@ final class RaspberryConfigPushCallback
             if ('pullRaspberryConfig' === $action) {
                 $result = $this->configPushService->pull();
                 Message::addConfirmation(sprintf(
-                    'Konfiguration erfolgreich vom Raspberry geholt (%d Geraete, %d Sensoren, %d Collector-Einstellungen).',
+                    'Konfiguration erfolgreich vom Raspberry geholt (%d Geraete, %d Sensoren, %d RemotCfg-Einstellungen).',
                     $result['devices'],
                     $result['sensors'],
                     $result['collectorConfig'],
@@ -37,7 +37,7 @@ final class RaspberryConfigPushCallback
             } else {
                 $result = $this->configPushService->push();
                 Message::addConfirmation(sprintf(
-                    'Konfiguration erfolgreich zum Raspberry uebertragen (%d Geraete, %d aktive Sensoren, %d Collector-Einstellungen).',
+                    'Konfiguration erfolgreich zum Raspberry uebertragen (%d Geraete, %d aktive Sensoren, %d RemotCfg-Einstellungen).',
                     $result['devices'],
                     $result['sensors'],
                     $result['collectorConfig'],

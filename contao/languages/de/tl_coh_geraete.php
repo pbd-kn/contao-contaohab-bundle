@@ -22,10 +22,10 @@ $GLOBALS['TL_LANG']['tl_coh_geraete']['edit'] = "Datensatz mit ID: %s bearbeiten
 $GLOBALS['TL_LANG']['tl_coh_geraete']['copy'] = "Datensatz mit ID: %s kopieren";
 $GLOBALS['TL_LANG']['tl_coh_geraete']['delete'] = "Datensatz mit ID: %s löschen";
 $GLOBALS['TL_LANG']['tl_coh_geraete']['show'] = "Datensatz mit ID: %s ansehen";
-$GLOBALS['TL_LANG']['tl_coh_geraete']['pushRaspberryConfig'] = ['Konfiguration zum Raspberry übertragen', 'Überträgt alle Geräte, aktiven Sensoren und Collector-Einstellungen per HTTPS zum Raspberry.'];
-$GLOBALS['TL_LANG']['tl_coh_geraete']['pushRaspberryConfigConfirm'] = 'Geräte und aktive Sensoren jetzt zum Raspberry übertragen?';
-$GLOBALS['TL_LANG']['tl_coh_geraete']['pullRaspberryConfig'] = ['Konfiguration vom Raspberry holen', 'Übernimmt Geräte, Sensoren und Collector-Einstellungen vom Raspberry in die lokale Datenbank.'];
-$GLOBALS['TL_LANG']['tl_coh_geraete']['pullRaspberryConfigConfirm'] = 'Geräte und Sensoren jetzt vom Raspberry holen? Lokale Datensätze mit gleicher ID werden aktualisiert.';
+$GLOBALS['TL_LANG']['tl_coh_geraete']['pushRaspberryConfig'] = ['Konfiguration zum Raspberry übertragen', 'Überträgt alle Geräte, aktiven Sensoren und RemotCfg-Einstellungen per HTTPS zum Raspberry.'];
+$GLOBALS['TL_LANG']['tl_coh_geraete']['pushRaspberryConfigConfirm'] = 'Geräte, aktive Sensoren und RemotCfg-Einstellungen jetzt zum Raspberry übertragen?';
+$GLOBALS['TL_LANG']['tl_coh_geraete']['pullRaspberryConfig'] = ['Konfiguration vom Raspberry holen', 'Übernimmt Geräte, Sensoren und RemotCfg-Einstellungen vom Raspberry in die lokale Datenbank.'];
+$GLOBALS['TL_LANG']['tl_coh_geraete']['pullRaspberryConfigConfirm'] = 'Geräte, Sensoren und RemotCfg-Einstellungen jetzt vom Raspberry holen? Lokale Datensätze mit gleicher ID werden aktualisiert.';
 
 
 /**

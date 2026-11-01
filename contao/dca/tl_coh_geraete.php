@@ -171,6 +171,15 @@ public function validateHostOrIp(string $value): string
 {
     $value = trim($value);
 
+    // HTTP-/HTTPS-Geräteadressen im Backend erlauben.
+    if (preg_match('~^https?://~i', $value) && filter_var($value, FILTER_VALIDATE_URL)) {
+        $host = trim((string) parse_url($value, PHP_URL_HOST), '[]');
+        if (filter_var($host, FILTER_VALIDATE_IP)
+            || preg_match('/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/D', $host)) {
+            return $value;
+        }
+    }
+
     if ($this->isMyPvApiAccess($value)) {
         return $value;
     }
@@ -185,7 +194,7 @@ public function validateHostOrIp(string $value): string
     }
 
     throw new \InvalidArgumentException(
-        'Bitte eine gültige IP-Adresse, einen Hostnamen oder my-PV API-Zugang im Format serialnummer:APIKey eingeben.'
+        'Bitte eine gültige IP-Adresse, einen Hostnamen, eine HTTP-/HTTPS-Adresse oder my-PV API-Zugang im Format serialnummer:APIKey eingeben.'
     );
 }
 
