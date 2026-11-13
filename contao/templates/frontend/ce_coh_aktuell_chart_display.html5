@@ -121,6 +121,13 @@
         $heizstabServerOk = $raspberryHeating['serverStatus'] ?? false;
         // backup raspberry
         $raspberryBackup = $raspberryAll['backup'] ?? [];
+        $raspberryTimestamp = (int) ($d['Raspberry_All']['sensorTimestamp'] ?? 0);
+        $raspberryStale = $raspberryTimestamp <= 0 || time() - $raspberryTimestamp > 1800;
+        $backupResult = $raspberryBackup['lastResult'] ?? null;
+        $backupLastSuccess = (string) ($raspberryBackup['lastSuccess'] ?? '');
+        $backupSuccessTimestamp = $backupLastSuccess !== '' ? strtotime($backupLastSuccess . ' Europe/Berlin') : false;
+        $backupOverdue = $backupSuccessTimestamp === false || time() - $backupSuccessTimestamp > 8 * 86400;
+        $backupNeedsAttention = $raspberryStale || $backupResult !== 'success' || $backupOverdue;
         $raspberryBackupErrors = $raspberryAll['backup']['errors'] ?? [];
         $raspberryBackupProtocoll = $raspberryAll['backup']['protocol'] ?? [];
 //var_dump($raspberryBackupProtocoll);
@@ -323,12 +330,12 @@
             </div>
         <?php else: ?>
         <details class="coh-toggle">
-            <summary class="coh-row <?= $HZprotokollHasError ? 'is-red' : '' ?>">📝 HeizstabServer</summary>
+            <summary class="coh-row <?= $HZprotokollHasError || $raspberryStale ? 'is-red' : '' ?>">📝 HeizstabServer<?= $raspberryStale ? ' – Datenstand prüfen' : '' ?></summary>
             <div class="coh-toggle-body">
-                <div class="coh-row <?= $heizstabServerOk ? 'is-green' : 'is-red' ?>">
+                <div class="coh-row <?= !$raspberryStale && $heizstabServerOk ? 'is-green' : 'is-red' ?>">
                     <div class="coh-icon">🎯</div>
                     <div class="coh-label">Raspberry HeizstabServer Status</div>
-                    <div class="coh-value"><?= $heizstabServerOk ?></div>
+                    <div class="coh-value"><?= $raspberryStale ? 'Unbekannt – Raspberry-Datenstand veraltet oder nicht verfügbar' : htmlspecialchars((string) $heizstabServerOk, ENT_QUOTES, 'UTF-8') ?></div>
                 </div>
                 <div class="coh-row <?= $HZprotokollHasError ? 'is-red' : '' ?>">
                     <div class="coh-icon">📄</div>
@@ -353,8 +360,21 @@
             <?php
                 $plattendiskAll = is_array($raspberrySystem['diskCheckResult'] ?? null) ? $raspberrySystem['diskCheckResult'] : [];
             ?>
-            <summary>🖥️ Raspberry Systemdaten</summary>
+            <summary class="<?= $backupNeedsAttention ? 'is-red' : '' ?>">🖥️ Raspberry Systemdaten<?= $backupNeedsAttention ? ' – Backup prüfen' : '' ?></summary>
             <div class="coh-toggle-body">
+                <div class="coh-row <?= $raspberryStale ? 'is-red' : '' ?>">
+                    <div class="coh-label">Raspberry-Datenstand</div>
+                    <div class="coh-value"><?= $raspberryTimestamp > 0 ? htmlspecialchars(date('d.m.Y H:i', $raspberryTimestamp), ENT_QUOTES, 'UTF-8') : 'Unbekannt' ?><?= $raspberryStale ? ' – veraltet oder unbekannt; angezeigte Zustände sind nicht aktuell bestätigt (Collector-Ruhezeit beachten).' : '' ?></div>
+                </div>
+                <div class="coh-row <?= $backupNeedsAttention ? 'is-red' : '' ?>">
+                    <div class="coh-label">Backup-Status</div>
+                    <div class="coh-value">
+                        <?= htmlspecialchars(['success' => 'Letzter Lauf erfolgreich', 'error' => 'Letzter Lauf fehlgeschlagen', 'running' => 'Backup gestartet – Abschluss noch nicht bestätigt'][$backupResult ?? ''] ?? 'Unbekannt – keine lokale Statusinformation', ENT_QUOTES, 'UTF-8') ?>
+                        <?= htmlspecialchars((string) ($raspberryBackup['lastResultAt'] ?? ''), ENT_QUOTES, 'UTF-8') ?><br>
+                        Letzter Erfolg: <?= htmlspecialchars($backupLastSuccess !== '' ? $backupLastSuccess : 'unbekannt', ENT_QUOTES, 'UTF-8') ?>
+                        <?= $backupOverdue ? ' – kein bestätigter Erfolg innerhalb der letzten 8 Tage' : '' ?>
+                    </div>
+                </div>
                 <div class="coh-row" style="margin-top:8px;">
                     <div class="coh-icon">💾</div>
                     <div class="coh-label">Dateisysteme</div>

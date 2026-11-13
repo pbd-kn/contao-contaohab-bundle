@@ -80,7 +80,8 @@ class CohAktuellChart extends AbstractContentElementController
                 $data[$sensorID]['sensorID']      = $row['sensorID'];
                 $data[$sensorID]['sensorTitle']   = $row['sensorTitle'] ?? $sensorID;
                 $data[$sensorID]['sensorEinheit'] = $row['sensorEinheit'];
-                $data[$sensorID]['sensorDatum'] = date('d.m.Y H:i');
+                $data[$sensorID]['sensorTimestamp'] = (int) ($row['tstamp'] ?? 0);
+                $data[$sensorID]['sensorDatum'] = !empty($row['tstamp']) ? date('d.m.Y H:i', (int) $row['tstamp']) : 'Unbekannt';
                 $data[$sensorID]['sensorConfigDatum'] = '';
                 $logValue = is_array($val) ? json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : (string) $val;
                 $this->logger->debugMe("Aktuell {$sensorID} = {$logValue}");
