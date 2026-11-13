@@ -243,6 +243,7 @@ class CohHistoryChart extends AbstractContentElementController
                 'datasets' => array_values($datasets),
                 'axes' => $axes,
                 'xUnit' => $unit,
+                'timezone' => date_default_timezone_get(),
                 'xDisplayUnit' => 'day' === $unit && 1 === count($selectedPeriodIds) ? 'hour' : ('year' === $unit ? 'month' : 'day'),
                 'rangeMin' => $rangeStart?->format(DATE_ATOM),
                 'rangeMax' => $rangeEnd?->format(DATE_ATOM),

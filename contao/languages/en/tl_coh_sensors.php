@@ -63,5 +63,5 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListLabel'] = 'Record history';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListYes'] = 'Yes';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListNo'] = 'No';
 
-$GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendMode'] = ['History chart legend display', 'Applies to all history charts for this sensor. Counter sum: last cumulative value in day view, otherwise sum of bars. Missing values prevent a total. Storage is unchanged.'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendMode'] = ['History chart legend display', 'Applies to all history charts for this sensor. Counter sum: last cumulative value in day view, otherwise sum of known bars. With missing values, the recorded sum is marked as incomplete. Storage is unchanged.'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendModes'] = ['range' => 'Range Δ (maximum − minimum)', 'none' => 'No additional value', 'sum' => 'Sum (counter)', 'minmax' => 'Minimum / maximum'];

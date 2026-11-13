@@ -79,5 +79,5 @@ $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListLabel'] = 'History anlegen';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListYes'] = 'Ja';
 $GLOBALS['TL_LANG']['tl_coh_sensors']['historyListNo'] = 'Nein';
 
-$GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendMode'] = ['Legendenanzeige im Historychart', 'Gilt für alle Historycharts dieses Sensors. Summe für Zähler: Tagesansicht letzter kumulierter Wert, sonst Summe der Balken. Bei fehlenden Werten wird keine Summe angezeigt. Die Speicherung bleibt unverändert.'];
+$GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendMode'] = ['Legendenanzeige im Historychart', 'Gilt für alle Historycharts dieses Sensors. Summe für Zähler: Tagesansicht letzter kumulierter Wert, sonst Summe der bekannten Balken. Bei fehlenden Werten wird die erfasste Summe als unvollständig gekennzeichnet. Die Speicherung bleibt unverändert.'];
 $GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendModes'] = ['range' => 'Spannweite Δ (Maximum − Minimum)', 'none' => 'Keine Zusatzangabe', 'sum' => 'Summe (Zähler)', 'minmax' => 'Minimum / Maximum'];

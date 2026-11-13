@@ -10,4 +10,5 @@
 /.php-cs-fixer.cache
 /tools/phpunit/.phpunit.result.cache
 /tmp/
-/tests/
+/tests/*
+!/tests/HistoryChartTemplateTest.cjs

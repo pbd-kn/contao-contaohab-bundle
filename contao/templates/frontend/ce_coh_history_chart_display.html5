@@ -171,12 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
   ctx.canvas.parentElement.style.setProperty('--coh-chart-min-width',
     `${440 + Math.max(0, axisCount - 2) * 100}px`);
   const chartType = chartData.xUnit === 'day' ? 'line' : 'bar';
+  const chartZone = chartData.timezone || 'local';
   if (chartType === 'bar') {
     chartData.datasets.forEach(dataset => {
       dataset.data.forEach(point => {
         const date = typeof point.x === 'number'
-          ? luxon.DateTime.fromMillis(point.x)
-          : luxon.DateTime.fromISO(point.x, { setZone: true });
+          ? luxon.DateTime.fromMillis(point.x, { zone: chartZone })
+          : luxon.DateTime.fromISO(point.x, { zone: chartZone });
         const unit = getTimeConfig(chartData.xUnit).unit;
         const start = date.startOf(unit);
         const end = start.plus({ [unit]: 1 });
@@ -215,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const scales = {
     x: {
       type: 'time',
+      adapters: { date: { zone: chartZone } },
       min: chartData.rangeMin,
       max: chartData.rangeMax,
       time: getTimeConfig(chartData.xUnit),
@@ -311,9 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const unit = chartData.axes?.[dataset.yAxisID]?.unit || '';
       if (dataset.legendMode === 'sum') {
         // Die Tageskurve eines Zaehlers ist bereits seit Mitternacht kumuliert.
-        const value = minimum === null || missing ? null
+        const value = minimum === null ? null
           : dataset.historyAggregation === 'counter' && chartData.xUnit === 'day' ? last : sum;
-        item.text += ' · Summe: ' + (value === null ? '–' : differenceFormat.format(value) + (unit ? ' ' + unit : ''));
+        const title = missing && value !== null ? 'Erfasste Summe: ' : 'Summe: ';
+        item.text += ' · ' + title + (value === null ? '–' : differenceFormat.format(value) + (unit ? ' ' + unit : ''));
+        if (missing && value !== null) item.text += ' (unvollständig)';
         return item;
       }
       if (dataset.legendMode === 'minmax') {

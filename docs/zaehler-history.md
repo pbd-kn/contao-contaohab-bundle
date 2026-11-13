@@ -37,3 +37,18 @@ Bestehende absolute Historien sind verwendbar. Bereits mit Heute/7/30/365 Tage
 umgerechnet gespeicherte Historien werden nicht in absolute Stände zurückgerechnet.
 
 Tests im Collector-Projekt: `php tests/counter_history_test.php`.
+
+## Legendenanzeige
+
+Die Sensoreinstellung **Legendenanzeige im Historychart → Summe (Zähler)** gilt
+für alle Historycharts des Sensors. Die Tageskurve ist bereits kumuliert;
+hier wird ihr letzter bekannter Wert verwendet. Woche/Monat addieren die
+bekannten Tagesbalken, Jahr die bekannten Monatsbalken. Enthält der Zeitraum
+unbekannte Werte, lautet die Anzeige **Erfasste Summe: … (unvollständig)**.
+Ohne einen bekannten Wert bleibt die Summe unbekannt. Fehlende Werte werden
+nicht als null behandelt; unbekannte Anteile einzelner Balken werden nicht
+geschätzt. Laufende Intervalle bleiben vorläufig.
+
+Balken werden in der Contao-Zeitzone den Kalendertagen bzw. -monaten zugeordnet,
+auch bei der Sommer-/Winterzeitumstellung. Template-Regressionsprüfung:
+`node tests/HistoryChartTemplateTest.cjs` (verwendet das vorhandene `luxon`).
