@@ -288,6 +288,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return labels.map(item => {
       const dataset = chartInstance.data.datasets[item.datasetIndex];
+      if (dataset.legendMode === 'none') return item;
+      let sum = 0;
+      let last = null;
+      let lastX = -Infinity;
+      let missing = false;
       let minimum = null;
       let maximum = null;
 
@@ -295,12 +300,27 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const point of dataset.data) {
         const x = typeof point?.x === 'number' ? point.x : Date.parse(point?.x);
         const y = point?.y;
-        if (!Number.isFinite(x) || x < min || x > max || !Number.isFinite(y)) continue;
+        if (!Number.isFinite(x) || x < min || x > max) continue;
+        if (!Number.isFinite(y)) { missing = true; continue; }
+        sum += y;
+        if (x >= lastX) { last = y; lastX = x; }
         minimum = minimum === null ? y : Math.min(minimum, y);
         maximum = maximum === null ? y : Math.max(maximum, y);
       }
 
       const unit = chartData.axes?.[dataset.yAxisID]?.unit || '';
+      if (dataset.legendMode === 'sum') {
+        // Die Tageskurve eines Zaehlers ist bereits seit Mitternacht kumuliert.
+        const value = minimum === null || missing ? null
+          : dataset.historyAggregation === 'counter' && chartData.xUnit === 'day' ? last : sum;
+        item.text += ' · Summe: ' + (value === null ? '–' : differenceFormat.format(value) + (unit ? ' ' + unit : ''));
+        return item;
+      }
+      if (dataset.legendMode === 'minmax') {
+        const format = value => value === null ? '–' : differenceFormat.format(value) + (unit ? ' ' + unit : '');
+        item.text += ' · Min: ' + format(minimum) + ' / Max: ' + format(maximum);
+        return item;
+      }
       // Delta beschreibt die Spannweite der Werte im gewaehlten Intervall.
       const value = minimum !== null ? maximum - minimum : null;
       const difference = value !== null ? differenceFormat.format(value) : '–';

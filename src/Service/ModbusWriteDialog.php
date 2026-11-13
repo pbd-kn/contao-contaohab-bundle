@@ -50,7 +50,7 @@ final class ModbusWriteDialog
             }
             $catalogs = [];
             foreach ($devices as $id => $device) {
-                $catalogs[$device['profile']] ??= $this->api(['action' => 'catalog', 'profile' => $device['profile']])['catalog'];
+                $catalogs[$device['profile']] ??= self::withoutTimeSettings($this->api(['action' => 'catalog', 'profile' => $device['profile']])['catalog']);
                 $template->modbusDevices += [$id => ['label' => $device['label'], 'catalog' => $catalogs[$device['profile']]]];
             }
             if (!$request->isMethod('POST') || (string) $request->request->get('modbus_element') !== (string) $elementId) {
@@ -104,6 +104,11 @@ final class ModbusWriteDialog
                 if (!$device || $device['host'] !== $preview['host'] || $device['profile'] !== $preview['profile']) {
                     throw new \RuntimeException('Gerätekonfiguration hat sich geändert. Bitte erneut prüfen.');
                 }
+                $definition = $catalogs[$device['profile']][$preview['setting']] ?? null;
+                if (!$definition || ($definition['writable'] ?? true) === false
+                    || !array_key_exists($preview['value'], $definition['options'])) {
+                    throw new \RuntimeException('Diese Einstellung oder dieser Auswahlwert ist nicht mehr freigegeben. Bitte erneut prüfen.');
+                }
                 $result = $this->api($device + [
                     'action' => 'execute', 'setting' => $preview['setting'], 'value' => $preview['value'],
                     'expected' => $preview['expected'], 'confirmed' => true,
@@ -127,6 +132,20 @@ final class ModbusWriteDialog
             return new RedirectResponse($request->getUri(), Response::HTTP_SEE_OTHER);
         }
         return null;
+    }
+
+    /** Auch Kataloge älterer Raspberry-Installationen ohne Zeitsteuerung anzeigen. */
+    private static function withoutTimeSettings(array $catalog): array
+    {
+        foreach ($catalog as $setting => &$definition) {
+            if (preg_match('/^(?:control|planned)\.(?:outsideTimeMode|timeBatteryDischarge|(?:charge|discharge)[1-7]\.)/', (string) $setting)) {
+                unset($catalog[$setting]);
+                continue;
+            }
+            if ($setting === 'control.appMode') unset($definition['options'][1]);
+        }
+        unset($definition);
+        return $catalog;
     }
 
     private function api(array $payload): array

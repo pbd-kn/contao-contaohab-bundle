@@ -118,6 +118,21 @@ class CohHistoryChart extends AbstractContentElementController
             $sensorColors[$sensorId] = $this->getSensorColor($index);
         }
 
+        $legendModes = [];
+        if ($selectedSensors !== []) {
+            $connection = System::getContainer()->get('database_connection');
+            $settings = $connection->fetchAllAssociative(
+                'SELECT sensorID, historyLegendMode FROM tl_coh_sensors WHERE sensorID IN ('
+                . implode(',', array_fill(0, count($selectedSensors), '?')) . ')',
+                array_values($selectedSensors)
+            );
+            foreach ($settings as $setting) {
+                if (in_array($setting['historyLegendMode'], ['range', 'none', 'sum', 'minmax'], true)) {
+                    $legendModes[(string) $setting['sensorID']] = $setting['historyLegendMode'];
+                }
+            }
+        }
+
         $datasets = [];
         $axes = [];
         $timestamps = [];
@@ -197,6 +212,7 @@ class CohHistoryChart extends AbstractContentElementController
                         $timestamps[] = $ts;
 
                         $datasets[$sensorTitle]['label'] ??= $sensorTitle;
+                        $datasets[$sensorTitle]['legendMode'] ??= $legendModes[$sensorID] ?? 'range';
                         $datasets[$sensorTitle]['historyAggregation'] ??= $row['historyAggregation'] ?? 'absolute';
                         $datasets[$sensorTitle]['data'][] = ['x' => $ts, 'y' => $val];
                         $datasets[$sensorTitle]['borderColor'] ??= $color;

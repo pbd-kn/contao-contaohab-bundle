@@ -70,7 +70,7 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             {base_legend},sensorID,sensorTitle,
             sensorActive,sensorEinheit,sensorValueType,
             sensorSource,sensorLokalId,sensorComment,
-            transFormProcedur,outputMode;
+            transFormProcedur,outputMode,historyLegendMode;
 
             {calc_legend},isComponent;
 
@@ -172,6 +172,15 @@ $GLOBALS['TL_DCA']['tl_coh_sensors'] = [
             ],
             'eval' => ['includeBlankOption'=>true,'chosen'=>true,'tl_class'=>'w50'],
             'sql'  => "varchar(255) NOT NULL default ''",
+        ],
+
+        'historyLegendMode' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendMode'],
+            'inputType' => 'select',
+            'options' => ['range', 'none', 'sum', 'minmax'],
+            'reference' => &$GLOBALS['TL_LANG']['tl_coh_sensors']['historyLegendModes'],
+            'eval' => ['tl_class' => 'w50'],
+            'sql' => "varchar(20) NOT NULL default 'range'",
         ],
 
         'outputMode' => [
